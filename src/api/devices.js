@@ -1,5 +1,5 @@
 import request from '../utils/request'
-export const getDevices = () => request.get('/devices')
+export const getDevices = (params) => request.get('/devices/', { params })
 export const addDevice = (data) => request.post('/devices', data)
 export const updateDevice = (id, data) => request.put(`/devices/${id}`, data)
 export const deleteDevice = (id) => request.delete(`/devices/${id}`)

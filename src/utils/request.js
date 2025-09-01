@@ -2,6 +2,8 @@ import axios from 'axios'
 import router from '../router'
 import { ElMessage } from 'element-plus'
 
+let isHandlingUnauthorized = false
+
 const request = axios.create({
   baseURL: '/api/v1',
   timeout: 10000,
@@ -14,6 +16,9 @@ request.interceptors.request.use(config => {
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`
   }
+  
+  // 调试日志
+  console.log('[REQUEST]', config.method?.toUpperCase(), config.baseURL + config.url, config.params)
   
   return config
 }, error => {
@@ -32,11 +37,35 @@ request.interceptors.response.use(
       const { status, data } = error.response
       
       switch (status) {
-        case 401:
-          localStorage.removeItem('token')
-          ElMessage.error('登录已过期，请重新登录')
-          router.push('/login')
+        case 401: {
+          if (!isHandlingUnauthorized) {
+            isHandlingUnauthorized = true
+            // 清理本地状态
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            const currentPath = router.currentRoute?.value?.fullPath || (window.location.pathname + window.location.search)
+
+            // 已在登录页则不再跳转
+            const alreadyOnLogin = (router.currentRoute?.value?.path === '/login') || window.location.pathname === '/login'
+            if (!alreadyOnLogin) {
+              ElMessage.error('登录已过期，请重新登录')
+              // 先尝试SPA跳转
+              router.push({ path: '/login', query: { redirect: currentPath } }).catch(() => {})
+              // 兜底：确保在极端情况下也能跳转
+              setTimeout(() => {
+                const target = `/login?redirect=${encodeURIComponent(currentPath)}`
+                if (window.location.pathname + window.location.search !== target) {
+                  window.location.replace(target)
+                }
+                isHandlingUnauthorized = false
+              }, 100)
+            } else {
+              // 已在登录页，释放锁
+              isHandlingUnauthorized = false
+            }
+          }
           break
+        }
         case 403:
           ElMessage.error('没有权限访问该资源')
           break

@@ -165,11 +165,12 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login, register, forgotPassword } from '../api/auth'
 
 const router = useRouter()
+const route = useRoute()
 const activeTab = ref('login')
 const loginLoading = ref(false)
 const registerLoading = ref(false)
@@ -270,7 +271,8 @@ const handleLogin = async () => {
         token_type: response.token_type
       }))
       ElMessage.success('登录成功')
-      router.push('/dashboard')
+      const redirect = route?.query?.redirect || '/dashboard'
+      router.push(redirect)
     } catch (error) {
       console.error('登录失败:', error)
       console.error('错误详情:', {
