@@ -2,26 +2,51 @@ import request from '../utils/request'
 
 // 用户注册
 export function register(data) {
+  // 将数据转换为form-urlencoded格式
+  const formData = new URLSearchParams()
+  formData.append('username', data.username)
+  formData.append('email', data.email)
+  formData.append('password', data.password)
+  formData.append('grant_type', '')
+  formData.append('scope', '')
+  formData.append('client_id', '')
+  formData.append('client_secret', '')
+  
   return request({
-    url: '/v1/auth/register',
+    url: '/auth/register',
     method: 'post',
-    data
+    data: formData,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
   })
 }
 
 // 用户登录
 export function login(data) {
+  // 将数据转换为form-urlencoded格式
+  const formData = new URLSearchParams()
+  formData.append('username', data.username)
+  formData.append('password', data.password)
+  formData.append('grant_type', '')
+  formData.append('scope', '')
+  formData.append('client_id', '')
+  formData.append('client_secret', '')
+  
   return request({
-    url: '/v1/auth/login',
+    url: '/auth/login',
     method: 'post',
-    data
+    data: formData,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
   })
 }
 
 // 用户登出
 export function logout() {
   return request({
-    url: '/v1/auth/logout',
+    url: '/auth/logout',
     method: 'post'
   })
 }
@@ -29,7 +54,7 @@ export function logout() {
 // 获取用户信息
 export function getUserInfo() {
   return request({
-    url: '/v1/auth/user',
+    url: '/auth/user',
     method: 'get'
   })
 }
@@ -37,7 +62,7 @@ export function getUserInfo() {
 // 修改密码
 export function changePassword(data) {
   return request({
-    url: '/v1/auth/change-password',
+    url: '/auth/change-password',
     method: 'post',
     data
   })
@@ -46,7 +71,7 @@ export function changePassword(data) {
 // 忘记密码
 export function forgotPassword(data) {
   return request({
-    url: '/v1/auth/forgot-password',
+    url: '/auth/forgot-password',
     method: 'post',
     data
   })
@@ -55,7 +80,7 @@ export function forgotPassword(data) {
 // 重置密码
 export function resetPassword(data) {
   return request({
-    url: '/v1/auth/reset-password',
+    url: '/auth/reset-password',
     method: 'post',
     data
   })

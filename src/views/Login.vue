@@ -262,11 +262,12 @@ const handleLogin = async () => {
       
       console.log('登录成功，响应数据:', response)
       
-      localStorage.setItem('token', response.data.token)
+      // 根据后端返回的格式调整
+      localStorage.setItem('token', response.access_token)
       localStorage.setItem('user', JSON.stringify({
         username: loginForm.username,
         remember: loginForm.remember,
-        ...response.data.user
+        token_type: response.token_type
       }))
       ElMessage.success('登录成功')
       router.push('/dashboard')
