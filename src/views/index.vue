@@ -184,14 +184,14 @@ body, html {
 
 /* 左侧导航栏 */
 .sidebar {
-  width: 280px;
+  width: 140px;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
 }
 
 .logo {
-  padding: 0 24px 32px;
+  padding: 0 16px 32px;
   margin-bottom: 32px;
 }
 
@@ -217,13 +217,15 @@ body, html {
 
 .nav-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 16px 24px;
-  margin: 4px 16px;
+  padding: 16px 12px;
+  margin: 4px 8px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   color: #71717A;
+  text-align: center;
 }
 
 .nav-item:hover {
@@ -239,7 +241,7 @@ body, html {
 .nav-icon {
   width: 24px;
   height: 24px;
-  margin-right: 16px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,13 +259,15 @@ body, html {
 }
 
 .logout {
-  padding: 16px 24px;
-  margin: 16px;
+  padding: 16px 12px;
+  margin: 16px 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   cursor: pointer;
   color: #71717A;
   transition: color 0.3s ease;
+  text-align: center;
 }
 
 .logout:hover {
