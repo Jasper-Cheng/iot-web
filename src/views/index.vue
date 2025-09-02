@@ -99,6 +99,37 @@
       </div>
     </nav>
 
+    <!-- 主内容区域 -->
+    <main class="main-content">
+      <!-- 顶部头部 -->
+      <header class="header">
+        <div class="header-left">
+          <h1 class="greeting">Greetings from home again, Bala</h1>
+          <p class="status">Every system and gadget is operating as planned.</p>
+        </div>
+        <div class="header-right">
+          <button class="add-device-btn">
+            <span class="plus-icon">+</span>
+            Add Device
+          </button>
+          <div class="theme-toggle">
+            <button class="theme-btn sun-btn">☀️</button>
+            <button class="theme-btn moon-btn active">🌙</button>
+          </div>
+          <button class="notification-btn">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+          </button>
+          <div class="user-profile">
+            <img src="https://via.placeholder.com/40x40/FFD700/000000?text=BH" alt="Profile" class="profile-avatar">
+            <span class="user-name">Bala Hatun</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+        </div>
+      </header>
+    </main>
   </div>
 </template>
 
@@ -110,28 +141,57 @@ import Login from './Login.vue'
 const showLogin = ref(false)
 </script>
 
-<style scoped>
+<style>
+/* 全局重置样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 .home {
   display: flex;
   height: 100vh;
-  background-color: #09090B;
+  background: linear-gradient(135deg, #0e1925 0%, #11130b 100%);
   color: #FFFFFF;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* 隐藏滚动条 */
+.home::-webkit-scrollbar {
+  display: none;
+}
+
+.home {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* 左侧导航栏 */
 .sidebar {
   width: 280px;
-  background-color: #27272A;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #71717A;
 }
 
 .logo {
   padding: 0 24px 32px;
-  border-bottom: 1px solid #71717A;
   margin-bottom: 32px;
 }
 
@@ -199,7 +259,6 @@ const showLogin = ref(false)
 .logout {
   padding: 16px 24px;
   margin: 16px;
-  border-top: 1px solid #71717A;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -209,6 +268,145 @@ const showLogin = ref(false)
 
 .logout:hover {
   color: #BFFE01;
+}
+
+/* 主内容区域 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部头部 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 40px;
+}
+
+.header-left h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.header-left p {
+  margin: 0;
+  color: #71717A;
+  font-size: 16px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.add-device-btn {
+  background-color: #BFFE01;
+  color: #09090B;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-device-btn:hover {
+  background-color: #A8E600;
+  transform: translateY(-2px);
+}
+
+.plus-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.theme-toggle {
+  display: flex;
+  background-color: #27272A;
+  border-radius: 20px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.theme-btn {
+  background: none;
+  border: none;
+  color: #71717A;
+  padding: 8px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+}
+
+.theme-btn.active {
+  background-color: #71717A;
+  color: #FFFFFF;
+}
+
+.notification-btn {
+  background-color: #27272A;
+  border: 2px solid #71717A;
+  color: #FFFFFF;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-btn:hover {
+  border-color: #BFFE01;
+  background-color: #BFFE01;
+  color: #09090B;
+}
+
+.notification-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.user-profile:hover {
+  background-color: #27272A;
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #FFFFFF;
+}
+
+.dropdown-arrow {
+  color: #71717A;
+  font-size: 12px;
 }
 
 </style>
