@@ -145,7 +145,7 @@
             </svg>
           </button>
           <div class="user-profile">
-            <img src="https://via.placeholder.com/40x40/FFD700/000000?text=BH" alt="Profile" class="profile-avatar">
+            <img src="https://api.dicebear.com/7.x/adventurer/png?size=80&seed=bala" alt="Profile Avatar" class="profile-avatar">
             <span class="user-name">Bala Hatun</span>
             <span class="dropdown-arrow">▼</span>
           </div>
@@ -235,8 +235,11 @@ body, html {
 }
 
 .logo {
-  padding: 0 16px 32px;
-  margin-bottom: 32px;
+  padding: 12px 0 32px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo-icon {
@@ -335,7 +338,7 @@ body, html {
 
 .header-left h1 {
   margin: 0 0 8px 0;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -343,7 +346,7 @@ body, html {
 .header-left p {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .header-right {
@@ -356,7 +359,7 @@ body, html {
   background-color: var(--color-primary);
   color: var(--color-bg-primary);
   border: none;
-  padding: 12px 24px;
+  padding: 10px 18px;
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
@@ -373,7 +376,7 @@ body, html {
 }
 
 .plus-icon {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
 }
 
@@ -426,8 +429,8 @@ body, html {
   background-color: var(--color-bg-card);
   border: 2px solid var(--color-border);
   color: var(--color-text-primary);
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
