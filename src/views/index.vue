@@ -112,9 +112,21 @@
             <span class="plus-icon">+</span>
             Add Device
           </button>
-          <div class="theme-toggle">
-            <button class="theme-btn sun-btn" @click="handleThemeToggle">☀️</button>
-            <button class="theme-btn moon-btn" @click="handleThemeToggle">🌙</button>
+          <!-- 主题切换：胶囊+滑块 -->
+          <div class="theme-toggle" role="group" aria-label="Theme toggle">
+            <span 
+              class="toggle-option" 
+              :class="{ active: currentTheme === 'light' }" 
+              @click="setToLight"
+              aria-label="Light"
+            >☀️</span>
+            <span 
+              class="toggle-option" 
+              :class="{ active: currentTheme === 'dark' }" 
+              @click="setToDark"
+              aria-label="Dark"
+            >🌙</span>
+            <span class="toggle-knob" :class="{ right: currentTheme === 'dark' }"></span>
           </div>
           <button class="notification-btn">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -136,18 +148,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Login from './Login.vue'
-import { initTheme, toggleTheme, getCurrentTheme } from '../utils/theme.js'
+import { initTheme, setTheme } from '../utils/theme.js'
 
-// 控制登录弹窗显示
+// 控制登录弹窗显示（预留）
 const showLogin = ref(false)
 
 // 当前主题
 const currentTheme = ref('dark')
 
-// 切换主题
-const handleThemeToggle = () => {
-  const newTheme = toggleTheme()
-  currentTheme.updateTheme(newTheme)
+// 操作：设置为明亮/黑暗
+const setToLight = () => {
+  setTheme('light')
+  currentTheme.value = 'light'
+}
+const setToDark = () => {
+  setTheme('dark')
+  currentTheme.value = 'dark'
 }
 
 // 初始化主题
@@ -351,28 +367,46 @@ body, html {
   font-weight: bold;
 }
 
+/* 主题胶囊开关 */
 .theme-toggle {
-  display: flex;
-  background-color: var(--color-bg-card);
+  position: relative;
+  width: 96px;
+  height: 40px;
+  background: var(--color-bg-card);
   border-radius: 20px;
-  padding: 4px;
-  gap: 2px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.theme-btn {
-  background: none;
-  border: none;
+.toggle-option {
+  z-index: 2;
+  width: 50%;
+  text-align: center;
   color: var(--color-text-secondary);
-  padding: 8px 12px;
-  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 16px;
+  user-select: none;
 }
 
-.theme-btn.active {
-  background-color: var(--color-text-secondary);
+.toggle-option.active {
   color: var(--color-text-primary);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 44px;
+  height: 32px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  transition: left 0.25s ease;
+  box-shadow: inset 0 0 0 1px var(--color-border-light);
+}
+
+.toggle-knob.right {
+  left: 48px;
 }
 
 .notification-btn {
@@ -430,5 +464,4 @@ body, html {
   color: var(--color-text-secondary);
   font-size: 12px;
 }
-
 </style>
