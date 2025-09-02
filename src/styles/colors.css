@@ -9,6 +9,8 @@
   --color-bg-secondary: #11130b;
   --color-bg-sidebar: #27272A;
   --color-bg-card: #27272A;
+  /* 导航未选中背景 */
+  --color-nav-idle: #18181a;
   
   /* 文字色系 */
   --color-text-primary: #FFFFFF;
@@ -33,6 +35,8 @@
   --color-bg-secondary: #e9ecef;
   --color-bg-sidebar: #ffffff;
   --color-bg-card: #ffffff;
+  /* 导航未选中背景（浅色） */
+  --color-nav-idle: #f1f1f1;
   
   --color-text-primary: #212529;
   --color-text-secondary: #6c757d;
@@ -51,8 +55,10 @@
 [data-theme="dark"] {
   --color-bg-primary: #0e1925;
   --color-bg-secondary: #11130b;
-  --color-bg-sidebar: #27272A;
-  --color-bg-card: #27272A;
+  --color-bg-sidebar: #18181a;
+  --color-bg-card: #18181a;
+  /* 导航未选中背景（深色） */
+  --color-nav-idle: #18181a;
   
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #71717A;
@@ -73,6 +79,8 @@
   --color-bg-secondary: #1e293b;
   --color-bg-sidebar: #334155;
   --color-bg-card: #334155;
+  /* 导航未选中背景（蓝色） */
+  --color-nav-idle: #1f2937;
   
   --color-text-primary: #f8fafc;
   --color-text-secondary: #94a3b8;

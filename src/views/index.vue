@@ -119,13 +119,23 @@
               :class="{ active: currentTheme === 'light' }" 
               @click="setToLight"
               aria-label="Light"
-            >☀️</span>
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+              </svg>
+            </span>
             <span 
               class="toggle-option" 
               :class="{ active: currentTheme === 'dark' }" 
               @click="setToDark"
               aria-label="Dark"
-            >🌙</span>
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon">
+                <!-- Crescent moon: outer arc with inner subtraction mimic -->
+                <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z" />
+              </svg>
+            </span>
             <span class="toggle-knob" :class="{ right: currentTheme === 'dark' }"></span>
           </div>
           <button class="notification-btn">
@@ -370,19 +380,22 @@ body, html {
 /* 主题胶囊开关 */
 .theme-toggle {
   position: relative;
-  width: 96px;
+  width: 100px;
   height: 40px;
   background: var(--color-bg-card);
   border-radius: 20px;
-  padding: 4px 8px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;
 }
 
 .toggle-option {
   z-index: 2;
   width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -395,10 +408,10 @@ body, html {
 
 .toggle-knob {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 44px;
-  height: 32px;
+  top: 8px;
+  left: 10px;
+  width: 40px;
+  height: 24px;
   background: rgba(255,255,255,0.08);
   border-radius: 16px;
   transition: left 0.25s ease;
@@ -406,7 +419,7 @@ body, html {
 }
 
 .toggle-knob.right {
-  left: 48px;
+  left: calc(100% - 10px - 40px);
 }
 
 .notification-btn {
@@ -463,5 +476,19 @@ body, html {
 .dropdown-arrow {
   color: var(--color-text-secondary);
   font-size: 12px;
+}
+
+.toggle-icon {
+  width: 18px;
+  height: 18px;
+  stroke: var(--color-text-secondary);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.toggle-option.active .toggle-icon {
+  stroke: var(--color-text-primary);
 }
 </style>
