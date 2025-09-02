@@ -8,11 +8,9 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@types/three": "^0.179.0",
     "axios": "^1.6.0",
     "echarts": "^5.5.2",
     "element-plus": "^2.3.0",
-    "three": "^0.179.1",
     "vue": "^3.3.4",
     "vue-router": "^4.3.0"
   },
