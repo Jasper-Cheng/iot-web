@@ -1,12 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
-import Dashboard from '../views/Dashboard.vue'
+import Index from '../views/Index.vue'
+import Home from '../views/Home.vue'
 import { ElMessage } from 'element-plus'
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
-  { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
+  { path: '/home', component: Home, meta: { requiresAuth: true } },
+  {path: '/Index', component: Index, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

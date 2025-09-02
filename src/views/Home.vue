@@ -1,6 +1,6 @@
 <template>
-  <div class="dashboard">
-    <!-- 在这里重新开发你的Dashboard -->
+  <div class="home">
+    <!-- 在这里重新开发你的Home页面 -->
   </div>
 </template>
 
@@ -9,7 +9,7 @@
 </script>
 
 <style scoped>
-.dashboard {
+.home {
   /* 在这里重新开发你的样式 */
 }
 </style>

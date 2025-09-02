@@ -1,0 +1,327 @@
+<template>
+  <div class="login-overlay">
+    <div class="login-modal">
+      <!-- 关闭按钮 -->
+      <button class="close-btn" @click="closeLogin">×</button>
+      
+      <!-- Logo区域 -->
+      <div class="logo-section">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#BFFE01" stroke-width="2" fill="none"/>
+            <polyline points="9,22 9,12 15,12 15,22" stroke="#BFFE01" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
+        <h1 class="platform-title">IoT 管理平台</h1>
+        <p class="platform-subtitle">智能设备管理与监控系统</p>
+      </div>
+
+      <!-- 登录表单 -->
+      <form class="login-form" @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input 
+            type="text" 
+            id="username" 
+            v-model="formData.username"
+            placeholder="请输入用户名"
+            required
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input 
+            type="password" 
+            id="password" 
+            v-model="formData.password"
+            placeholder="请输入密码"
+            required
+          />
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-container">
+            <input type="checkbox" v-model="formData.rememberMe" />
+            <span class="checkmark"></span>
+            记住我
+          </label>
+          <a href="#" class="forgot-password">忘记密码?</a>
+        </div>
+
+        <button type="submit" class="login-btn">
+          登录
+        </button>
+      </form>
+
+      <!-- 底部链接 -->
+      <div class="bottom-links">
+        <span>还没有账号? </span>
+        <a href="#" class="register-link">立即注册</a>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue'
+
+// 表单数据
+const formData = reactive({
+  username: '',
+  password: '',
+  rememberMe: false
+})
+
+// 关闭登录弹窗
+const closeLogin = () => {
+  // 触发关闭事件
+  emit('close')
+}
+
+// 定义emit
+const emit = defineEmits(['close'])
+
+// 处理登录
+const handleLogin = () => {
+  console.log('登录信息:', formData)
+  // 这里实现登录逻辑
+}
+</script>
+
+<style scoped>
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.login-modal {
+  background: rgba(39, 39, 42, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid #71717A;
+  border-radius: 20px;
+  padding: 40px;
+  width: 420px;
+  max-width: 90vw;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #71717A;
+  font-size: 28px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background-color: rgba(191, 254, 1, 0.1);
+  color: #BFFE01;
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.platform-title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(45deg, #BFFE01, #38A0FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.platform-subtitle {
+  margin: 0;
+  color: #71717A;
+  font-size: 16px;
+}
+
+.login-form {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 16px;
+  background: rgba(9, 9, 11, 0.6);
+  border: 2px solid #71717A;
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #BFFE01;
+  background: rgba(9, 9, 11, 0.8);
+}
+
+.form-group input::placeholder {
+  color: #71717A;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #71717A;
+  font-size: 14px;
+}
+
+.checkbox-container input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #71717A;
+  border-radius: 4px;
+  margin-right: 8px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark {
+  background-color: #BFFE01;
+  border-color: #BFFE01;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #09090B;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.forgot-password {
+  color: #38A0FF;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: #BFFE01;
+}
+
+.login-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #BFFE01, #38A0FF);
+  color: #09090B;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(191, 254, 1, 0.3);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.bottom-links {
+  text-align: center;
+  color: #71717A;
+  font-size: 14px;
+}
+
+.register-link {
+  color: #BFFE01;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.register-link:hover {
+  color: #38A0FF;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .login-modal {
+    padding: 30px 20px;
+    width: 90vw;
+  }
+  
+  .platform-title {
+    font-size: 24px;
+  }
+  
+  .form-group input {
+    padding: 14px;
+  }
+}
+</style>
