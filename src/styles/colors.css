@@ -1,0 +1,89 @@
+/* 颜色变量配置文件 */
+:root {
+  /* 主色调 */
+  --color-primary: #BFFE01;
+  --color-primary-hover: #A8E600;
+  
+  /* 背景色系 */
+  --color-bg-primary: #0e1925;
+  --color-bg-secondary: #11130b;
+  --color-bg-sidebar: #27272A;
+  --color-bg-card: #27272A;
+  
+  /* 文字色系 */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #71717A;
+  --color-text-muted: #71717A;
+  
+  /* 边框色系 */
+  --color-border: #71717A;
+  --color-border-light: rgba(113, 113, 122, 0.3);
+  
+  /* 状态色系 */
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-hover: rgba(191, 254, 1, 0.1);
+  
+  /* 渐变背景 */
+  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+  --color-bg-primary: #f8f9fa;
+  --color-bg-secondary: #e9ecef;
+  --color-bg-sidebar: #ffffff;
+  --color-bg-card: #ffffff;
+  
+  --color-text-primary: #212529;
+  --color-text-secondary: #6c757d;
+  --color-text-muted: #adb5bd;
+  
+  --color-border: #dee2e6;
+  --color-border-light: rgba(222, 226, 230, 0.3);
+  
+  --color-active: rgba(33, 37, 41, 0.1);
+  --color-hover: rgba(191, 254, 1, 0.1);
+  
+  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+
+/* 深色主题（默认） */
+[data-theme="dark"] {
+  --color-bg-primary: #0e1925;
+  --color-bg-secondary: #11130b;
+  --color-bg-sidebar: #27272A;
+  --color-bg-card: #27272A;
+  
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #71717A;
+  --color-text-muted: #71717A;
+  
+  --color-border: #71717A;
+  --color-border-light: rgba(113, 113, 122, 0.3);
+  
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-hover: rgba(191, 254, 1, 0.1);
+  
+  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+
+/* 蓝色主题 */
+[data-theme="blue"] {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-sidebar: #334155;
+  --color-bg-card: #334155;
+  
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  
+  --color-border: #475569;
+  --color-border-light: rgba(71, 85, 105, 0.3);
+  
+  --color-active: rgba(248, 250, 252, 0.1);
+  --color-hover: rgba(59, 130, 246, 0.1);
+  
+  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+

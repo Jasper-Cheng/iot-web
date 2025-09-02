@@ -113,8 +113,8 @@
             Add Device
           </button>
           <div class="theme-toggle">
-            <button class="theme-btn sun-btn">☀️</button>
-            <button class="theme-btn moon-btn active">🌙</button>
+            <button class="theme-btn sun-btn" @click="handleThemeToggle">☀️</button>
+            <button class="theme-btn moon-btn" @click="handleThemeToggle">🌙</button>
           </div>
           <button class="notification-btn">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -134,14 +134,32 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Login from './Login.vue'
+import { initTheme, toggleTheme, getCurrentTheme } from '../utils/theme.js'
 
 // 控制登录弹窗显示
 const showLogin = ref(false)
+
+// 当前主题
+const currentTheme = ref('dark')
+
+// 切换主题
+const handleThemeToggle = () => {
+  const newTheme = toggleTheme()
+  currentTheme.updateTheme(newTheme)
+}
+
+// 初始化主题
+onMounted(() => {
+  const theme = initTheme()
+  currentTheme.value = theme
+})
 </script>
 
 <style>
+@import '../styles/colors.css';
+
 /* 全局重置样式 */
 * {
   margin: 0;
@@ -159,8 +177,8 @@ body, html {
 .home {
   display: flex;
   height: 100vh;
-  background: linear-gradient(135deg, #0e1925 0%, #11130b 100%);
-  color: #FFFFFF;
+  background: var(--gradient-bg);
+  color: var(--color-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
   margin: 0;
@@ -224,18 +242,18 @@ body, html {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #71717A;
+  color: var(--color-text-secondary);
   text-align: center;
 }
 
 .nav-item:hover {
-  background-color: rgba(191, 254, 1, 0.1);
-  color: #BFFE01;
+  background-color: var(--color-hover);
+  color: var(--color-primary);
 }
 
 .nav-item.active {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #BFFE01;
+  background-color: var(--color-active);
+  color: var(--color-primary);
 }
 
 .nav-icon {
@@ -265,13 +283,13 @@ body, html {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  color: #71717A;
+  color: var(--color-text-secondary);
   transition: color 0.3s ease;
   text-align: center;
 }
 
 .logout:hover {
-  color: #BFFE01;
+  color: var(--color-primary);
 }
 
 /* 主内容区域 */
@@ -293,12 +311,12 @@ body, html {
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: var(--color-text-primary);
 }
 
 .header-left p {
   margin: 0;
-  color: #71717A;
+  color: var(--color-text-secondary);
   font-size: 16px;
 }
 
@@ -309,8 +327,8 @@ body, html {
 }
 
 .add-device-btn {
-  background-color: #BFFE01;
-  color: #09090B;
+  background-color: var(--color-primary);
+  color: var(--color-bg-primary);
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
@@ -324,7 +342,7 @@ body, html {
 }
 
 .add-device-btn:hover {
-  background-color: #A8E600;
+  background-color: var(--color-primary-hover);
   transform: translateY(-2px);
 }
 
@@ -335,7 +353,7 @@ body, html {
 
 .theme-toggle {
   display: flex;
-  background-color: #27272A;
+  background-color: var(--color-bg-card);
   border-radius: 20px;
   padding: 4px;
   gap: 2px;
@@ -344,7 +362,7 @@ body, html {
 .theme-btn {
   background: none;
   border: none;
-  color: #71717A;
+  color: var(--color-text-secondary);
   padding: 8px 12px;
   border-radius: 16px;
   cursor: pointer;
@@ -353,14 +371,14 @@ body, html {
 }
 
 .theme-btn.active {
-  background-color: #71717A;
-  color: #FFFFFF;
+  background-color: var(--color-text-secondary);
+  color: var(--color-text-primary);
 }
 
 .notification-btn {
-  background-color: #27272A;
-  border: 2px solid #71717A;
-  color: #FFFFFF;
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-primary);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -372,9 +390,9 @@ body, html {
 }
 
 .notification-btn:hover {
-  border-color: #BFFE01;
-  background-color: #BFFE01;
-  color: #09090B;
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-bg-primary);
 }
 
 .notification-btn svg {
@@ -393,7 +411,7 @@ body, html {
 }
 
 .user-profile:hover {
-  background-color: #27272A;
+  background-color: var(--color-bg-card);
 }
 
 .profile-avatar {
@@ -405,11 +423,11 @@ body, html {
 
 .user-name {
   font-weight: 500;
-  color: #FFFFFF;
+  color: var(--color-text-primary);
 }
 
 .dropdown-arrow {
-  color: #71717A;
+  color: var(--color-text-secondary);
   font-size: 12px;
 }
 
