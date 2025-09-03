@@ -45,11 +45,11 @@
                 <h4>AC</h4>
                 <h4>Temperature</h4>
               </div>
-              <div class="temp-display">18°</div>
+              <div class="temp-display" :style="{ '--temp-end-color': tempEndColor }">{{ acTemp }}°</div>
             </div>
             <div class="room-temp">
               <h4>Room Temperature</h4>
-              <div class="room-image">
+              <div class="room-image" :style="{ '--room-tint': roomTint }">
                 <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=150&fit=crop" alt="Living Room">
                 <div class="temp-overlay">20°</div>
               </div>
@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 // 房间数据
 const rooms = ref([
@@ -141,6 +141,37 @@ const lastActiveMode = ref(activeMode.value)
 
 // 空调电源状态
 const acPower = ref(true)
+
+// 当前空调温度（示例）
+const acTemp = ref(16)
+
+// 根据温度选择渐变终点色（6个区间）
+const tempEndColor = computed(() => {
+  const t = acTemp.value
+  if (t <= 10) return 'var(--temp-color-1)'
+  if (t <= 16) return 'var(--temp-color-2)'
+  if (t <= 22) return 'var(--temp-color-3)'
+  if (t <= 26) return 'var(--temp-color-4)'
+  if (t <= 30) return 'var(--temp-color-5)'
+  return 'var(--temp-color-6)'
+})
+
+// 根据模式计算房间覆盖色
+const roomTint = computed(() => {
+  if (!acPower.value) return 'transparent'
+  switch (activeMode.value) {
+    case 'heat':
+      return 'var(--mode-heat-overlay)'
+    case 'dry':
+      return 'var(--mode-dry-overlay)'
+    case 'cool':
+      return 'var(--mode-cool-overlay)'
+    case 'auto':
+      return 'var(--mode-auto-overlay)'
+    default:
+      return 'transparent'
+  }
+})
 
 // 设备数据
 const devices = ref([
@@ -399,7 +430,7 @@ const toggleAC = () => {
   font-size: 28px;
   font-weight: 400;
   color: white;
-  background: linear-gradient(180deg, var(--color-temp-gradient-start) 0%, var(--color-blue-500) 100%);
+  background: linear-gradient(180deg, var(--color-temp-gradient-start) 0%, var(--temp-end-color, var(--color-blue-500)) 100%);
   border-radius: 32px;
   text-align: center;
   width: 100%;
@@ -407,7 +438,7 @@ const toggleAC = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px var(--color-blue-shadow);
+  box-shadow: 0 4px 12px var(--shadow-soft);
 }
 
 .room-image {
@@ -420,6 +451,14 @@ const toggleAC = () => {
   width: 90%;
   object-fit: contain;
   border-radius: 12px;
+}
+
+.room-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--room-tint, transparent);
+  pointer-events: none;
 }
 
 .temp-overlay {
