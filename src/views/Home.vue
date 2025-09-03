@@ -29,15 +29,21 @@
               <h3>Air Cooler</h3>
               <p>GTA AC00L4</p>
             </div>
-            <div class="power-switch">
-              <span class="switch-label">On</span>
-              <div class="switch-button active"></div>
-            </div>
+                         <div class="power-switch">
+               <span class="switch-label">{{ acPower ? 'On' : 'Off' }}</span>
+               <div 
+                 :class="['switch-button', { active: acPower }]"
+                 @click="toggleAC"
+               ></div>
+             </div>
           </div>
           
           <div class="temperature-section">
             <div class="ac-temp">
-              <h4>AC Temperature</h4>
+              <div class="temp-header">
+                <h4>AC</h4>
+                <h4>Temperature</h4>
+              </div>
               <div class="temp-display">18°</div>
             </div>
             <div class="room-temp">
@@ -50,20 +56,20 @@
           </div>
           
           <div class="mode-controls">
-            <button 
-              v-for="mode in acModes" 
-              :key="mode.id"
+          <div v-for="mode in acModes" class="mode-div">
+            <button :key="mode.id"
               :class="['mode-btn', { active: mode.id === activeMode }]"
-              @click="setActiveMode(mode.id)"
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path v-if="mode.id === 'heat'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path v-else-if="mode.id === 'dry'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path v-else-if="mode.id === 'cool'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path v-else-if="mode.id === 'auto'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-              {{ mode.name }}
+              @click="setActiveMode(mode.id)">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                 <path v-if="mode.id === 'heat'" d="M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16z M12 1v2 M12 21v2 M1 12h2 M21 12h2 M4.2 4.2l1.4 1.4 M18.4 18.4l1.4 1.4 M4.2 19.8l1.4-1.4 M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                 <path v-else-if="mode.id === 'dry'" d="M12 4 C5 12, 3 20, 12 23 C21 20, 19 12, 12 4 Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                 <path v-else-if="mode.id === 'cool'" d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M19 5 L5 19 M8 4 L12 8 L16 4 M8 20 L12 16 L16 20 M4 8 L8 12 L4 16 M20 8 L16 12 L20 16" stroke="currentColor" stroke-width="2" fill="none"/>
+                 <path v-else-if="mode.id === 'auto'" d="M7 16 L12 5 L17 16 M9 12 L15 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+               </svg>
             </button>
+            <span>{{ mode.name }}</span>
+          </div>
           </div>
         </div>
 
@@ -127,6 +133,9 @@ const acModes = ref([
 // 当前选中的空调模式
 const activeMode = ref('cool')
 
+// 空调电源状态
+const acPower = ref(true)
+
 // 设备数据
 const devices = ref([
   { id: 1, name: 'Smart Light', model: 'Bardi Smart Light', type: 'light', power: false },
@@ -152,6 +161,11 @@ const toggleDevice = (deviceId) => {
     device.power = !device.power
   }
 }
+
+// 切换空调电源
+const toggleAC = () => {
+  acPower.value = !acPower.value
+}
 </script>
 
 <style scoped>
@@ -160,6 +174,13 @@ const toggleDevice = (deviceId) => {
 .home-page {
   width: 100%;
   padding: 8px 24px;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.home-page::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 /* 房间导航栏 */
@@ -213,7 +234,6 @@ const toggleDevice = (deviceId) => {
 
 .add-room-btn:hover {
   background: var(--color-bg-card);
-  border-color: var(--color-primary);
 }
 
 .add-room-btn svg {
@@ -237,11 +257,21 @@ const toggleDevice = (deviceId) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.left-section::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 /* 空调控制卡片 */
 .air-cooler-card {
-  padding: 0;
+  width: 50%;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px 18px;
 }
 
 .card-header {
@@ -253,7 +283,7 @@ const toggleDevice = (deviceId) => {
 
 .device-info h3 {
   margin: 0 0 4px 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -261,12 +291,11 @@ const toggleDevice = (deviceId) => {
 .device-info p {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .power-switch {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
@@ -277,7 +306,7 @@ const toggleDevice = (deviceId) => {
 }
 
 .switch-button {
-  width: 40px;
+  width: 32px;
   height: 20px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -289,52 +318,73 @@ const toggleDevice = (deviceId) => {
 
 .switch-button.active {
   background: var(--color-primary);
-  border-color: var(--color-primary);
 }
 
 .switch-button::after {
   content: '';
   position: absolute;
   top: 2px;
-  left: 2px;
   width: 14px;
   height: 14px;
-  background: var(--color-text-primary);
+  background: var(--color-switch-indicator);
   border-radius: 50%;
   transition: all 0.3s ease;
 }
 
 .switch-button.active::after {
-  left: 22px;
+  left: 16px;
 }
 
 /* 温度区域 */
 .temperature-section {
-  display: grid;
+  display: flex;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  margin-bottom: 24px;
 }
 
-.ac-temp, .room-temp {
+.ac-temp{
   text-align: center;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
 }
 
-.ac-temp h4, .room-temp h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
+.room-temp {
+  text-align: center;
+  flex-direction: column;
+  flex: 3;
+  align-items: center;
+}
+
+.temp-header h4 {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.room-temp h4 {
+  margin: 0 0 18px 0;
+  font-size: 12px;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .temp-display {
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--color-primary);
-  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 400;
+  color: white;
+  background: linear-gradient(180deg, #171d22 0%, #3b82f6 100%);
+  border-radius: 32px;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .room-image {
@@ -344,9 +394,9 @@ const toggleDevice = (deviceId) => {
 }
 
 .room-image img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
+  width: 90%;
+  object-fit: contain;
+  border-radius: 12px;
 }
 
 .temp-overlay {
@@ -354,56 +404,68 @@ const toggleDevice = (deviceId) => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 400;
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 24px 20px;
+  border-radius: 50%;
   backdrop-filter: blur(4px);
 }
 
 /* 模式控制按钮 */
 .mode-controls {
   display: flex;
-  gap: 12px;
-  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
 }
 
-.mode-btn {
+.mode-div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
+  gap: 12px;
+  flex: 1;
+}
+
+.mode-btn {
   border: none;
-  border-radius: 50%;
-  background: var(--color-bg-primary);
-  color: var(--color-text-secondary);
+  border-radius: 10px;
+  background: #2a2a2a;
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 60px;
-  height: 60px;
+  padding: 10px 24px;
 }
 
 .mode-btn:hover {
-  background: var(--color-hover);
+  background: #3a3a3a;
+  transform: translateY(-2px);
 }
 
 .mode-btn.active {
-  background: var(--color-primary);
-  color: var(--color-bg-primary);
+  border: 1px solid var(--color-primary);
+  color: white;
 }
 
 .mode-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
+  color: white;
+  stroke: white;
+}
+
+.mode-btn.active svg {
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary);
 }
 
 .mode-btn span {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
+  color: white;
+  text-align: center;
 }
 
 /* 设备列表 */
@@ -425,7 +487,7 @@ const toggleDevice = (deviceId) => {
 }
 
 .device-card:hover {
-  border-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
 }
 
 .device-icon {
@@ -444,10 +506,6 @@ const toggleDevice = (deviceId) => {
   color: var(--color-text-secondary);
 }
 
-.device-info {
-  flex: 1;
-}
-
 .device-info h4 {
   margin: 0 0 4px 0;
   font-size: 16px;
@@ -455,11 +513,6 @@ const toggleDevice = (deviceId) => {
   color: var(--color-text-primary);
 }
 
-.device-info p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
 
 .device-switch {
   display: flex;
@@ -468,46 +521,4 @@ const toggleDevice = (deviceId) => {
   gap: 8px;
 }
 
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .main-content {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  
-  .devices-list {
-    order: -1;
-  }
-}
-
-@media (max-width: 768px) {
-  .home-page {
-    padding: 16px;
-  }
-  
-  .room-navigation {
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-  
-  .room-btn, .add-room-btn {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-  
-  .temperature-section {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .mode-controls {
-    gap: 8px;
-  }
-  
-  .mode-btn {
-    width: 50px;
-    height: 50px;
-    padding: 12px;
-  }
-}
 </style>

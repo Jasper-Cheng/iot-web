@@ -25,6 +25,9 @@
   --color-active: #28272a;
   --color-hover: rgba(191, 254, 1, 0.1);
   
+  /* 开关指示器颜色 */
+  --color-switch-indicator: #090a04;
+  
   /* 渐变背景 */
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
@@ -48,6 +51,8 @@
   --color-active: rgba(33, 37, 41, 0.1);
   --color-hover: rgba(191, 254, 1, 0.1);
   
+  --color-switch-indicator: #090a04;
+  
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
 
@@ -69,6 +74,8 @@
   
   --color-active: #28272a;
   --color-hover: rgba(191, 254, 1, 0.1);
+  
+  --color-switch-indicator: #090a04;
   
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
