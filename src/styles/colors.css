@@ -6,7 +6,7 @@
   
   /* 背景色系 */
   --color-bg-primary: #0e1925;
-  --color-bg-secondary: #11130b;
+  --color-bg-secondary: #09090b;
   --color-bg-sidebar: #27272A;
   --color-bg-card: #27272A;
   /* 导航未选中背景 */
@@ -22,11 +22,11 @@
   --color-border-light: rgba(113, 113, 122, 0.3);
   
   /* 状态色系 */
-  --color-active: rgba(255, 255, 255, 0.1);
+  --color-active: #28272a;
   --color-hover: rgba(191, 254, 1, 0.1);
   
   /* 渐变背景 */
-  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
 
 /* 浅色主题 */
@@ -48,50 +48,30 @@
   --color-active: rgba(33, 37, 41, 0.1);
   --color-hover: rgba(191, 254, 1, 0.1);
   
-  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
 
 /* 深色主题（默认） */
 [data-theme="dark"] {
   --color-bg-primary: #0e1925;
-  --color-bg-secondary: #11130b;
+  --color-bg-secondary: #09090b;
   --color-bg-sidebar: #18181a;
   --color-bg-card: #18181a;
   /* 导航未选中背景（深色） */
   --color-nav-idle: #18181a;
   
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #71717A;
+  --color-text-secondary: #bebfc1;
   --color-text-muted: #71717A;
   
   --color-border: #71717A;
   --color-border-light: rgba(113, 113, 122, 0.3);
   
-  --color-active: rgba(255, 255, 255, 0.1);
+  --color-active: #28272a;
   --color-hover: rgba(191, 254, 1, 0.1);
   
-  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
 
-/* 蓝色主题 */
-[data-theme="blue"] {
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-sidebar: #334155;
-  --color-bg-card: #334155;
-  /* 导航未选中背景（蓝色） */
-  --color-nav-idle: #1f2937;
-  
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  
-  --color-border: #475569;
-  --color-border-light: rgba(71, 85, 105, 0.3);
-  
-  --color-active: rgba(248, 250, 252, 0.1);
-  --color-hover: rgba(59, 130, 246, 0.1);
-  
-  --gradient-bg: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
-}
+
 

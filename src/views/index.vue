@@ -228,7 +228,7 @@ body, html {
 
 /* 左侧导航栏 */
 .sidebar {
-  width: 140px;
+  width: 110px;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
@@ -266,13 +266,14 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 12px;
-  margin: 4px 8px;
+  padding: 16px 0px;
+  margin: 24px 12px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   color: var(--color-text-secondary);
   text-align: center;
+  background-color: var(--color-nav-idle);
 }
 
 .nav-item:hover {
@@ -286,8 +287,8 @@ body, html {
 }
 
 .nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -302,7 +303,7 @@ body, html {
 
 .nav-item span {
   font-weight: 500;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .logout {
@@ -429,8 +430,8 @@ body, html {
   background-color: var(--color-bg-card);
   border: 2px solid var(--color-border);
   color: var(--color-text-primary);
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
