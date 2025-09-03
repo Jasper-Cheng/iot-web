@@ -399,7 +399,7 @@ const toggleAC = () => {
   font-size: 28px;
   font-weight: 400;
   color: white;
-  background: linear-gradient(180deg, #171d22 0%, #3b82f6 100%);
+  background: linear-gradient(180deg, var(--color-temp-gradient-start) 0%, var(--color-blue-500) 100%);
   border-radius: 32px;
   text-align: center;
   width: 100%;
@@ -407,7 +407,7 @@ const toggleAC = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px var(--color-blue-shadow);
 }
 
 .room-image {
@@ -430,7 +430,7 @@ const toggleAC = () => {
   font-size: 28px;
   font-weight: 400;
   color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px var(--color-border-light);
   padding: 24px 20px;
   border-radius: 50%;
   backdrop-filter: blur(4px);
@@ -454,7 +454,7 @@ const toggleAC = () => {
 .mode-btn {
   border: none;
   border-radius: 10px;
-  background: #2a2a2a;
+  background: var(--color-button-dark);
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -462,7 +462,7 @@ const toggleAC = () => {
 }
 
 .mode-btn:hover {
-  background: #3a3a3a;
+  background: var(--color-button-dark-hover);
   transform: translateY(-2px);
 }
 
@@ -517,7 +517,7 @@ const toggleAC = () => {
 
 .device-icon {
   padding: 10px 10px;
-  background: #2a2a2a;
+  background: var(--color-button-dark);
   border-radius: 10px;
   display: flex;
   align-items: center;

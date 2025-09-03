@@ -30,6 +30,13 @@
   
   /* 渐变背景 */
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
+
+  /* 组件与强调色 */
+  --color-button-dark: #2a2a2a;
+  --color-button-dark-hover: #3a3a3a;
+  --color-blue-500: #3b82f6;
+  --color-blue-shadow: rgba(59, 130, 246, 0.3);
+  --color-temp-gradient-start: #171d22;
 }
 
 /* 浅色主题 */
@@ -54,6 +61,13 @@
   --color-switch-indicator: #090a04;
   
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
+
+  /* 组件与强调色（浅色） */
+  --color-button-dark: #e9ecef;
+  --color-button-dark-hover: #dee2e6;
+  --color-blue-500: #3b82f6;
+  --color-blue-shadow: rgba(59, 130, 246, 0.2);
+  --color-temp-gradient-start: #dfe3e7;
 }
 
 /* 深色主题（默认） */
@@ -79,6 +93,13 @@
   --color-switch-indicator-active:#090a04;
   
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
+
+  /* 组件与强调色（深色） */
+  --color-button-dark: #2a2a2a;
+  --color-button-dark-hover: #3a3a3a;
+  --color-blue-500: #3b82f6;
+  --color-blue-shadow: rgba(59, 130, 246, 0.3);
+  --color-temp-gradient-start: #171d22;
 }
 
 
