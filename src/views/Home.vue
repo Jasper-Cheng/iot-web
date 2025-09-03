@@ -160,9 +160,16 @@
 </template>
 
 <script setup>
+// =========================
+// Imports
+// =========================
 import { ref, computed, watch } from 'vue'
 
-// 房间数据
+// =========================
+// Room navigation data/state
+// - rooms: includes an 'all' option for the navigation only
+// - activeRoom: current nav selection (defaults to 'all')
+// =========================
 const rooms = ref([
   { id: 'all', name: 'All' },
   { id: 'living', name: 'Living Room' },
@@ -175,7 +182,9 @@ const rooms = ref([
 // 当前选中的房间
 const activeRoom = ref('all')
 
-// 空调模式
+// =========================
+// AC modes and state
+// =========================
 const acModes = ref([
   { id: 'heat', name: 'Heat' },
   { id: 'dry', name: 'Dry' },
@@ -205,7 +214,7 @@ const tempEndColor = computed(() => {
   return 'var(--temp-color-6)'
 })
 
-// 根据模式计算房间覆盖色
+// 根据模式计算房间覆盖色（房间图片上色）
 const roomTint = computed(() => {
   if (!acPower.value) return 'transparent'
   switch (activeMode.value) {
@@ -230,12 +239,19 @@ const devices = ref([
   { id: 4, name: 'Thermostat', model: 'Tuya Zigbe', type: 'thermostat', power: false }
 ])
 
-// 设置当前房间
+// =========================
+// Navigation / Mode handlers
+// =========================
 const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
 }
 
-// Camera 头部显示的房间标签
+// =========================
+// Camera module: independent room selector
+// - roomLabel: label for the selector
+// - selectedCameraRoom: local selection (independent from nav)
+// - cameraMenuOpen: dropdown visibility
+// =========================
 const roomLabel = computed(() => {
   const map = {
     'living': 'Living Room',
@@ -278,7 +294,9 @@ const cameraVideoSrc = computed(() => {
   return cameraSources[selectedCameraRoom.value] || cameraSources.living
 })
 
-// 语音输入（本地识别并输出文本）
+// =========================
+// Voice input (local speech recognition to text)
+// =========================
 const SpeechRecognition = (window.SpeechRecognition || window.webkitSpeechRecognition)
 const speechSupported = !!SpeechRecognition
 const isListening = ref(false)
@@ -346,6 +364,9 @@ const toggleAC = () => {
 <style scoped>
 @import '../styles/colors.css';
 
+/* =========================
+   Page layout
+   ========================= */
 .home-page {
   width: 100%;
   padding: 8px 24px;
@@ -358,7 +379,9 @@ const toggleAC = () => {
   display: none; /* Chrome, Safari and Opera */
 }
 
-/* 房间导航栏 */
+/* =========================
+   Room navigation bar
+   ========================= */
 .room-navigation {
   display: flex;
   gap: 12px;
@@ -416,14 +439,18 @@ const toggleAC = () => {
   height: 16px;
 }
 
-/* 主要内容区域 */
+/* =========================
+   Main content grid
+   ========================= */
 .main-content {
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 32px;
 }
 
-/* 左侧内容区域 */
+/* =========================
+   Left section container
+   ========================= */
 .left-section {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -447,7 +474,9 @@ const toggleAC = () => {
   gap: 16px;
 }
 
-/* 空调控制卡片 */
+/* =========================
+   Air cooler card
+   ========================= */
 .air-cooler-card {
   display: flex;
   flex-direction: column;
@@ -457,7 +486,9 @@ const toggleAC = () => {
   padding: 24px 18px;
 }
 
-/* Camera 模块 */
+/* =========================
+   Camera module
+   ========================= */
 .camera-card {
   display: flex;
   flex-direction: column;
@@ -653,7 +684,9 @@ const toggleAC = () => {
   left: 16px;
 }
 
-/* 温度区域 */
+/* =========================
+   Temperature section
+   ========================= */
 .temperature-section {
   display: flex;
   gap: 24px;
@@ -737,7 +770,9 @@ const toggleAC = () => {
   backdrop-filter: blur(6px);
 }
 
-/* 模式控制按钮 */
+/* =========================
+   Mode control buttons
+   ========================= */
 .mode-controls {
   display: flex;
   gap: 16px;
@@ -792,7 +827,9 @@ const toggleAC = () => {
   text-align: center;
 }
 
-/* 设备列表 */
+/* =========================
+   Devices list
+   ========================= */
 .devices-list {
   display: flex;
   flex: 1;
