@@ -104,6 +104,52 @@
           </div>
         </div>
       </div>
+      
+        <!-- 摄像头模块（移动到下方） -->
+        <div class="camera-card">
+          <div class="camera-header">
+            <h3>Camera</h3>
+            <button class="room-selector" @click="cameraMenuOpen = !cameraMenuOpen">
+              <span>{{ roomLabel }}</span>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              class="mic-button"
+              :class="{ listening: isListening }"
+              @mousedown.prevent="startVoice"
+              @mouseup.prevent="stopVoice"
+              @mouseleave.prevent="stopVoice"
+              @touchstart.prevent="startVoice"
+              @touchend.prevent="stopVoice"
+              :title="isListening ? 'Release to stop' : 'Hold to talk'"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3z" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M19 11a7 7 0 01-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="camera-view">
+            <div v-if="cameraMenuOpen" class="room-selector-menu">
+              <button 
+                v-for="room in rooms.filter(r => r.id !== 'all')"
+                :key="room.id"
+                :class="['room-selector-item', { selected: room.id === selectedCameraRoom }]"
+                @click.stop="selectCameraRoom(room.id)"
+              >
+                {{ room.name }}
+              </button>
+            </div>
+            <video class="camera-video" :src="cameraVideoSrc" autoplay muted loop playsinline></video>
+          </div>
+          <div class="voice-output">
+            <span v-if="!speechSupported">Your browser does not support SpeechRecognition.</span>
+            <span v-else>{{ transcript || (isListening ? 'Listening…' : 'Hold mic to speak') }}</span>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -112,10 +158,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 // 房间数据
 const rooms = ref([
+  { id: 'all', name: 'All' },
   { id: 'living', name: 'Living Room' },
   { id: 'dining', name: 'Dining Room' },
   { id: 'bedroom', name: 'Bed Room' },
@@ -124,7 +171,7 @@ const rooms = ref([
 ])
 
 // 当前选中的房间
-const activeRoom = ref('living')
+const activeRoom = ref('all')
 
 // 空调模式
 const acModes = ref([
@@ -184,6 +231,85 @@ const devices = ref([
 // 设置当前房间
 const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
+}
+
+// Camera 头部显示的房间标签
+const roomLabel = computed(() => {
+  const map = {
+    'living': 'Living Room',
+    'dining': 'Dining Room',
+    'bedroom': 'Bed Room',
+    'bathroom': 'Bath Room',
+    'backyard': 'Backyard'
+  }
+  // 当 activeRoom 为 all 时，默认显示 Living Room
+  return map[selectedCameraRoom.value] || 'Living Room'
+})
+
+// Camera 独立选择的房间（不影响 room-navigation）
+// 初始化选择器为第一个非 all 的房间
+const selectedCameraRoom = ref('living')
+const cameraMenuOpen = ref(false)
+
+// room-navigation 改变时，自动同步 room-selector 的显示值
+watch(activeRoom, (val) => {
+  if (val === 'all') return
+  selectedCameraRoom.value = val
+})
+
+// room-selector 改变时，只影响自身，不修改 activeRoom
+const selectCameraRoom = (roomId) => {
+  selectedCameraRoom.value = roomId
+  cameraMenuOpen.value = false
+}
+
+// 示例：按房间提供不同演示视频地址（可接入真实流）
+const cameraSources = {
+  living: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  dining: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
+  bedroom: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+  bathroom: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
+  backyard: 'https://media.w3.org/2010/05/video/movie_300.mp4'
+}
+
+const cameraVideoSrc = computed(() => {
+  return cameraSources[selectedCameraRoom.value] || cameraSources.living
+})
+
+// 语音输入（本地识别并输出文本）
+const SpeechRecognition = (window.SpeechRecognition || window.webkitSpeechRecognition)
+const speechSupported = !!SpeechRecognition
+const isListening = ref(false)
+const transcript = ref('')
+let recognition = null
+
+if (speechSupported) {
+  recognition = new SpeechRecognition()
+  recognition.lang = 'zh-CN'
+  recognition.continuous = true
+  recognition.interimResults = true
+  recognition.onresult = (event) => {
+    let text = ''
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      text += event.results[i][0].transcript
+    }
+    transcript.value = text
+  }
+  recognition.onend = () => {
+    isListening.value = false
+  }
+}
+
+const startVoice = () => {
+  if (!speechSupported || !recognition) return
+  transcript.value = ''
+  isListening.value = true
+  try { recognition.start() } catch (e) { /* ignore double start */ }
+}
+
+const stopVoice = () => {
+  if (!speechSupported || !recognition) return
+  try { recognition.stop() } catch (e) { /* ignore */ }
 }
 
 // 设置空调模式
@@ -327,6 +453,134 @@ const toggleAC = () => {
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 24px 18px;
+}
+
+/* Camera 模块 */
+.camera-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.camera-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.camera-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.room-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.room-selector svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mic-button {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.mic-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mic-button.listening {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(191, 254, 1, 0.12);
+}
+
+.camera-view {
+  position: relative;
+  min-height: 340px;
+  border-radius: 12px;
+  background: var(--color-bg-card);
+  border: 1px dashed var(--color-border);
+  overflow: hidden;
+}
+
+.room-selector-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.room-selector-item {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid transparent;
+  text-align: left;
+}
+
+.room-selector-item.selected {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.camera-placeholder svg {
+  width: 48px;
+  height: 48px;
+}
+
+.camera-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.voice-output {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 
 .card-header {
