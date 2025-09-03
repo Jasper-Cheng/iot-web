@@ -702,9 +702,8 @@ const toggleAC = () => {
 }
 
 .room-image img {
-  width: 90%;
+  width: 100%;
   object-fit: contain;
-  border-radius: 12px;
 }
 
 .room-image::after {
@@ -726,7 +725,7 @@ const toggleAC = () => {
   text-shadow: 0 2px 4px var(--color-border-light);
   padding: 24px 20px;
   border-radius: 50%;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
 }
 
 /* 模式控制按钮 */
