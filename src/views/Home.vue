@@ -109,12 +109,6 @@
         <div class="camera-card">
           <div class="camera-header">
             <h3>Camera</h3>
-            <button class="room-selector" @click="cameraMenuOpen = !cameraMenuOpen">
-              <span>{{ roomLabel }}</span>
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
             <button 
               class="mic-button"
               :class="{ listening: isListening }"
@@ -131,18 +125,26 @@
                 <path d="M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
               </svg>
             </button>
+            <div class="room-selector-wrapper">
+              <button class="room-selector" @click="cameraMenuOpen = !cameraMenuOpen">
+                <span>{{ roomLabel }}</span>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div v-if="cameraMenuOpen" class="room-selector-menu">
+                <button 
+                  v-for="room in rooms.filter(r => r.id !== 'all')"
+                  :key="room.id"
+                  :class="['room-selector-item', { selected: room.id === selectedCameraRoom }]"
+                  @click.stop="selectCameraRoom(room.id)"
+                >
+                  {{ room.name }}
+                </button>
+              </div>
+            </div>
           </div>
           <div class="camera-view">
-            <div v-if="cameraMenuOpen" class="room-selector-menu">
-              <button 
-                v-for="room in rooms.filter(r => r.id !== 'all')"
-                :key="room.id"
-                :class="['room-selector-item', { selected: room.id === selectedCameraRoom }]"
-                @click.stop="selectCameraRoom(room.id)"
-              >
-                {{ room.name }}
-              </button>
-            </div>
             <video class="camera-video" :src="cameraVideoSrc" autoplay muted loop playsinline></video>
           </div>
           <div class="voice-output">
@@ -481,8 +483,8 @@ const toggleAC = () => {
 .room-selector {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 10px;
+  padding: 12px 20px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: transparent;
@@ -494,13 +496,18 @@ const toggleAC = () => {
   height: 14px;
 }
 
+.room-selector-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .mic-button {
-  margin-left: 8px;
+  margin-left: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: transparent;
@@ -529,8 +536,8 @@ const toggleAC = () => {
 
 .room-selector-menu {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: calc(100% + 6px);
+  right: 0;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -538,7 +545,9 @@ const toggleAC = () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  z-index: 2;
+  z-index: 5;
+  min-width: 160px;
+  box-shadow: 0 8px 24px var(--shadow-soft);
 }
 
 .room-selector-item {
