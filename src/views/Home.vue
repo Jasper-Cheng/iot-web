@@ -1,219 +1,436 @@
 <template>
   <div class="home-page">
-    <!-- Home 内容区域 -->
-    <div class="home-content">
-      <div class="content-grid">
-        <!-- 设备状态卡片 -->
-        <div class="status-card">
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+      <!-- 左侧内容区域（房间导航 + 空调控制） -->
+      <div class="left-section">
+        <!-- 房间导航栏 -->
+        <div class="room-navigation">
+          <button 
+            v-for="room in rooms" 
+            :key="room.id"
+            :class="['room-btn', { active: room.id === activeRoom }]"
+            @click="setActiveRoom(room.id)"
+          >
+            {{ room.name }}
+          </button>
+          <button class="add-room-btn">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            Add Room
+          </button>
+        </div>
+
+        <!-- 空调控制卡片 -->
+        <div class="air-cooler-card">
           <div class="card-header">
-            <h3>设备状态</h3>
-            <span class="status-indicator online"></span>
+            <div class="device-info">
+              <h3>Air Cooler</h3>
+              <p>GTA AC00L4</p>
+            </div>
+            <div class="power-switch">
+              <span class="switch-label">On</span>
+              <div class="switch-button active"></div>
+            </div>
           </div>
-          <div class="card-content">
-            <div class="status-item">
-              <span class="status-label">在线设备</span>
-              <span class="status-value">12</span>
+          
+          <div class="temperature-section">
+            <div class="ac-temp">
+              <h4>AC Temperature</h4>
+              <div class="temp-display">18°</div>
             </div>
-            <div class="status-item">
-              <span class="status-label">离线设备</span>
-              <span class="status-value">3</span>
+            <div class="room-temp">
+              <h4>Room Temperature</h4>
+              <div class="room-image">
+                <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=150&fit=crop" alt="Living Room">
+                <div class="temp-overlay">20°</div>
+              </div>
             </div>
+          </div>
+          
+          <div class="mode-controls">
+            <button 
+              v-for="mode in acModes" 
+              :key="mode.id"
+              :class="['mode-btn', { active: mode.id === activeMode }]"
+              @click="setActiveMode(mode.id)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path v-if="mode.id === 'heat'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path v-else-if="mode.id === 'dry'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path v-else-if="mode.id === 'cool'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path v-else-if="mode.id === 'auto'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              {{ mode.name }}
+            </button>
           </div>
         </div>
-        
-        <!-- 快速操作卡片 -->
-        <div class="action-card">
-          <div class="card-header">
-            <h3>快速操作</h3>
+
+        <!-- 智能设备列表 -->
+      <div class="devices-list">
+        <div 
+          v-for="device in devices" 
+          :key="device.id"
+          class="device-card"
+        >
+          <div class="device-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path v-if="device.type === 'light'" d="M9 21h6M12 3a6 6 0 0 0-6 6v6a6 6 0 0 0 12 0V9a6 6 0 0 0-6-6z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path v-else-if="device.type === 'tv'" d="M3 7h18v10H3zM7 17v2M17 17v2" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path v-else-if="device.type === 'vacuum'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path v-else-if="device.type === 'thermostat'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
           </div>
-          <div class="card-content">
-            <button class="action-btn">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-              添加设备
-            </button>
-            <button class="action-btn">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-              检查更新
-            </button>
+          <div class="device-info">
+            <h4>{{ device.name }}</h4>
+            <p>{{ device.model }}</p>
           </div>
-        </div>
-        
-        <!-- 最近活动卡片 -->
-        <div class="activity-card">
-          <div class="card-header">
-            <h3>最近活动</h3>
-          </div>
-          <div class="card-content">
-            <div class="activity-item">
-              <div class="activity-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-              </div>
-              <div class="activity-info">
-                <span class="activity-title">客厅灯已开启</span>
-                <span class="activity-time">2分钟前</span>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-              </div>
-              <div class="activity-info">
-                <span class="activity-title">空调已关闭</span>
-                <span class="activity-time">15分钟前</span>
-              </div>
-            </div>
+          <div class="device-switch">
+            <span class="switch-label">{{ device.power ? 'On' : 'Off' }}</span>
+            <div 
+              :class="['switch-button', { active: device.power }]"
+              @click="toggleDevice(device.id)"
+            ></div>
           </div>
         </div>
       </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-// Home 页面的逻辑
+import { ref } from 'vue'
+
+// 房间数据
+const rooms = ref([
+  { id: 'living', name: 'Living Room' },
+  { id: 'dining', name: 'Dining Room' },
+  { id: 'bedroom', name: 'Bed Room' },
+  { id: 'bathroom', name: 'Bath Room' },
+  { id: 'backyard', name: 'Backyard' }
+])
+
+// 当前选中的房间
+const activeRoom = ref('living')
+
+// 空调模式
+const acModes = ref([
+  { id: 'heat', name: 'Heat' },
+  { id: 'dry', name: 'Dry' },
+  { id: 'cool', name: 'Cool' },
+  { id: 'auto', name: 'Auto' }
+])
+
+// 当前选中的空调模式
+const activeMode = ref('cool')
+
+// 设备数据
+const devices = ref([
+  { id: 1, name: 'Smart Light', model: 'Bardi Smart Light', type: 'light', power: false },
+  { id: 2, name: 'Smart TV', model: 'Samsung QBOC', type: 'tv', power: true },
+  { id: 3, name: 'Smart Vacuum', model: 'KLAZ Vacuum', type: 'vacuum', power: false },
+  { id: 4, name: 'Thermostat', model: 'Tuya Zigbe', type: 'thermostat', power: false }
+])
+
+// 设置当前房间
+const setActiveRoom = (roomId) => {
+  activeRoom.value = roomId
+}
+
+// 设置空调模式
+const setActiveMode = (modeId) => {
+  activeMode.value = modeId
+}
+
+// 切换设备开关
+const toggleDevice = (deviceId) => {
+  const device = devices.value.find(d => d.id === deviceId)
+  if (device) {
+    device.power = !device.power
+  }
+}
 </script>
 
 <style scoped>
 @import '../styles/colors.css';
 
-/* Home 页面样式 */
 .home-page {
   width: 100%;
+  padding: 8px 24px;
 }
 
-/* Home 内容区域样式 */
-.home-content {
-  padding: 0 40px 40px;
-  overflow-y: auto;
+/* 房间导航栏 */
+.room-navigation {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-top: 24px;
-}
-
-/* 卡片通用样式 */
-.status-card,
-.action-card,
-.activity-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 24px;
+.room-btn {
+  flex-direction: column;
+  align-items: center;
+  padding:10px 12px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.status-card:hover,
-.action-card:hover,
-.activity-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.card-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-primary);
-}
-
-.status-indicator.online {
-  background: #10B981;
-}
-
-/* 状态卡片内容 */
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.status-item:last-child {
-  border-bottom: none;
-}
-
-.status-label {
   color: var(--color-text-secondary);
-  font-size: 14px;
+  text-align: center;
+  background-color: var(--color-nav-idle);
+  border: 1px solid var(--color-border);
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.status-value {
-  color: var(--color-text-primary);
-  font-weight: 600;
-  font-size: 16px;
+.room-btn:hover {
+  background-color: var(--color-hover);
+  color: var(--color-primary);
 }
 
-/* 操作按钮 */
-.action-btn {
+.room-btn.active {
+  background-color: var(--color-active);
+  color: var(--color-primary);
+}
+
+.add-room-btn {
+  margin-left: auto;
+  padding: 0px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  margin-bottom: 12px;
-  width: 100%;
 }
 
-.action-btn:hover {
-  background: var(--color-primary);
-  color: var(--color-bg-primary);
+.add-room-btn:hover {
+  background: var(--color-bg-card);
   border-color: var(--color-primary);
 }
 
-.action-btn svg {
+.add-room-btn svg {
   width: 16px;
   height: 16px;
 }
 
-/* 活动项目 */
-.activity-item {
+/* 主要内容区域 */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 32px;
+}
+
+/* 左侧内容区域 */
+.left-section {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 空调控制卡片 */
+.air-cooler-card {
+  padding: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.device-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.device-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.power-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.switch-button {
+  width: 40px;
+  height: 20px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.switch-button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.switch-button::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--color-text-primary);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.switch-button.active::after {
+  left: 22px;
+}
+
+/* 温度区域 */
+.temperature-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.ac-temp, .room-temp {
+  text-align: center;
+}
+
+.ac-temp h4, .room-temp h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.temp-display {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.room-image {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.room-image img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.temp-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+/* 模式控制按钮 */
+.mode-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 60px;
+  height: 60px;
+}
+
+.mode-btn:hover {
+  background: var(--color-hover);
+}
+
+.mode-btn.active {
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+}
+
+.mode-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mode-btn span {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* 设备列表 */
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.device-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border-light);
+  gap: 16px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
 }
 
-.activity-item:last-child {
-  border-bottom: none;
+.device-card:hover {
+  border-color: var(--color-primary);
 }
 
-.activity-icon {
-  width: 32px;
-  height: 32px;
+.device-icon {
+  width: 40px;
+  height: 40px;
   background: var(--color-bg-primary);
   border-radius: 8px;
   display: flex;
@@ -221,26 +438,76 @@
   justify-content: center;
 }
 
-.activity-icon svg {
-  width: 18px;
-  height: 18px;
+.device-icon svg {
+  width: 20px;
+  height: 20px;
   color: var(--color-text-secondary);
 }
 
-.activity-info {
+.device-info {
+  flex: 1;
+}
+
+.device-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.device-info p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.device-switch {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
-.activity-title {
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 500;
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .devices-list {
+    order: -1;
+  }
 }
 
-.activity-time {
-  color: var(--color-text-secondary);
-  font-size: 12px;
+@media (max-width: 768px) {
+  .home-page {
+    padding: 16px;
+  }
+  
+  .room-navigation {
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  
+  .room-btn, .add-room-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .temperature-section {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .mode-controls {
+    gap: 8px;
+  }
+  
+  .mode-btn {
+    width: 50px;
+    height: 50px;
+    padding: 12px;
+  }
 }
 </style>

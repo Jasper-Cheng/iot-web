@@ -262,7 +262,7 @@ body, html {
 .nav-menu {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 36px 0px 0px 0px;
   flex: 1;
 }
 
@@ -271,7 +271,7 @@ body, html {
   flex-direction: column;
   align-items: center;
   padding: 16px 0px;
-  margin: 24px 12px;
+  margin: 18px 12px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -338,7 +338,7 @@ body, html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32px 40px;
+  padding: 32px 24px;
 }
 
 .header-left h1 {
