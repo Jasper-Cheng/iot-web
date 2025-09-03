@@ -59,7 +59,8 @@
           <div class="mode-controls">
           <div v-for="mode in acModes" class="mode-div">
             <button :key="mode.id"
-              :class="['mode-btn', { active: mode.id === activeMode }]"
+              :class="['mode-btn', { active: mode.id === activeMode, disabled: !acPower }]"
+              :disabled="!acPower"
               @click="setActiveMode(mode.id)">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                  <path v-if="mode.id === 'heat'" d="M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16z M12 1v2 M12 21v2 M1 12h2 M21 12h2 M4.2 4.2l1.4 1.4 M18.4 18.4l1.4 1.4 M4.2 19.8l1.4-1.4 M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.5" fill="none"/>
@@ -135,6 +136,8 @@ const acModes = ref([
 
 // 当前选中的空调模式
 const activeMode = ref('cool')
+// 记住上一次的模式，用于断电后恢复
+const lastActiveMode = ref(activeMode.value)
 
 // 空调电源状态
 const acPower = ref(true)
@@ -154,7 +157,9 @@ const setActiveRoom = (roomId) => {
 
 // 设置空调模式
 const setActiveMode = (modeId) => {
+  if (!acPower.value) return
   activeMode.value = modeId
+  lastActiveMode.value = modeId
 }
 
 // 切换设备开关
@@ -168,6 +173,14 @@ const toggleDevice = (deviceId) => {
 // 切换空调电源
 const toggleAC = () => {
   acPower.value = !acPower.value
+  if (!acPower.value) {
+    // 关闭电源时，清除当前模式的选中状态
+    lastActiveMode.value = activeMode.value
+    activeMode.value = null
+  } else {
+    // 打开电源时，恢复上一次模式
+    activeMode.value = lastActiveMode.value || 'cool'
+  }
 }
 </script>
 
