@@ -151,6 +151,9 @@
           </div>
         </div>
       </header>
+      
+      <!-- Home 内容区域 -->
+      <Home />
     </main>
   </div>
 </template>
@@ -158,6 +161,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Login from './Login.vue'
+import Home from './Home.vue'
 import { initTheme, setTheme } from '../utils/theme.js'
 
 // 控制登录弹窗显示（预留）
@@ -495,4 +499,6 @@ body, html {
 .toggle-option.active .toggle-icon {
   stroke: var(--color-text-primary);
 }
+
+
 </style>
