@@ -22,10 +22,11 @@
           </button>
         </div>
 
-        <!-- 空调控制卡片 -->
+        <div class="room-content">
+          <!-- 空调控制卡片 -->
         <div class="air-cooler-card">
           <div class="card-header">
-            <div class="device-info">
+            <div class="air-card-info">
               <h3>Air Cooler</h3>
               <p>GTA AC00L4</p>
             </div>
@@ -82,7 +83,8 @@
         >
           <div class="device-icon">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path v-if="device.type === 'light'" d="M9 21h6M12 3a6 6 0 0 0-6 6v6a6 6 0 0 0 12 0V9a6 6 0 0 0-6-6z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path v-if="device.type === 'light'" d="M12 2a7 7 0 0 0-7 7c0 3 2 5 4 6v3h6v-3c2-1 4-3 4-6a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+
               <path v-else-if="device.type === 'tv'" d="M3 7h18v10H3zM7 17v2M17 17v2" stroke="currentColor" stroke-width="2" fill="none"/>
               <path v-else-if="device.type === 'vacuum'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
               <path v-else-if="device.type === 'thermostat'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -101,6 +103,7 @@
           </div>
         </div>
       </div>
+        </div>
       </div>
 
     </div>
@@ -266,9 +269,17 @@ const toggleAC = () => {
   display: none; /* Chrome, Safari and Opera */
 }
 
+.room-content {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 两列 */
+  gap: 16px;
+}
+
 /* 空调控制卡片 */
 .air-cooler-card {
-  width: 50%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 24px 18px;
@@ -281,14 +292,14 @@ const toggleAC = () => {
   margin-bottom: 24px;
 }
 
-.device-info h3 {
+.air-card-info h3 {
   margin: 0 0 4px 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
-.device-info p {
+.air-card-info p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 12px;
@@ -308,7 +319,7 @@ const toggleAC = () => {
 .switch-button {
   width: 32px;
   height: 20px;
-  background: var(--color-bg-primary);
+  background: var(--color-switch-indicator);
   border: 1px solid var(--color-border);
   border-radius: 10px;
   position: relative;
@@ -326,7 +337,7 @@ const toggleAC = () => {
   top: 2px;
   width: 14px;
   height: 14px;
-  background: var(--color-switch-indicator);
+  background: var(--color-switch-indicator-active);
   border-radius: 50%;
   transition: all 0.3s ease;
 }
@@ -338,7 +349,6 @@ const toggleAC = () => {
 /* 温度区域 */
 .temperature-section {
   display: flex;
-  grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
 
@@ -471,18 +481,20 @@ const toggleAC = () => {
 /* 设备列表 */
 .devices-list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 16px;
 }
 
 .device-card {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 16px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   transition: all 0.3s ease;
 }
 
@@ -491,32 +503,38 @@ const toggleAC = () => {
 }
 
 .device-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--color-bg-primary);
-  border-radius: 8px;
+  padding: 10px 10px;
+  background: #2a2a2a;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .device-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--color-text-secondary);
 }
 
 .device-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+  margin: 0 0 6px 0;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+.device-info p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 
 
 .device-switch {
   display: flex;
-  flex-direction: column;
+  margin-left: auto;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
 }

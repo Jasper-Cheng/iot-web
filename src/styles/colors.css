@@ -75,7 +75,8 @@
   --color-active: #28272a;
   --color-hover: rgba(191, 254, 1, 0.1);
   
-  --color-switch-indicator: #090a04;
+  --color-switch-indicator: #707278;
+  --color-switch-indicator-active:#090a04;
   
   --gradient-bg: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 33%, var(--color-bg-secondary) 100%), linear-gradient(90deg, var(--color-bg-secondary) 0%,var(--color-bg-primary) 20%,var(--color-bg-secondary) 100%);
 }
