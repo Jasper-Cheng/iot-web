@@ -310,7 +310,7 @@ const roomTint = computed(() => {
     case 'cool':
       return 'var(--mode-cool-overlay)'
     case 'auto':
-      return 'var(--mode-auto-overlay)'
+      return 'transparent'
     default:
       return 'transparent'
   }
