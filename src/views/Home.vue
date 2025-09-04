@@ -179,6 +179,64 @@
             <span v-else>{{ transcript || (isListening ? 'Listening…' : 'Hold mic to speak') }}</span>
           </div>
         </div>
+
+        <!-- 扫地机器人控制面板 -->
+        <div class="vacuum-card">
+          <div class="card-header">
+            <div class="vacuum-card-info">
+              <h3>Smart Vacuum</h3>
+              <p>KLAZ Vacuum Pro</p>
+            </div>
+            <div class="power-switch">
+              <span class="switch-label">{{ vacuumPower ? 'On' : 'Off' }}</span>
+              <div 
+                :class="['switch-button', { active: vacuumPower }]"
+                @click="toggleVacuum"
+              ></div>
+            </div>
+          </div>
+          
+          <div class="vacuum-status-section">
+            <div class="vacuum-info">
+              <div class="status-display">
+                <div class="status-icon" :class="vacuumStatus">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                  </svg>
+                </div>
+                <div class="status-text">
+                  <h4>{{ vacuumStatusText }}</h4>
+                  <p>{{ vacuumBattery }}% Battery</p>
+                </div>
+              </div>
+              <div class="cleaning-progress">
+                <div class="progress-label">Cleaning Progress</div>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: vacuumProgress + '%' }"></div>
+                </div>
+                <div class="progress-text">{{ vacuumProgress.toFixed(1) }}%</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="vacuum-controls">
+            <div v-for="mode in vacuumModes" class="mode-div">
+              <button :key="mode.id"
+                :class="['mode-btn', { active: mode.id === activeVacuumMode && vacuumPower, disabled: !vacuumPower }]"
+                :disabled="!vacuumPower"
+                @click="setVacuumMode(mode.id)">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path v-if="mode.id === 'auto'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'spot'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z M12 8v8 M8 12h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'edge'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z M8 8h8v8H8z" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'mop'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z M12 6v12 M6 12h12" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+              </button>
+              <span>{{ mode.name }}</span>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -388,9 +446,87 @@ const toggleAC = () => {
 }
 
 // =========================
+// Vacuum robot state and modes
+// =========================
+const vacuumModes = ref([
+  { id: 'auto', name: 'Auto' },
+  { id: 'spot', name: 'Spot' },
+  { id: 'edge', name: 'Edge' },
+  { id: 'mop', name: 'Mop' }
+])
+
+const vacuumPower = ref(false)
+const activeVacuumMode = ref('auto')
+// 记住上一次的模式，用于断电后恢复
+const lastActiveVacuumMode = ref(activeVacuumMode.value)
+const vacuumStatus = ref('idle') // idle, cleaning, charging, error
+const vacuumBattery = ref(85)
+const vacuumProgress = ref(0)
+
+// 计算状态文本
+const vacuumStatusText = computed(() => {
+  if (!vacuumPower.value) return 'Offline'
+  switch (vacuumStatus.value) {
+    case 'idle': return 'Idle'
+    case 'cleaning': return 'Cleaning'
+    case 'charging': return 'Charging'
+    case 'error': return 'Error'
+    default: return 'Unknown'
+  }
+})
+
+// =========================
 // Camera power state
 // =========================
 const cameraPower = ref(true)
+
+// 切换扫地机器人开关
+const toggleVacuum = () => {
+  vacuumPower.value = !vacuumPower.value
+  if (!vacuumPower.value) {
+    // 关闭电源时，清除当前模式的选中状态
+    lastActiveVacuumMode.value = activeVacuumMode.value
+    activeVacuumMode.value = null
+    vacuumStatus.value = 'idle'
+    vacuumProgress.value = 0
+  } else {
+    // 打开电源时，默认为auto模式并自动开始清洁
+    activeVacuumMode.value = 'auto'
+    vacuumStatus.value = 'cleaning'
+    vacuumProgress.value = 0
+    startCleaningSimulation()
+  }
+}
+
+// 设置扫地机器人模式
+const setVacuumMode = (modeId) => {
+  if (!vacuumPower.value) return
+  activeVacuumMode.value = modeId
+  lastActiveVacuumMode.value = modeId
+  
+  // 模拟开始清洁
+  if (modeId !== 'auto' || vacuumStatus.value === 'idle') {
+    vacuumStatus.value = 'cleaning'
+    startCleaningSimulation()
+  }
+}
+
+// 模拟清洁进度
+const startCleaningSimulation = () => {
+  vacuumProgress.value = 0
+  const interval = setInterval(() => {
+    if (vacuumProgress.value < 100 && vacuumStatus.value === 'cleaning') {
+      vacuumProgress.value += Math.random() * 5
+      if (vacuumProgress.value >= 100) {
+        vacuumProgress.value = 100
+        vacuumStatus.value = 'idle'
+        clearInterval(interval)
+      }
+    } else {
+      clearInterval(interval)
+    }
+  }, 1000)
+}
 
 // 切换摄像头开关
 const toggleCamera = () => {
@@ -565,6 +701,139 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 24px 18px;
+}
+
+/* =========================
+   Vacuum robot card
+   ========================= */
+.vacuum-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px 18px;
+}
+
+.vacuum-card-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.vacuum-card-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.vacuum-status-section {
+  margin-bottom: 24px;
+}
+
+.vacuum-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.status-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-button-dark);
+  transition: all 0.3s ease;
+}
+
+.status-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-text-secondary);
+}
+
+.status-icon.idle {
+  background: var(--color-button-dark);
+}
+
+.status-icon.cleaning {
+  background: var(--color-primary);
+  animation: pulse 2s infinite;
+}
+
+.status-icon.charging {
+  background: var(--color-blue-500);
+}
+
+.status-icon.error {
+  background: var(--color-red-500);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.status-text h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.status-text p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.cleaning-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-button-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-blue-500) 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+.vacuum-controls {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
 }
 
 /* =========================
