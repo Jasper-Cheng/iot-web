@@ -237,6 +237,66 @@
             </div>
           </div>
         </div>
+
+        <!-- 洗衣机控制面板 -->
+        <div class="washing-machine-card">
+          <div class="card-header">
+            <div class="washing-machine-card-info">
+              <h3>Washing Machine</h3>
+              <p>Samsung Smart Washer</p>
+            </div>
+            <div class="power-switch">
+              <span class="switch-label">{{ washingMachinePower ? 'On' : 'Off' }}</span>
+              <div 
+                :class="['switch-button', { active: washingMachinePower }]"
+                @click="toggleWashingMachine"
+              ></div>
+            </div>
+          </div>
+          
+          <div class="washing-machine-status-section">
+            <div class="washing-machine-info">
+              <div class="status-display">
+                <div class="status-icon" :class="washingMachineStatus">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 6h18v2H3V6zM3 10h18v8H3v-8z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <circle cx="8" cy="14" r="1" fill="currentColor"/>
+                    <circle cx="12" cy="14" r="1" fill="currentColor"/>
+                    <circle cx="16" cy="14" r="1" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="status-text">
+                  <h4>{{ washingMachineStatusText }}</h4>
+                  <p>{{ washingMachineTime.toFixed(1) }} min remaining</p>
+                </div>
+              </div>
+              <div class="washing-progress">
+                <div class="progress-label">Washing Progress</div>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: washingMachineProgress + '%' }"></div>
+                </div>
+                <div class="progress-text">{{ washingMachineProgress.toFixed(1) }}%</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="washing-machine-controls">
+            <div v-for="mode in washingMachineModes" class="mode-div">
+              <button :key="mode.id"
+                :class="['mode-btn', { active: mode.id === activeWashingMachineMode && washingMachinePower, disabled: !washingMachinePower }]"
+                :disabled="!washingMachinePower"
+                @click="setWashingMachineMode(mode.id)">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path v-if="mode.id === 'normal'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 14h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'quick'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 12h8 M8 16h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'delicate'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 13h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'heavy'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 12h8 M8 14h8 M8 16h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+              </button>
+              <span>{{ mode.name }}</span>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -459,7 +519,7 @@ const vacuumPower = ref(false)
 const activeVacuumMode = ref('auto')
 // 记住上一次的模式，用于断电后恢复
 const lastActiveVacuumMode = ref(activeVacuumMode.value)
-const vacuumStatus = ref('idle') // idle, cleaning, charging, error
+const vacuumStatus = ref('idle') // idle, cleaning, charging, done, error
 const vacuumBattery = ref(85)
 const vacuumProgress = ref(0)
 
@@ -470,7 +530,39 @@ const vacuumStatusText = computed(() => {
     case 'idle': return 'Idle'
     case 'cleaning': return 'Cleaning'
     case 'charging': return 'Charging'
+    case 'done': return 'Done'
     case 'error': return 'Error'
+    default: return 'Unknown'
+  }
+})
+
+// =========================
+// Washing machine state and modes
+// =========================
+const washingMachineModes = ref([
+  { id: 'normal', name: 'Normal' },
+  { id: 'quick', name: 'Quick' },
+  { id: 'delicate', name: 'Delicate' },
+  { id: 'heavy', name: 'Heavy' }
+])
+
+const washingMachinePower = ref(false)
+const activeWashingMachineMode = ref('normal')
+// 记住上一次的模式，用于断电后恢复
+const lastActiveWashingMachineMode = ref(activeWashingMachineMode.value)
+const washingMachineStatus = ref('idle') // idle, washing, rinsing, spinning, done
+const washingMachineTime = ref(0)
+const washingMachineProgress = ref(0)
+
+// 计算状态文本
+const washingMachineStatusText = computed(() => {
+  if (!washingMachinePower.value) return 'Offline'
+  switch (washingMachineStatus.value) {
+    case 'idle': return 'Idle'
+    case 'washing': return 'Washing'
+    case 'rinsing': return 'Rinsing'
+    case 'spinning': return 'Spinning'
+    case 'done': return 'Done'
     default: return 'Unknown'
   }
 })
@@ -490,11 +582,10 @@ const toggleVacuum = () => {
     vacuumStatus.value = 'idle'
     vacuumProgress.value = 0
   } else {
-    // 打开电源时，默认为auto模式并自动开始清洁
-    activeVacuumMode.value = 'auto'
-    vacuumStatus.value = 'cleaning'
+    // 打开电源时，不默认选中任何模式
+    activeVacuumMode.value = null
+    vacuumStatus.value = 'idle'
     vacuumProgress.value = 0
-    startCleaningSimulation()
   }
 }
 
@@ -519,8 +610,79 @@ const startCleaningSimulation = () => {
       vacuumProgress.value += Math.random() * 5
       if (vacuumProgress.value >= 100) {
         vacuumProgress.value = 100
-        vacuumStatus.value = 'idle'
+        vacuumStatus.value = 'done'
         clearInterval(interval)
+        
+        // 3秒后重置按钮和进度条
+        setTimeout(() => {
+          activeVacuumMode.value = null
+          vacuumStatus.value = 'idle'
+          vacuumProgress.value = 0
+        }, 3000)
+      }
+    } else {
+      clearInterval(interval)
+    }
+  }, 1000)
+}
+
+// 切换洗衣机开关
+const toggleWashingMachine = () => {
+  washingMachinePower.value = !washingMachinePower.value
+  if (!washingMachinePower.value) {
+    // 关闭电源时，清除当前模式的选中状态
+    lastActiveWashingMachineMode.value = activeWashingMachineMode.value
+    activeWashingMachineMode.value = null
+    washingMachineStatus.value = 'idle'
+    washingMachineProgress.value = 0
+    washingMachineTime.value = 0
+  } else {
+    // 打开电源时，不默认选中任何模式
+    activeWashingMachineMode.value = null
+    washingMachineStatus.value = 'idle'
+    washingMachineProgress.value = 0
+    washingMachineTime.value = 0
+  }
+}
+
+// 设置洗衣机模式
+const setWashingMachineMode = (modeId) => {
+  if (!washingMachinePower.value) return
+  activeWashingMachineMode.value = modeId
+  lastActiveWashingMachineMode.value = modeId
+  
+  // 模拟开始洗衣
+  washingMachineStatus.value = 'washing'
+  startWashingSimulation()
+}
+
+// 模拟洗衣进度
+const startWashingSimulation = () => {
+  washingMachineProgress.value = 0
+  washingMachineTime.value = 45 // 默认45分钟
+  
+  const interval = setInterval(() => {
+    if (washingMachineProgress.value < 100 && washingMachineStatus.value !== 'idle') {
+      washingMachineProgress.value += Math.random() * 8
+      washingMachineTime.value = Math.max(0, washingMachineTime.value - 1.2)
+      
+      // 模拟洗衣阶段
+      if (washingMachineProgress.value >= 100) {
+        washingMachineProgress.value = 100
+        washingMachineStatus.value = 'done'
+        washingMachineTime.value = 0
+        clearInterval(interval)
+        
+        // 3秒后重置按钮和进度条
+        setTimeout(() => {
+          activeWashingMachineMode.value = null
+          washingMachineStatus.value = 'idle'
+          washingMachineProgress.value = 0
+        }, 3000)
+      } else if (washingMachineProgress.value >= 60 && washingMachineStatus.value === 'washing') {
+        washingMachineStatus.value = 'spinning'
+      } else if (washingMachineProgress.value >= 30 && washingMachineStatus.value === 'washing') {
+        washingMachineStatus.value = 'rinsing'
       }
     } else {
       clearInterval(interval)
@@ -778,6 +940,17 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   background: var(--color-red-500);
 }
 
+.status-icon.done {
+  background: var(--color-green-500);
+  animation: pulse 1s infinite;
+}
+
+/* 扫地机器人done状态样式 */
+.vacuum-card .status-icon.done {
+  background: #10b981;
+  animation: pulse 1s infinite;
+}
+
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -834,6 +1007,78 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   display: flex;
   gap: 16px;
   margin-top: 24px;
+}
+
+/* =========================
+   Washing machine card
+   ========================= */
+.washing-machine-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px 18px;
+}
+
+.washing-machine-card-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.washing-machine-card-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.washing-machine-status-section {
+  margin-bottom: 24px;
+}
+
+.washing-machine-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.washing-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.washing-machine-controls {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+/* 洗衣机状态图标样式 */
+.washing-machine-card .status-icon.idle {
+  background: var(--color-button-dark);
+}
+
+.washing-machine-card .status-icon.washing {
+  background: var(--color-blue-500);
+  animation: pulse 2s infinite;
+}
+
+.washing-machine-card .status-icon.rinsing {
+  background: #60a5fa;
+  animation: pulse 2s infinite;
+}
+
+.washing-machine-card .status-icon.spinning {
+  background: var(--color-blue-600);
+  animation: pulse 1.5s infinite;
+}
+
+.washing-machine-card .status-icon.done {
+  background: #10b981;
+  animation: pulse 1s infinite;
 }
 
 /* =========================
