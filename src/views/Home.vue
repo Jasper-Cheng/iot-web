@@ -109,44 +109,61 @@
         <div class="camera-card">
           <div class="camera-header">
             <h3>Camera</h3>
-            <button 
-              class="mic-button"
-              :class="{ listening: isListening }"
-              @mousedown.prevent="startVoice"
-              @mouseup.prevent="stopVoice"
-              @mouseleave.prevent="stopVoice"
-              @touchstart.prevent="startVoice"
-              @touchend.prevent="stopVoice"
-              :title="isListening ? 'Release to stop' : 'Hold to talk'"
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M12 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3z" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M19 11a7 7 0 01-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <div class="room-selector-wrapper">
-              <button class="room-selector" @click="cameraMenuOpen = !cameraMenuOpen">
-                <span>{{ roomLabel }}</span>
+            <div class="camera-controls">
+              <button 
+                class="mic-button"
+                :class="{ listening: isListening }"
+                @mousedown.prevent="startVoice"
+                @mouseup.prevent="stopVoice"
+                @mouseleave.prevent="stopVoice"
+                @touchstart.prevent="startVoice"
+                @touchend.prevent="stopVoice"
+                :title="isListening ? 'Release to stop' : 'Hold to talk'"
+              >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3z" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M19 11a7 7 0 01-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
               </button>
-              <div v-if="cameraMenuOpen" class="room-selector-menu">
-                <button 
-                  v-for="room in rooms.filter(r => r.id !== 'all')"
-                  :key="room.id"
-                  :class="['room-selector-item', { selected: room.id === selectedCameraRoom }]"
-                  @click.stop="selectCameraRoom(room.id)"
-                >
-                  {{ room.name }}
+              <div class="room-selector-wrapper">
+                <button class="room-selector" @click="cameraMenuOpen = !cameraMenuOpen">
+                  <span>{{ roomLabel }}</span>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                 </button>
+                <div v-if="cameraMenuOpen" class="room-selector-menu">
+                  <button 
+                    v-for="room in rooms.filter(r => r.id !== 'all')"
+                    :key="room.id"
+                    :class="['room-selector-item', { selected: room.id === selectedCameraRoom }]"
+                    @click.stop="selectCameraRoom(room.id)"
+                  >
+                    {{ room.name }}
+                  </button>
+                </div>
+              </div>
+              <div class="camera-switch">
+                <span class="switch-label">{{ cameraPower ? 'On' : 'Off' }}</span>
+                <div 
+                  :class="['switch-button', { active: cameraPower }]"
+                  @click="toggleCamera"
+                ></div>
               </div>
             </div>
           </div>
           <div class="camera-view">
-            <video class="camera-video" :src="cameraVideoSrc" autoplay muted loop playsinline></video>
+            <video v-if="cameraPower" class="camera-video" :src="cameraVideoSrc" autoplay muted loop playsinline></video>
+            <div v-else class="camera-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <p>Camera Off</p>
+            </div>
             <button 
+              v-if="cameraPower"
               class="fullscreen-button"
               @click="toggleFullscreen"
               :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
@@ -371,6 +388,16 @@ const toggleAC = () => {
 }
 
 // =========================
+// Camera power state
+// =========================
+const cameraPower = ref(true)
+
+// 切换摄像头开关
+const toggleCamera = () => {
+  cameraPower.value = !cameraPower.value
+}
+
+// =========================
 // Fullscreen functionality
 // =========================
 const isFullscreen = ref(false)
@@ -558,6 +585,12 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   margin-bottom: 12px;
 }
 
+.camera-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .camera-header h3 {
   margin: 0;
   font-size: 16px;
@@ -655,18 +688,32 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   color: var(--color-primary);
 }
 
+.camera-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .camera-placeholder {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--color-text-secondary);
+  gap: 12px;
 }
 
 .camera-placeholder svg {
   width: 48px;
   height: 48px;
+}
+
+.camera-placeholder p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .camera-video {
