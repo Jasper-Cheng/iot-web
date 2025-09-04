@@ -245,6 +245,26 @@
               <h3>Washing Machine</h3>
               <p>Samsung Smart Washer</p>
             </div>
+            
+            <!-- 开始按钮 -->
+            <div class="washing-machine-start">
+              <button 
+                :class="['start-btn', { disabled: !washingMachinePower || (!activeWashingMachineMode && washingMachineStatus === 'idle') || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done') }]"
+                :disabled="!washingMachinePower || (!activeWashingMachineMode && washingMachineStatus === 'idle') || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done')"
+                @click="startWashingMachine">
+                <svg v-if="washingMachineStatus === 'idle'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg v-else-if="washingMachineStatus === 'done'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                {{ startButtonText }}
+              </button>
+            </div>
+            
             <div class="power-switch">
               <span class="switch-label">{{ washingMachinePower ? 'On' : 'Off' }}</span>
               <div 
@@ -283,23 +303,105 @@
           <div class="washing-machine-controls">
             <div v-for="mode in washingMachineModes" class="mode-div">
               <button :key="mode.id"
-                :class="['mode-btn', { active: mode.id === activeWashingMachineMode && washingMachinePower, disabled: !washingMachinePower }]"
-                :disabled="!washingMachinePower"
+                :class="['mode-btn', { active: mode.id === activeWashingMachineMode && washingMachinePower, disabled: !washingMachinePower || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done') }]"
+                :disabled="!washingMachinePower || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done')"
                 @click="setWashingMachineMode(mode.id)">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path v-if="mode.id === 'normal'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 14h8" stroke="currentColor" stroke-width="2" fill="none"/>
                   <path v-else-if="mode.id === 'quick'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 12h8 M8 16h8" stroke="currentColor" stroke-width="2" fill="none"/>
                   <path v-else-if="mode.id === 'delicate'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 13h8" stroke="currentColor" stroke-width="2" fill="none"/>
                   <path v-else-if="mode.id === 'heavy'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 12h8 M8 14h8 M8 16h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'wool'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 12h8" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path v-else-if="mode.id === 'eco'" d="M3 6h18v2H3V6zM3 10h18v8H3v-8z M8 13h8" stroke="currentColor" stroke-width="2" fill="none"/>
                 </svg>
               </button>
               <span>{{ mode.name }}</span>
+            </div>
+          </div>
+          
+          <!-- 洗衣机详细设置 -->
+          <div class="washing-machine-settings">
+            <!-- 温度设置 -->
+            <div class="setting-group">
+              <h5>温度</h5>
+              <div class="setting-options">
+                <button 
+                  v-for="option in temperatureOptions" 
+                  :key="option.id"
+                  :class="['setting-btn', { active: option.id === washingMachineSettings.temperature && washingMachinePower && activeWashingMachineMode, disabled: !washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done') }]"
+                  :disabled="!washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done')"
+                  @click="setWashingMachineSetting('temperature', option.id)">
+                  {{ option.name }}
+                </button>
+              </div>
+            </div>
+            
+            <!-- 洗涤次数设置 -->
+            <div class="setting-group">
+              <h5>洗涤次数</h5>
+              <div class="setting-options">
+                <button 
+                  v-for="option in rinseCountOptions" 
+                  :key="option.id"
+                  :class="['setting-btn', { active: option.id === washingMachineSettings.rinseCount && washingMachinePower && activeWashingMachineMode, disabled: !washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done') }]"
+                  :disabled="!washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done')"
+                  @click="setWashingMachineSetting('rinseCount', option.id)">
+                  {{ option.name }}
+                </button>
+              </div>
+            </div>
+            
+            <!-- 脱水转速设置 -->
+            <div class="setting-group">
+              <h5>脱水转速</h5>
+              <div class="setting-options">
+                <button 
+                  v-for="option in spinSpeedOptions" 
+                  :key="option.id"
+                  :class="['setting-btn', { active: option.id === washingMachineSettings.spinSpeed && washingMachinePower && activeWashingMachineMode, disabled: !washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done') }]"
+                  :disabled="!washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done')"
+                  @click="setWashingMachineSetting('spinSpeed', option.id)">
+                  {{ option.name }}
+                </button>
+              </div>
+            </div>
+            
+            <!-- 烘干时长设置 -->
+            <div class="setting-group">
+              <h5>烘干时长</h5>
+              <div class="setting-options">
+                <button 
+                  v-for="option in dryTimeOptions" 
+                  :key="option.id"
+                  :class="['setting-btn', { active: option.id === washingMachineSettings.dryTime && washingMachinePower && activeWashingMachineMode, disabled: !washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done') }]"
+                  :disabled="!washingMachinePower || !activeWashingMachineMode || (washingMachineStatus !== 'idle' && washingMachineStatus !== 'done')"
+                  @click="setWashingMachineSetting('dryTime', option.id)">
+                  {{ option.name }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- 洗衣机关闭确认对话框 -->
+  <div v-if="showWashConfirmDialog" class="confirm-dialog-overlay" @click="cancelTurnOffWashingMachine">
+    <div class="confirm-dialog" @click.stop>
+      <div class="confirm-dialog-header">
+        <h3>确认关闭洗衣机</h3>
+      </div>
+      <div class="confirm-dialog-content">
+        <p>洗衣机正在运行中，确定要关闭吗？</p>
+        <p class="warning-text">关闭后洗衣进度将丢失，需要重新开始。</p>
+      </div>
+      <div class="confirm-dialog-actions">
+        <button class="cancel-btn" @click="cancelTurnOffWashingMachine">取消</button>
+        <button class="confirm-btn" @click="confirmTurnOffWashingMachine">确认关闭</button>
+      </div>
     </div>
   </div>
 </template>
@@ -543,7 +645,43 @@ const washingMachineModes = ref([
   { id: 'normal', name: 'Normal' },
   { id: 'quick', name: 'Quick' },
   { id: 'delicate', name: 'Delicate' },
-  { id: 'heavy', name: 'Heavy' }
+  { id: 'heavy', name: 'Heavy' },
+  { id: 'wool', name: 'Wool' },
+  { id: 'eco', name: 'Eco' }
+])
+
+// 温度选项
+const temperatureOptions = ref([
+  { id: 'cold', name: '常温', value: '常温' },
+  { id: 'warm', name: '40°C', value: '40°C' }
+])
+
+// 洗涤次数选项
+const rinseCountOptions = ref([
+  { id: 1, name: '1次' },
+  { id: 2, name: '2次' },
+  { id: 3, name: '3次' }
+])
+
+// 脱水转速选项
+const spinSpeedOptions = ref([
+  { id: 0, name: '无' },
+  { id: 400, name: '400' },
+  { id: 600, name: '600' },
+  { id: 800, name: '800' },
+  { id: 1000, name: '1000' },
+  { id: 1200, name: '1200' }
+])
+
+// 烘干时长选项
+const dryTimeOptions = ref([
+  { id: 'none', name: '不烘干' },
+  { id: 'smart', name: '智能烘干' },
+  { id: '30', name: '30分钟' },
+  { id: '60', name: '60分钟' },
+  { id: '90', name: '90分钟' },
+  { id: '120', name: '120分钟' },
+  { id: '180', name: '180分钟' }
 ])
 
 const washingMachinePower = ref(false)
@@ -553,6 +691,17 @@ const lastActiveWashingMachineMode = ref(activeWashingMachineMode.value)
 const washingMachineStatus = ref('idle') // idle, washing, rinsing, spinning, done
 const washingMachineTime = ref(0)
 const washingMachineProgress = ref(0)
+
+// 确认对话框状态
+const showWashConfirmDialog = ref(false)
+
+// 洗衣机设置选项
+const washingMachineSettings = ref({
+  temperature: 'cold', // 默认常温
+  rinseCount: 2, // 默认2次
+  spinSpeed: 800, // 默认800转
+  dryTime: 'none' // 默认不烘干
+})
 
 // 计算状态文本
 const washingMachineStatusText = computed(() => {
@@ -564,6 +713,21 @@ const washingMachineStatusText = computed(() => {
     case 'spinning': return 'Spinning'
     case 'done': return 'Done'
     default: return 'Unknown'
+  }
+})
+
+// 开始按钮文字
+const startButtonText = computed(() => {
+  if (!washingMachinePower.value) return '设备关闭'
+  if (!activeWashingMachineMode.value) return '选择模式'
+  
+  switch (washingMachineStatus.value) {
+    case 'idle': return '开始洗衣'
+    case 'washing': return '洗衣中...'
+    case 'rinsing': return '漂洗中...'
+    case 'spinning': return '脱水中...'
+    case 'done': return '已完成'
+    default: return '开始洗衣'
   }
 })
 
@@ -628,6 +792,12 @@ const startCleaningSimulation = () => {
 
 // 切换洗衣机开关
 const toggleWashingMachine = () => {
+  // 如果正在洗衣过程中，显示确认对话框
+  if (washingMachinePower.value && (washingMachineStatus.value === 'washing' || washingMachineStatus.value === 'rinsing' || washingMachineStatus.value === 'spinning')) {
+    showWashConfirmDialog.value = true
+    return
+  }
+  
   washingMachinePower.value = !washingMachinePower.value
   if (!washingMachinePower.value) {
     // 关闭电源时，清除当前模式的选中状态
@@ -645,15 +815,63 @@ const toggleWashingMachine = () => {
   }
 }
 
+// 确认关闭洗衣机
+const confirmTurnOffWashingMachine = () => {
+  washingMachinePower.value = false
+  lastActiveWashingMachineMode.value = activeWashingMachineMode.value
+  activeWashingMachineMode.value = null
+  washingMachineStatus.value = 'idle'
+  washingMachineProgress.value = 0
+  washingMachineTime.value = 0
+  showWashConfirmDialog.value = false
+}
+
+// 取消关闭洗衣机
+const cancelTurnOffWashingMachine = () => {
+  showWashConfirmDialog.value = false
+}
+
 // 设置洗衣机模式
 const setWashingMachineMode = (modeId) => {
   if (!washingMachinePower.value) return
+  // 洗衣过程中不能切换模式
+  if (washingMachineStatus.value !== 'idle' && washingMachineStatus.value !== 'done') return
   activeWashingMachineMode.value = modeId
   lastActiveWashingMachineMode.value = modeId
+}
+
+// 开始洗衣机工作
+const startWashingMachine = () => {
+  if (!washingMachinePower.value) {
+    return
+  }
   
-  // 模拟开始洗衣
+  // 如果已完成，重置状态
+  if (washingMachineStatus.value === 'done') {
+    washingMachineStatus.value = 'idle'
+    washingMachineTime.value = 0
+    washingMachineProgress.value = 0
+    activeWashingMachineMode.value = null
+    return
+  }
+  
+  // 如果没有选择模式，不能开始
+  if (!activeWashingMachineMode.value || washingMachineStatus.value !== 'idle') {
+    return
+  }
+  
+  // 开始洗衣
   washingMachineStatus.value = 'washing'
+  washingMachineTime.value = 45
   startWashingSimulation()
+}
+
+// 设置洗衣机选项
+const setWashingMachineSetting = (settingType, value) => {
+  if (!washingMachinePower.value) return
+  // 洗衣过程中不能修改设置
+  if (washingMachineStatus.value !== 'idle' && washingMachineStatus.value !== 'done') return
+  washingMachineSettings.value[settingType] = value
 }
 
 // 模拟洗衣进度
@@ -1054,6 +1272,66 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   display: flex;
   gap: 16px;
   margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* 洗衣机详细设置样式 */
+.washing-machine-settings {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-group h5 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.setting-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.setting-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 50px;
+  text-align: center;
+}
+
+.setting-btn:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.setting-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.setting-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 洗衣机状态图标样式 */
@@ -1280,8 +1558,9 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
 .air-card-info h3 {
@@ -1542,6 +1821,149 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   flex-direction: row;
   align-items: center;
   gap: 8px;
+}
+
+/* =========================
+   Washing machine start button
+   ========================= */
+.washing-machine-start {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.start-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.start-btn:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.start-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.start-btn:disabled,
+.start-btn.disabled {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.start-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* =========================
+   Confirm dialog styles
+   ========================= */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.confirm-dialog {
+  background: var(--color-bg);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+}
+
+.confirm-dialog-header {
+  margin-bottom: 16px;
+}
+
+.confirm-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.confirm-dialog-content {
+  margin-bottom: 24px;
+}
+
+.confirm-dialog-content p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.warning-text {
+  color: #f59e0b !important;
+  font-weight: 500;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancel-btn, .confirm-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cancel-btn {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.cancel-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.confirm-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 </style>
