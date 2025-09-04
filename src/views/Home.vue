@@ -146,6 +146,16 @@
           </div>
           <div class="camera-view">
             <video class="camera-video" :src="cameraVideoSrc" autoplay muted loop playsinline></video>
+            <button 
+              class="fullscreen-button"
+              @click="toggleFullscreen"
+              :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path v-if="!isFullscreen" d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path v-else d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <div class="voice-output">
             <span v-if="!speechSupported">Your browser does not support SpeechRecognition.</span>
@@ -359,6 +369,50 @@ const toggleAC = () => {
     activeMode.value = lastActiveMode.value || 'cool'
   }
 }
+
+// =========================
+// Fullscreen functionality
+// =========================
+const isFullscreen = ref(false)
+
+const toggleFullscreen = () => {
+  const cameraView = document.querySelector('.camera-view')
+  if (!cameraView) return
+
+  if (!isFullscreen.value) {
+    // Enter fullscreen
+    if (cameraView.requestFullscreen) {
+      cameraView.requestFullscreen()
+    } else if (cameraView.webkitRequestFullscreen) {
+      cameraView.webkitRequestFullscreen()
+    } else if (cameraView.msRequestFullscreen) {
+      cameraView.msRequestFullscreen()
+    }
+  } else {
+    // Exit fullscreen
+    if (document.exitFullscreen) {
+      document.exitFullscreen()
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen()
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen()
+    }
+  }
+}
+
+// Listen for fullscreen changes
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.msFullscreenElement
+  )
+}
+
+// Add event listeners for fullscreen changes
+document.addEventListener('fullscreenchange', handleFullscreenChange)
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+document.addEventListener('msfullscreenchange', handleFullscreenChange)
 </script>
 
 <style scoped>
@@ -565,6 +619,12 @@ const toggleAC = () => {
   overflow: hidden;
 }
 
+.camera-view:hover .fullscreen-button {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
 .room-selector-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -615,6 +675,39 @@ const toggleAC = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.fullscreen-button {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8);
+}
+
+.camera-view:hover .fullscreen-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.fullscreen-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .voice-output {
