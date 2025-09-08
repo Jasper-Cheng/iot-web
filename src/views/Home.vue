@@ -692,7 +692,7 @@ const roomTint = computed(() => {
 const devices = ref([
   { id: 1, name: 'Smart Light', model: 'Bardi Smart Light', type: 'light', power: false },
   { id: 2, name: 'Smart TV', model: 'Samsung QBOC', type: 'tv', power: true },
-  { id: 3, name: 'Smart Vacuum', model: 'KLAZ Vacuum', type: 'vacuum', power: false },
+  { id: 3, name: 'Fall Detection', model: 'KLAZ Vacuum', type: 'detection', power: false },
   { id: 4, name: 'Thermostat', model: 'Tuya Zigbe', type: 'thermostat', power: false }
 ])
 
