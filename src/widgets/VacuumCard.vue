@@ -9,7 +9,7 @@
       <div class="record-button">
         <button 
           class="record-btn"
-          @click="$emit('show-records')"
+          @click="$emit('show-records', vacuumRecords)"
           title="查看扫地记录">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -89,6 +89,12 @@ const vacuumStatus = ref('idle') // idle, cleaning, charging, done, error
 const vacuumBattery = ref(85)
 const vacuumProgress = ref(0)
 
+// Demo vacuum records
+const vacuumRecords = ref([
+  { id: 1, date: '2024-01-15', time: '14:30', duration: '45分钟', mode: 'Auto', status: '完成' },
+  { id: 2, date: '2024-01-14', time: '09:15', duration: '32分钟', mode: 'Spot', status: '完成' },
+  { id: 3, date: '2024-01-13', time: '20:45', duration: '38分钟', mode: 'Edge', status: '完成' }
+])
 const vacuumStatusText = computed(() => {
   if (!vacuumPower.value) return 'Offline'
   switch (vacuumStatus.value) {

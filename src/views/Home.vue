@@ -60,10 +60,10 @@
         <CameraCard :rooms="rooms" :activeRoom="activeRoom" />
 
         <!-- 扫地机器人控制面板 -->
-        <VacuumCard @show-records="showVacuumRecordDialog" />
+        <VacuumCard @show-records="onShowVacuumRecords" />
 
         <!-- 洗衣机控制面板 -->
-        <WashingMachineCard @show-records="showWashingMachineRecordDialog" />
+        <WashingMachineCard @show-records="onShowWashingMachineRecords" />
         
         <!-- 冰箱控制面板 -->
         <div class="refrigerator-card">
@@ -570,79 +570,12 @@ const toggleDevice = (deviceId) => {
 
 // Vacuum moved to widget
 
-// =========================
-// Washing machine state and modes
-// =========================
-const washingMachineModes = ref([
-  { id: 'normal', name: 'Normal' },
-  { id: 'quick', name: 'Quick' },
-  { id: 'delicate', name: 'Delicate' },
-  { id: 'heavy', name: 'Heavy' },
-  { id: 'wool', name: 'Wool' },
-  { id: 'eco', name: 'Eco' }
-])
-
-// 温度选项
-const temperatureOptions = ref([
-  { id: 'cold', name: '常温', value: '常温' },
-  { id: 'warm', name: '40°C', value: '40°C' }
-])
-
-// 洗涤次数选项
-const rinseCountOptions = ref([
-  { id: 1, name: '1次' },
-  { id: 2, name: '2次' },
-  { id: 3, name: '3次' }
-])
-
-// 脱水转速选项
-const spinSpeedOptions = ref([
-  { id: 0, name: '无' },
-  { id: 400, name: '400' },
-  { id: 600, name: '600' },
-  { id: 800, name: '800' },
-  { id: 1000, name: '1000' },
-  { id: 1200, name: '1200' }
-])
-
-// 烘干时长选项
-const dryTimeOptions = ref([
-  { id: 'none', name: '不烘干' },
-  { id: 'smart', name: '智能烘干' },
-  { id: '30', name: '30分钟' },
-  { id: '60', name: '60分钟' },
-  { id: '90', name: '90分钟' },
-  { id: '120', name: '120分钟' },
-  { id: '180', name: '180分钟' }
-])
-
-const washingMachinePower = ref(false)
-const activeWashingMachineMode = ref('normal')
-// 记住上一次的模式，用于断电后恢复
-const lastActiveWashingMachineMode = ref(activeWashingMachineMode.value)
-const washingMachineStatus = ref('idle') // idle, washing, rinsing, spinning, done
-const washingMachineTime = ref(0)
-const washingMachineProgress = ref(0)
-
-// 确认对话框状态
-const showWashConfirmDialog = ref(false)
-
-// 设备记录数据
-const vacuumRecords = ref([
-  { id: 1, date: '2024-01-15', time: '14:30', duration: '45分钟', mode: 'Auto', status: '完成' },
-  { id: 2, date: '2024-01-14', time: '09:15', duration: '32分钟', mode: 'Spot', status: '完成' },
-  { id: 3, date: '2024-01-13', time: '20:45', duration: '38分钟', mode: 'Edge', status: '完成' }
-])
-
-const washingMachineRecords = ref([
-  { id: 1, date: '2024-01-15', time: '16:20', duration: '45分钟', mode: 'Normal', status: '完成' },
-  { id: 2, date: '2024-01-14', time: '10:30', duration: '30分钟', mode: 'Quick', status: '完成' },
-  { id: 3, date: '2024-01-13', time: '19:15', duration: '60分钟', mode: 'Heavy', status: '完成' }
-])
-
-// 记录对话框状态
+// Washing machine moved to widget; keep record dialog states only
 const showVacuumRecords = ref(false)
 const showWashingMachineRecords = ref(false)
+
+// Washing machine records stored in child; receive via event when needed
+const washingMachineRecords = ref([])
 
 // =========================
 // Speaker state and modes
@@ -726,41 +659,11 @@ const freezerSettings = ref({
 })
 
 
-// 洗衣机设置选项
-const washingMachineSettings = ref({
-  temperature: 'cold', // 默认常温
-  rinseCount: 2, // 默认2次
-  spinSpeed: 800, // 默认800转
-  dryTime: 'none' // 默认不烘干
-})
+// Washing machine moved to widget
 
-// 计算状态文本
-const washingMachineStatusText = computed(() => {
-  if (!washingMachinePower.value) return 'Offline'
-  switch (washingMachineStatus.value) {
-    case 'idle': return 'Idle'
-    case 'washing': return 'Washing'
-    case 'rinsing': return 'Rinsing'
-    case 'spinning': return 'Spinning'
-    case 'done': return 'Done'
-    default: return 'Unknown'
-  }
-})
+// Washing machine moved to widget
 
-// 开始按钮文字
-const startButtonText = computed(() => {
-  if (!washingMachinePower.value) return '设备关闭'
-  if (!activeWashingMachineMode.value) return '选择模式'
-  
-  switch (washingMachineStatus.value) {
-    case 'idle': return '开始洗衣'
-    case 'washing': return '洗衣中...'
-    case 'rinsing': return '漂洗中...'
-    case 'spinning': return '脱水中...'
-    case 'done': return '已完成'
-    default: return '开始洗衣'
-  }
-})
+// Washing machine moved to widget
 
 // 音响状态文本
 const speakerStatusText = computed(() => {
@@ -786,54 +689,25 @@ const progressPercentage = computed(() => {
 
 // Vacuum moved to widget
 
-// 切换洗衣机开关
-const toggleWashingMachine = () => {
-  // 如果正在洗衣过程中，显示确认对话框
-  if (washingMachinePower.value && (washingMachineStatus.value === 'washing' || washingMachineStatus.value === 'rinsing' || washingMachineStatus.value === 'spinning')) {
-    showWashConfirmDialog.value = true
-    return
-  }
-  
-  washingMachinePower.value = !washingMachinePower.value
-  if (!washingMachinePower.value) {
-    // 关闭电源时，清除当前模式的选中状态
-    lastActiveWashingMachineMode.value = activeWashingMachineMode.value
-    activeWashingMachineMode.value = null
-    washingMachineStatus.value = 'idle'
-    washingMachineProgress.value = 0
-    washingMachineTime.value = 0
-  } else {
-    // 打开电源时，不默认选中任何模式
-    activeWashingMachineMode.value = null
-    washingMachineStatus.value = 'idle'
-    washingMachineProgress.value = 0
-    washingMachineTime.value = 0
-  }
-}
+// Washing machine moved to widget
 
-// 确认关闭洗衣机
-const confirmTurnOffWashingMachine = () => {
-  washingMachinePower.value = false
-  lastActiveWashingMachineMode.value = activeWashingMachineMode.value
-  activeWashingMachineMode.value = null
-  washingMachineStatus.value = 'idle'
-  washingMachineProgress.value = 0
-  washingMachineTime.value = 0
-  showWashConfirmDialog.value = false
-}
+// Washing machine moved to widget
 
 // 取消关闭洗衣机
 const cancelTurnOffWashingMachine = () => {
   showWashConfirmDialog.value = false
 }
 
-// 显示扫地机器人记录
-const showVacuumRecordDialog = () => {
+// 子组件传上来的扫地记录，打开对话框
+const vacuumRecords = ref([])
+const onShowVacuumRecords = (records) => {
+  vacuumRecords.value = Array.isArray(records) ? records : []
   showVacuumRecords.value = true
 }
 
-// 显示洗衣机记录
-const showWashingMachineRecordDialog = () => {
+// 子组件传上来的洗衣记录，打开对话框
+const onShowWashingMachineRecords = (records) => {
+  washingMachineRecords.value = Array.isArray(records) ? records : []
   showWashingMachineRecords.value = true
 }
 
@@ -1045,82 +919,13 @@ const stopPlaybackSimulation = () => {
 }
 
 
-// 设置洗衣机模式
-const setWashingMachineMode = (modeId) => {
-  if (!washingMachinePower.value) return
-  // 洗衣过程中不能切换模式
-  if (washingMachineStatus.value !== 'idle' && washingMachineStatus.value !== 'done') return
-  activeWashingMachineMode.value = modeId
-  lastActiveWashingMachineMode.value = modeId
-}
+// Washing machine moved to widget
 
-// 开始洗衣机工作
-const startWashingMachine = () => {
-  if (!washingMachinePower.value) {
-    return
-  }
-  
-  // 如果已完成，重置状态
-  if (washingMachineStatus.value === 'done') {
-    washingMachineStatus.value = 'idle'
-    washingMachineTime.value = 0
-    washingMachineProgress.value = 0
-    activeWashingMachineMode.value = null
-    return
-  }
-  
-  // 如果没有选择模式，不能开始
-  if (!activeWashingMachineMode.value || washingMachineStatus.value !== 'idle') {
-    return
-  }
-  
-  // 开始洗衣
-  washingMachineStatus.value = 'washing'
-  washingMachineTime.value = 45
-  startWashingSimulation()
-}
+// Washing machine moved to widget
 
-// 设置洗衣机选项
-const setWashingMachineSetting = (settingType, value) => {
-  if (!washingMachinePower.value) return
-  // 洗衣过程中不能修改设置
-  if (washingMachineStatus.value !== 'idle' && washingMachineStatus.value !== 'done') return
-  washingMachineSettings.value[settingType] = value
-}
+// Washing machine moved to widget
 
-// 模拟洗衣进度
-const startWashingSimulation = () => {
-  washingMachineProgress.value = 0
-  washingMachineTime.value = 45 // 默认45分钟
-  
-  const interval = setInterval(() => {
-    if (washingMachineProgress.value < 100 && washingMachineStatus.value !== 'idle') {
-      washingMachineProgress.value += Math.random() * 8
-      washingMachineTime.value = Math.max(0, washingMachineTime.value - 1.2)
-      
-      // 模拟洗衣阶段
-      if (washingMachineProgress.value >= 100) {
-        washingMachineProgress.value = 100
-        washingMachineStatus.value = 'done'
-        washingMachineTime.value = 0
-        clearInterval(interval)
-        
-        // 3秒后重置按钮和进度条
-        setTimeout(() => {
-          activeWashingMachineMode.value = null
-          washingMachineStatus.value = 'idle'
-          washingMachineProgress.value = 0
-        }, 3000)
-      } else if (washingMachineProgress.value >= 60 && washingMachineStatus.value === 'washing') {
-        washingMachineStatus.value = 'spinning'
-      } else if (washingMachineProgress.value >= 30 && washingMachineStatus.value === 'washing') {
-        washingMachineStatus.value = 'rinsing'
-      }
-    } else {
-      clearInterval(interval)
-    }
-  }, 1000)
-}
+// Washing machine moved to widget
 
 // 切换摄像头开关
 const toggleCamera = () => {
@@ -1430,37 +1235,15 @@ onBeforeUnmount(() => stopAirSimulation())
 /* =========================
    Washing machine card
    ========================= */
-.washing-machine-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 24px 18px;
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-card-info h3 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-card-info p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-status-section {
-  margin-bottom: 24px;
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-info {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* Washing machine styles moved to widget */
 
 .washing-progress {
   display: flex;
@@ -1468,20 +1251,10 @@ onBeforeUnmount(() => stopAirSimulation())
   gap: 8px;
 }
 
-.washing-machine-controls {
-  display: flex;
-  gap: 16px;
-  margin-top: 24px;
-  flex-wrap: wrap;
-}
+/* Washing machine styles moved to widget */
 
 /* 洗衣机详细设置样式 */
-.washing-machine-settings {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* Washing machine styles moved to widget */
 
 .setting-group {
   display: flex;
@@ -1535,29 +1308,15 @@ onBeforeUnmount(() => stopAirSimulation())
 }
 
 /* 洗衣机状态图标样式 */
-.washing-machine-card .status-icon.idle {
-  background: var(--color-button-dark);
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-card .status-icon.washing {
-  background: var(--color-blue-500);
-  animation: pulse 2s infinite;
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-card .status-icon.rinsing {
-  background: #60a5fa;
-  animation: pulse 2s infinite;
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-card .status-icon.spinning {
-  background: var(--color-blue-600);
-  animation: pulse 1.5s infinite;
-}
+/* Washing machine styles moved to widget */
 
-.washing-machine-card .status-icon.done {
-  background: #10b981;
-  animation: pulse 1s infinite;
-}
+/* Washing machine styles moved to widget */
 
 /* Camera styles moved to widget */
 
@@ -1693,11 +1452,7 @@ onBeforeUnmount(() => stopAirSimulation())
 /* =========================
    Washing machine start button
    ========================= */
-.washing-machine-start {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+/* Washing machine styles moved to widget */
 
 .start-btn {
   display: flex;

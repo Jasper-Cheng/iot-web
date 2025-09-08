@@ -122,6 +122,7 @@ const toggleAC = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
 }
 
 .air-card-info h3 {

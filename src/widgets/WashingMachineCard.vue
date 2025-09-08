@@ -9,7 +9,7 @@
       <div class="record-button">
         <button 
           class="record-btn"
-          @click="$emit('show-records')"
+          @click="$emit('show-records', washingMachineRecords)"
           title="查看洗衣记录">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -214,6 +214,13 @@ const lastActiveWashingMachineMode = ref(activeWashingMachineMode.value)
 const washingMachineStatus = ref('idle') // idle, washing, rinsing, spinning, done
 const washingMachineTime = ref(0)
 const washingMachineProgress = ref(0)
+
+// Demo records (moved into component)
+const washingMachineRecords = ref([
+  { id: 1, date: '2024-01-15', time: '16:20', duration: '45分钟', mode: 'Normal', status: '完成' },
+  { id: 2, date: '2024-01-14', time: '10:30', duration: '30分钟', mode: 'Quick', status: '完成' },
+  { id: 3, date: '2024-01-13', time: '19:15', duration: '60分钟', mode: 'Heavy', status: '完成' }
+])
 
 const washingMachineSettings = ref({
   temperature: 'cold',
