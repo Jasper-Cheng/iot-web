@@ -1849,7 +1849,7 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   font-weight: 500;
 }
 
-.progress-bar {
+.vacuum-status-section .progress-bar {
   width: 100%;
   height: 8px;
   background: var(--color-button-dark);
@@ -1857,7 +1857,7 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   overflow: hidden;
 }
 
-.progress-fill {
+.vacuum-status-section .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-blue-500) 100%);
   border-radius: 4px;
@@ -3141,51 +3141,7 @@ document.addEventListener('msfullscreenchange', handleFullscreenChange)
   color: var(--color-text-secondary);
 }
 
-.speaker-status-section {
-  margin-bottom: 24px;
-}
-
-.speaker-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.speaker-info .status-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-button-dark);
-  color: var(--color-text-secondary);
-  transition: all 0.3s ease;
-}
-
-.speaker-info .status-icon.playing {
-  background: var(--color-primary);
-  color: white;
-  animation: pulse 2s infinite;
-}
-
-.speaker-info .status-icon.paused {
-  background: var(--color-blue-500);
-  color: white;
-}
-
-.speaker-info .status-text h4 {
-  margin: 0 0 4px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.speaker-info .status-text p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
+/* speaker status section removed */
 
 /* 歌曲信息和歌词区域 */
 .song-lyrics-section {
