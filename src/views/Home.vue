@@ -505,40 +505,7 @@ const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
 }
 
-// =========================
-// Camera module: independent room selector
-// - roomLabel: label for the selector
-// - selectedCameraRoom: local selection (independent from nav)
-// - cameraMenuOpen: dropdown visibility
-// =========================
-const roomLabel = computed(() => {
-  const map = {
-    'living': 'Living Room',
-    'dining': 'Dining Room',
-    'bedroom': 'Bed Room',
-    'bathroom': 'Bath Room',
-    'backyard': 'Backyard'
-  }
-  // 当 activeRoom 为 all 时，默认显示 Living Room
-  return map[selectedCameraRoom.value] || 'Living Room'
-})
-
-// Camera 独立选择的房间（不影响 room-navigation）
-// 初始化选择器为第一个非 all 的房间
-const selectedCameraRoom = ref('living')
-const cameraMenuOpen = ref(false)
-
-// room-navigation 改变时，自动同步 room-selector 的显示值
-watch(activeRoom, (val) => {
-  if (val === 'all') return
-  selectedCameraRoom.value = val
-})
-
-// room-selector 改变时，只影响自身，不修改 activeRoom
-const selectCameraRoom = (roomId) => {
-  selectedCameraRoom.value = roomId
-  cameraMenuOpen.value = false
-}
+// Camera moved to widget
 
 // 示例：按房间提供不同演示视频地址（可接入真实流）
 const cameraSources = {
@@ -927,54 +894,10 @@ const stopPlaybackSimulation = () => {
 
 // Washing machine moved to widget
 
-// 切换摄像头开关
-const toggleCamera = () => {
-  cameraPower.value = !cameraPower.value
-}
+// Camera moved to widget
 
 // =========================
-// Fullscreen functionality
-// =========================
-const isFullscreen = ref(false)
-
-const toggleFullscreen = () => {
-  const cameraView = document.querySelector('.camera-view')
-  if (!cameraView) return
-
-  if (!isFullscreen.value) {
-    // Enter fullscreen
-    if (cameraView.requestFullscreen) {
-      cameraView.requestFullscreen()
-    } else if (cameraView.webkitRequestFullscreen) {
-      cameraView.webkitRequestFullscreen()
-    } else if (cameraView.msRequestFullscreen) {
-      cameraView.msRequestFullscreen()
-    }
-  } else {
-    // Exit fullscreen
-    if (document.exitFullscreen) {
-      document.exitFullscreen()
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen()
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen()
-    }
-  }
-}
-
-// Listen for fullscreen changes
-const handleFullscreenChange = () => {
-  isFullscreen.value = !!(
-    document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.msFullscreenElement
-  )
-}
-
-// Add event listeners for fullscreen changes
-document.addEventListener('fullscreenchange', handleFullscreenChange)
-document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
-document.addEventListener('msfullscreenchange', handleFullscreenChange)
+// Camera moved to widget
 
 // =========================
 // Air Purifier state and modes
