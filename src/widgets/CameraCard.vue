@@ -231,10 +231,10 @@ onBeforeUnmount(() => {
 .room-selector {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 12px 20px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--color-bg);
   color: var(--color-text-primary);
 }
@@ -258,8 +258,8 @@ onBeforeUnmount(() => {
 .camera-view { position: relative; margin-top: 12px; height: 200px; background: var(--color-button-dark); border-radius: 12px; overflow: hidden; }
 .camera-view:hover .fullscreen-button { opacity: 1; }
 
-.room-selector-menu { position: absolute; right: 0; top: 40px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: 0 4px 12px var(--shadow-soft); z-index: 10; }
-.room-selector-item { padding: 6px 10px; background: transparent; border: 1px solid transparent; color: var(--color-text-primary); width: 160px; text-align: left; }
+.room-selector-menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 10px; box-shadow: 0 8px 24px var(--shadow-soft); z-index: 1000; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.room-selector-item { padding: 6px 10px; background: transparent; border: 1px solid transparent; color: var(--color-text-primary); width: 100%; text-align: left; border-radius: 8px; }
 .room-selector-item:hover { background: var(--color-hover); }
 .room-selector-item.selected { border-color: var(--color-primary); color: var(--color-primary); }
 
