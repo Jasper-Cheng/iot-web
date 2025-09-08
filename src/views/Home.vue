@@ -87,8 +87,8 @@
               <path v-if="device.type === 'light'" d="M12 2a7 7 0 0 0-7 7c0 3 2 5 4 6v3h6v-3c2-1 4-3 4-6a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
 
               <path v-else-if="device.type === 'tv'" d="M3 7h18v10H3zM7 17v2M17 17v2" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path v-else-if="device.type === 'vacuum'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path v-else-if="device.type === 'thermostat'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path v-else-if="device.type === 'detection'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path v-else-if="device.type === 'socket'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
           </div>
           <div class="device-info">
@@ -693,7 +693,7 @@ const devices = ref([
   { id: 1, name: 'Smart Light', model: 'Bardi Smart Light', type: 'light', power: false },
   { id: 2, name: 'Smart TV', model: 'Samsung QBOC', type: 'tv', power: true },
   { id: 3, name: 'Fall Detection', model: 'KLAZ Vacuum', type: 'detection', power: false },
-  { id: 4, name: 'Thermostat', model: 'Tuya Zigbe', type: 'thermostat', power: false }
+  { id: 4, name: 'Smart Socket', model: 'Tuya Zigbe', type: 'socket', power: false }
 ])
 
 // =========================
