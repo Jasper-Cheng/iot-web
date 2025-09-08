@@ -178,7 +178,7 @@ const startCleaningSimulation = () => {
 .status-icon.cleaning { background: var(--color-primary); animation: pulse 2s infinite; }
 .status-icon.charging { background: var(--color-blue-500); }
 .status-icon.error { background: var(--color-red-500); }
-.status-icon.done { background: var(--color-green-500); animation: pulse 1s infinite; }
+.status-icon.done { background: #10b981; animation: pulse 1s infinite; }
 
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
