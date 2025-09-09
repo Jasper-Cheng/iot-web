@@ -64,6 +64,9 @@
           <MusicCard />
           <SocketsCard />
         </div>
+        <div class="color-control-row">
+          <ColorControlCard />
+        </div>
       </div>
     </div>
   </div>
@@ -86,6 +89,7 @@ import WiFiCard from '../widgets/WiFiCard.vue'
 import TvCard from '../widgets/TvCard.vue'
 import MusicCard from '../widgets/MusicCard.vue'
 import SocketsCard from '../widgets/SocketsCard.vue'
+import ColorControlCard from '../widgets/ColorControlCard.vue'
 
 // =========================
 // Room navigation data/state
@@ -247,6 +251,15 @@ const setActiveRoom = (roomId) => {
 }
 
 .music-row > * {
+  flex: 1;
+}
+
+.color-control-row {
+  display: flex;
+  width: 100%;
+}
+
+.color-control-row > * {
   flex: 1;
 }
 
