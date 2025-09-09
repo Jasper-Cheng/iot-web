@@ -469,7 +469,7 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 .setting-group h5 { margin: 0 0 8px 0; font-size: 12px; color: var(--color-text-secondary); }
 .setting-options { display: flex; gap: 8px; flex-wrap: wrap; }
 .setting-btn { height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary); font-size: 12px; }
-.setting-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-white); }
+.setting-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-text); }
 .setting-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* States */

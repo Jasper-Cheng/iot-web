@@ -316,7 +316,7 @@ onBeforeUnmount(() => stopAirSimulation())
 
 .mode-row .mode-btn.active { 
   background: var(--color-primary); 
-  color: var(--color-white); 
+  color: var(--color-primary-text); 
   border-color: var(--color-primary); 
 }
 
@@ -394,7 +394,7 @@ onBeforeUnmount(() => stopAirSimulation())
 .timer-btn.active { 
   background: var(--color-primary); 
   border-color: var(--color-primary); 
-  color: var(--color-white); 
+  color: var(--color-primary-text); 
 }
 
 .timer-btn.disabled { 

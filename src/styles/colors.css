@@ -3,6 +3,7 @@
   /* 主色调 */
   --color-primary: #BFFE01;
   --color-primary-hover: #A8E600;
+  --color-primary-text: #000000; /* 主色调背景上的文字颜色 */
   
   /* 背景色系 */
   --color-bg-primary: #0e1925;
@@ -75,6 +76,9 @@
 
 /* 浅色主题 */
 [data-theme="light"] {
+  /* 主色调文字颜色（浅色主题） */
+  --color-primary-text: #ffffff; /* 浅色主题下主色调背景上的文字颜色 */
+  
   --color-bg-primary: #f8f9fa;
   --color-bg-secondary: #e9ecef;
   --color-bg-sidebar: #ffffff;
@@ -140,6 +144,9 @@
 
 /* 深色主题（默认） */
 [data-theme="dark"] {
+  /* 主色调文字颜色（深色主题） */
+  --color-primary-text: #000000; /* 深色主题下主色调背景上的文字颜色 */
+  
   --color-bg-primary: #0e1925;
   --color-bg-secondary: #09090b;
   --color-bg-sidebar: #18181a;

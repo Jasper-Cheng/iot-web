@@ -495,7 +495,7 @@ const toggleFreezerSterilization = () => {
 
 .refrigerator-modes-header .mode-btn.active {
   background: var(--color-primary);
-  color: var(--color-gray-900);
+  color: var(--color-primary-text);
   border-color: var(--color-primary);
   font-weight: 600;
 }

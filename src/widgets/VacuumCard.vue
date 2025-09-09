@@ -206,7 +206,7 @@ const closeRecordDialog = () => {
 .status-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--color-button-dark); transition: all 0.3s ease; }
 .status-icon svg { width: 24px; height: 24px; color: var(--color-text-secondary); }
 .status-icon.idle { background: var(--color-button-dark); }
-.status-icon.cleaning { background: var(--color-primary); animation: pulse 2s infinite; }
+.status-icon.cleaning { background: var(--color-primary); color: var(--color-primary-text); animation: pulse 2s infinite; }
 .status-icon.charging { background: var(--color-blue-500); }
 .status-icon.error { background: var(--color-red-500); }
 .status-icon.done { background: var(--color-emerald-500); animation: pulse 1s infinite; }

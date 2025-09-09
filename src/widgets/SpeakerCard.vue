@@ -639,7 +639,7 @@ onBeforeUnmount(() => {
   width: 56px;
   height: 56px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-primary-text);
   border-color: var(--color-primary);
 }
 
