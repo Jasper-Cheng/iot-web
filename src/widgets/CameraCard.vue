@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
 .mic-button svg { width: 18px; height: 18px; }
 .mic-button.listening { border-color: var(--color-primary); color: var(--color-primary); }
 
-.camera-view { position: relative; margin-top: 12px; height: 320px; background: var(--color-button-dark); border-radius: 12px; overflow: hidden; }
+.camera-view { position: relative; margin-top: 12px; height: 280px; background: var(--color-button-dark); border-radius: 12px; overflow: hidden; }
 .camera-view:hover .fullscreen-button { opacity: 1; }
 
 .room-selector-menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 10px; box-shadow: 0 8px 24px var(--shadow-soft); z-index: 1000; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
