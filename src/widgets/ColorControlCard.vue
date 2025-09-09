@@ -19,8 +19,10 @@
           :class="['segmented-btn', { 
             active: activePreset === preset.id,
             'first': index === 0,
-            'last': index === colorPresets.length - 1
+            'last': index === colorPresets.length - 1,
+            disabled: !colorControlOn
           }]"
+          :disabled="!colorControlOn"
           @click="setActivePreset(preset.id)"
         >
           {{ preset.name }}
@@ -58,10 +60,11 @@
           max="100" 
           v-model="brightness" 
           class="slider"
+          :disabled="!colorControlOn"
           @input="updateBrightness"
         />
       </div>
-      <div class="slider-value">{{ brightness }}%</div>
+      <button class="reset-button" :disabled="!colorControlOn" @click="resetToDefault">恢复默认</button>
     </div>
   </div>
 </template>
@@ -73,17 +76,22 @@ export default {
   name: 'ColorControlCard',
   setup() {
     const colorControlOn = ref(true)
-    const activePreset = ref('neon')
+    const activePreset = ref('primary')
     const colorIntensity = ref(55)
     const brightness = ref(55)
     const selectedColor = ref({ hue: 0 })
     const colorWheel = ref(null)
 
     const colorPresets = [
-      { id: 'neon', name: 'Neon' },
-      { id: 'warm', name: 'Warm' },
-      { id: 'cool', name: 'Cool' }
+      { id: 'primary', name: 'primary' },
+      { id: 'bg-card', name: 'bg card' },
+      { id: 'text', name: 'text' }
     ]
+
+    // 记录主题初始默认值
+    const defaultPrimary = ref('')
+    const defaultBgCard = ref('')
+    const defaultTextPrimary = ref('')
 
     // 半径配置：外环半径、内环半径
     const outerRadius = 100
@@ -120,32 +128,146 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       return `#${f(0)}${f(8)}${f(4)}`
     }
 
-    // 计算当前选中颜色的十六进制值
+    // 计算当前选中颜色的十六进制值（包含透明度）
     const selectedColorHex = computed(() => {
       const hue = selectedColor.value.hue
       const saturation = 100
       const lightness = 50
-      return hslToHex(hue, saturation, lightness)
+      const alpha = Math.round((brightness.value / 100) * 255) // 将0-100转换为0-255
+      const hex = hslToHex(hue, saturation, lightness)
+      const alphaHex = alpha.toString(16).padStart(2, '0').toUpperCase()
+      return '#' + alphaHex + hex.substring(1) // 透明度在前两位
     })
+
+    // 计算白色小球选中的颜色（包含透明度，用于滑块小球）
+    const selectedColorForSlider = computed(() => {
+      const hue = selectedColor.value.hue
+      const saturation = 100
+      const lightness = 50
+      const alpha = brightness.value / 100 // 将0-100转换为0-1
+      return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`
+    })
+
+    const applyCurrentColorToTheme = () => {
+      if (!colorControlOn.value) return
+      const root = document.documentElement
+      const colorValue = selectedColorForSlider.value
+      let varName = null
+      if (activePreset.value === 'primary') varName = '--color-primary'
+      else if (activePreset.value === 'bg-card') varName = '--color-bg-card'
+      else if (activePreset.value === 'text') varName = '--color-text-primary'
+      if (varName) root.style.setProperty(varName, colorValue)
+    }
+
+    // 将任意颜色字符串解析为 HSLA
+    const hexToRgba = (hex) => {
+      let h = hex.replace('#', '').trim()
+      if (h.length === 3) {
+        h = h.split('').map(c => c + c).join('')
+      }
+      let a = 255
+      if (h.length === 8) {
+        a = parseInt(h.slice(0, 2), 16)
+        h = h.slice(2)
+      }
+      const r = parseInt(h.slice(0, 2), 16)
+      const g = parseInt(h.slice(2, 4), 16)
+      const b = parseInt(h.slice(4, 6), 16)
+      return { r, g, b, a }
+    }
+
+    const rgbToHsl = (r, g, b) => {
+      r /= 255; g /= 255; b /= 255
+      const max = Math.max(r, g, b), min = Math.min(r, g, b)
+      let h = 0, s = 0
+      const l = (max + min) / 2
+      if (max !== min) {
+        const d = max - min
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 5); break
+          case g: h = (b - r) / d + 1; break
+          case b: h = (r - g) / d + 3; break
+        }
+        h *= 60
+      }
+      return { h: Math.round(h % 360), s: Math.round(s * 100), l: Math.round(l * 100) }
+    }
+
+    const parseCssColorToHsla = (value) => {
+      if (!value) return { h: 0, s: 100, l: 50, a: 1 }
+      const v = value.trim()
+      if (v.startsWith('#')) {
+        const { r, g, b, a } = hexToRgba(v)
+        const { h, s, l } = rgbToHsl(r, g, b)
+        return { h, s, l, a: a / 255 }
+      }
+      if (v.startsWith('rgb')) {
+        // rgb or rgba
+        const nums = v.replace(/rgba?\(|\)|\s/g, '').split(',').map(Number)
+        const [r, g, b, a = 1] = nums
+        const { h, s, l } = rgbToHsl(r, g, b)
+        return { h, s, l, a }
+      }
+      if (v.startsWith('hsl')) {
+        const nums = v.replace(/hsla?\(|\)|\s|%/g, '').split(',').map(Number)
+        const [h, s, l, a = 1] = nums
+        return { h, s, l, a }
+      }
+      // fallback
+      return { h: 0, s: 100, l: 50, a: 1 }
+    }
+
+    const loadPresetColorFromTheme = (presetId) => {
+      const cs = getComputedStyle(document.documentElement)
+      let varName = '--color-primary'
+      if (presetId === 'bg-card') varName = '--color-bg-card'
+      else if (presetId === 'text') varName = '--color-text-primary'
+      const raw = cs.getPropertyValue(varName)
+      const { h, a } = parseCssColorToHsla(raw)
+      selectedColor.value = { hue: h }
+      const alphaPercent = Math.round((a ?? 1) * 100)
+      brightness.value = alphaPercent
+      colorIntensity.value = alphaPercent
+    }
+
+    const resetToDefault = () => {
+      if (!colorControlOn.value) return
+      const root = document.documentElement
+      let defaultColor = ''
+      if (activePreset.value === 'primary' && defaultPrimary.value) {
+        root.style.setProperty('--color-primary', defaultPrimary.value)
+        defaultColor = defaultPrimary.value
+      } else if (activePreset.value === 'bg-card' && defaultBgCard.value) {
+        root.style.setProperty('--color-bg-card', defaultBgCard.value)
+        defaultColor = defaultBgCard.value
+      } else if (activePreset.value === 'text' && defaultTextPrimary.value) {
+        root.style.setProperty('--color-text-primary', defaultTextPrimary.value)
+        defaultColor = defaultTextPrimary.value
+      }
+
+      // 同步更新色轮选中和滑块（根据默认颜色解析）
+      if (defaultColor) {
+        const { h, a } = parseCssColorToHsla(defaultColor)
+        selectedColor.value = { hue: h }
+        const alphaPercent = Math.round((a ?? 1) * 100)
+        brightness.value = alphaPercent
+        colorIntensity.value = alphaPercent
+      }
+    }
 
     const toggleColorControl = () => {
       colorControlOn.value = !colorControlOn.value
     }
 
     const setActivePreset = (presetId) => {
+      // 只有在开关开启时才能切换预设
+      if (!colorControlOn.value) return
+      
       activePreset.value = presetId
-      switch (presetId) {
-        case 'neon':
-          selectedColor.value = { hue: 0 }
-          // 预设只改变颜色，不改变透明度
-          break
-        case 'warm':
-          selectedColor.value = { hue: 30 }
-          break
-        case 'cool':
-          selectedColor.value = { hue: 200 }
-          break
-      }
+      // 切换预设时，从当前主题变量读取颜色，初始化色相与透明度
+      loadPresetColorFromTheme(presetId)
+      applyCurrentColorToTheme()
     }
 
     const updateHueFromPosition = (clientX, clientY) => {
@@ -161,6 +283,7 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
       // 小球只负责选择颜色，不改变透明度
       selectedColor.value.hue = angle
+      applyCurrentColorToTheme()
     }
 
     const startDrag = (event) => {
@@ -185,13 +308,23 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     }
 
     const updateBrightness = () => {
-      // 滑块只负责调整透明度
+      // 只有在开关开启时才能调整透明度
+      if (!colorControlOn.value) return
       colorIntensity.value = brightness.value
       console.log('Transparency updated:', brightness.value)
+      applyCurrentColorToTheme()
     }
 
     onMounted(() => {
-      setActivePreset('neon')
+      // 记录初始默认主题值（使用提供的初始值）
+      defaultPrimary.value = '#BFFE01'
+      defaultBgCard.value = '#18181a'
+      defaultTextPrimary.value = '#FFFFFF'
+
+      setActivePreset('primary')
+      // 首次根据当前主题变量加载颜色
+      loadPresetColorFromTheme(activePreset.value)
+      applyCurrentColorToTheme()
     })
 
     return {
@@ -204,10 +337,12 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       colorPresets,
       selectorStyle,
       selectedColorHex,
+      selectedColorForSlider,
       toggleColorControl,
       setActivePreset,
       startDrag,
-      updateBrightness
+      updateBrightness,
+      resetToDefault
     }
   }
 }
@@ -333,6 +468,18 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
   background: rgba(255, 255, 255, 0.05);
 }
 
+.segmented-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.segmented-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .color-wheel-section {
   display: flex;
   justify-content: center;
@@ -423,7 +570,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 8px;
 }
 
 .slider-icon {
@@ -454,13 +600,18 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
   cursor: pointer;
 }
 
+.slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: v-bind(selectedColorForSlider);
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
@@ -470,21 +621,23 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: v-bind(selectedColorForSlider);
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
-
-.slider-value {
-  min-width: 40px;
-  text-align: center;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  background: var(--color-button-dark);
-  padding: 6px 12px;
+.reset-button {
+  min-width: 68px;
+  height: 32px;
+  padding: 0 10px;
   border-radius: 8px;
   border: 1px solid var(--color-border);
+  background: var(--color-button-dark);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.reset-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
