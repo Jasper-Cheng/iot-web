@@ -26,49 +26,40 @@
           <!-- 空调控制卡片 -->
           <AirCoolerCard />
 
-        <!-- 智能设备列表 -->
-      <div class="devices-list">
-        <SmartLightCard />
-        <SmartTvCard />
-        <FallDetectionCard />
-        <SmartSocketCard />
-      </div>
-      
-        <!-- 摄像头模块（移动到下方） -->
-        <CameraCard :rooms="rooms" :activeRoom="activeRoom" />
-
-        <!-- 扫地机器人控制面板 -->
-        <VacuumCard />
-
-        <!-- 洗衣机控制面板 -->
-        <WashingMachineCard />
-        
-        <!-- 冰箱控制面板 -->
-        <RefrigeratorCard />
-         
-         <!-- 音响控制面板 -->
-        <SpeakerCard />
-         
-        <!-- 空气净化器模块 -->
-        <AirPurifierCard />
-         
-              </div>
-            </div>
-
-            </div>
+          <!-- 智能设备列表 -->
+          <div class="devices-list">
+            <SmartLightCard />
+            <SmartTvCard />
+            <FallDetectionCard />
+            <SmartSocketCard />
           </div>
+          
+          <!-- 摄像头模块 -->
+          <CameraCard :rooms="rooms" :activeRoom="activeRoom" />
 
+          <!-- 扫地机器人控制面板 -->
+          <VacuumCard />
 
-
-
+          <!-- 洗衣机控制面板 -->
+          <WashingMachineCard />
+          
+          <!-- 冰箱控制面板 -->
+          <RefrigeratorCard />
+           
+          <!-- 音响控制面板 -->
+          <SpeakerCard />
+           
+          <!-- 空气净化器模块 -->
+          <AirPurifierCard />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import AirCoolerCard from '../widgets/AirCoolerCard.vue'
-// =========================
-// Imports
-// =========================
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import CameraCard from '../widgets/CameraCard.vue'
 import VacuumCard from '../widgets/VacuumCard.vue'
 import WashingMachineCard from '../widgets/WashingMachineCard.vue'
@@ -103,17 +94,6 @@ const activeRoom = ref('all')
 const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
 }
-
-
-// 示例：按房间提供不同演示视频地址（可接入真实流）
-const cameraSources = {
-  living: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-  dining: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
-  bedroom: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
-  bathroom: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
-  backyard: 'https://media.w3.org/2010/05/video/movie_300.mp4'
-}
-
 </script>
 
 <style scoped>
@@ -240,128 +220,6 @@ const cameraSources = {
 
 
 
-
-
-
-/* =========================
-   Washing machine card
-   ========================= */
-
-
-
-
-
-.washing-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-
-/* 洗衣机详细设置样式 */
-
-.setting-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.setting-group h5 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.setting-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.setting-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 50px;
-  text-align: center;
-}
-
-.setting-btn:hover:not(:disabled) {
-  background: var(--color-hover);
-  color: var(--color-text-primary);
-}
-
-.setting-btn.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.setting-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 16px;
-}
-
-.power-switch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.switch-label {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.switch-button {
-  width: 32px;
-  height: 20px;
-  background: var(--color-switch-indicator);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.switch-button.active {
-  background: var(--color-primary);
-}
-
-.switch-button::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  width: 14px;
-  height: 14px;
-  background: var(--color-switch-indicator-active);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.switch-button.active::after {
-  left: 16px;
-}
-
-
-
 /* =========================
    Devices list
    ========================= */
@@ -370,146 +228,6 @@ const cameraSources = {
   flex: 1;
   flex-direction: column;
   gap: 16px;
-}
-
-
-/* =========================
-   Washing machine start button
-   ========================= */
-
-.start-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.start-btn:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-}
-
-.start-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.start-btn:disabled,
-.start-btn.disabled {
-  background: var(--color-border);
-  color: var(--color-text-secondary);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.start-btn svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-
-
-/* =========================
-   Record button styles
-   ========================= */
-.record-button {
-  display: flex;
-  align-items: center;
-}
-
-.record-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.record-btn:hover {
-  background: var(--color-hover);
-  color: var(--color-text-primary);
-  border-color: var(--color-primary);
-}
-
-.record-btn svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-
-
-
-/* Generic mode styles (used by vacuum, washing machine, refrigerator) */
-.mode-div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.mode-btn {
-  border: none;
-  border-radius: 10px;
-  background: var(--color-button-dark);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 10px 24px;
-}
-
-.mode-btn:hover {
-  background: var(--color-button-dark-hover);
-  transform: translateY(-2px);
-}
-
-.mode-btn.active {
-  border: 1px solid var(--color-primary);
-  color: white;
-}
-
-.mode-btn:disabled,
-.mode-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mode-btn svg {
-  width: 28px;
-  height: 28px;
-  color: white;
-  stroke: white;
-}
-
-.mode-btn.active svg {
-  width: 28px;
-  height: 28px;
-  color: var(--color-primary);
-}
-
-.mode-btn span {
-  font-size: 12px;
-  font-weight: 500;
-  color: white;
-  text-align: center;
 }
 
 </style>
