@@ -117,7 +117,7 @@ const toggleAC = () => {
   flex: 1;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 24px 18px;
+  padding: 16px 18px;
 }
 
 .card-header {
@@ -259,7 +259,7 @@ const toggleAC = () => {
   font-weight: 400;
   color: white;
   text-shadow: 0 2px 4px var(--color-border-light);
-  padding: 24px 20px;
+  padding: 20px 18px;
   border-radius: 50%;
   backdrop-filter: blur(6px);
 }
