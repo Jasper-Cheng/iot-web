@@ -12,14 +12,20 @@
     </div>
 
     <div class="preset-buttons">
-      <button 
-        v-for="preset in colorPresets" 
-        :key="preset.id"
-        :class="['preset-btn', { active: activePreset === preset.id }]"
-        @click="setActivePreset(preset.id)"
-      >
-        {{ preset.name }}
-      </button>
+      <div class="segmented-control">
+        <button 
+          v-for="(preset, index) in colorPresets" 
+          :key="preset.id"
+          :class="['segmented-btn', { 
+            active: activePreset === preset.id,
+            'first': index === 0,
+            'last': index === colorPresets.length - 1
+          }]"
+          @click="setActivePreset(preset.id)"
+        >
+          {{ preset.name }}
+        </button>
+      </div>
     </div>
 
     <div class="color-wheel-section">
@@ -230,30 +236,53 @@ export default {
 
 .preset-buttons {
   display: flex;
-  gap: 8px;
+  justify-content: center;
+  padding: 0 8px;
 }
 
-.preset-btn {
-  flex: 1;
-  padding: 10px 16px;
+.segmented-control {
+  display: flex;
   background: var(--color-button-dark);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.segmented-btn {
+  flex: 1;
+  padding: 14px 24px;
+  background: transparent;
+  border: none;
   color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
-.preset-btn.active {
-  background: var(--color-primary);
-  color: var(--color-primary-text);
-  border-color: var(--color-primary);
+.segmented-btn.first {
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
 }
 
-.preset-btn:hover:not(.active) {
-  background: var(--color-button-hover);
+.segmented-btn.last {
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.segmented-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.segmented-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .color-wheel-section {
@@ -354,6 +383,7 @@ export default {
   background: var(--color-button-dark);
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
 }
 
