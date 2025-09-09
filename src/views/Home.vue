@@ -80,22 +80,6 @@
      </div>
    </div>
 
-  <!-- 洗衣机关闭确认对话框 -->
-  <div v-if="showWashConfirmDialog" class="confirm-dialog-overlay" @click="cancelTurnOffWashingMachine">
-    <div class="confirm-dialog" @click.stop>
-      <div class="confirm-dialog-header">
-        <h3>确认关闭洗衣机</h3>
-      </div>
-      <div class="confirm-dialog-content">
-        <p>洗衣机正在运行中，确定要关闭吗？</p>
-        <p class="warning-text">关闭后洗衣进度将丢失，需要重新开始。</p>
-      </div>
-      <div class="confirm-dialog-actions">
-        <button class="cancel-btn" @click="cancelTurnOffWashingMachine">取消</button>
-        <button class="confirm-btn" @click="confirmTurnOffWashingMachine">确认关闭</button>
-      </div>
-    </div>
-  </div>
 
   <!-- 扫地机器人记录对话框 -->
   <div v-if="showVacuumRecords" class="record-dialog-overlay" @click="closeRecordDialog">
@@ -193,10 +177,6 @@ const showVacuumRecords = ref(false)
 
 
 // =========================
-// 取消关闭洗衣机
-const cancelTurnOffWashingMachine = () => {
-  showWashConfirmDialog.value = false
-}
 
 // 子组件传上来的扫地记录，打开对话框
 const vacuumRecords = ref([])
@@ -568,97 +548,6 @@ const closeRecordDialog = () => {
   fill: currentColor;
 }
 
-/* =========================
-   Confirm dialog styles
-   ========================= */
-.confirm-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.confirm-dialog {
-  background: var(--color-bg);
-  border-radius: 16px;
-  padding: 24px;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border);
-}
-
-.confirm-dialog-header {
-  margin-bottom: 16px;
-}
-
-.confirm-dialog-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.confirm-dialog-content {
-  margin-bottom: 24px;
-}
-
-.confirm-dialog-content p {
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.warning-text {
-  color: #f59e0b !important;
-  font-weight: 500;
-}
-
-.confirm-dialog-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.cancel-btn, .confirm-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-}
-
-.cancel-btn {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.cancel-btn:hover {
-  background: var(--color-hover);
-  color: var(--color-text-primary);
-}
-
-.confirm-btn {
-  background: #ef4444;
-  color: white;
-}
-
-.confirm-btn:hover {
-  background: #dc2626;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
 
 /* =========================
    Record button styles
