@@ -9,13 +9,15 @@
     </div>
     <div class="tv-info">
       <h4>TV</h4>
-      <p>{{ tvStatus ? 'On' : 'Off' }}</p>
-    </div>
-    <div class="tv-switch">
-      <div 
-        :class="['switch-button', { active: tvStatus }]"
-        @click="toggleTV"
-      ></div>
+      <div class="tv-status-row">
+        <p>{{ tvStatus ? 'On' : 'Off' }}</p>
+        <div class="tv-switch">
+          <div 
+            :class="['switch-button', { active: tvStatus }]"
+            @click="toggleTV"
+          ></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -53,19 +55,18 @@ const toggleTV = () => {
 }
 
 .tv-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--color-bg-secondary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-button-dark);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px 12px;
 }
 
 .tv-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--color-text-primary);
 }
 
@@ -73,7 +74,7 @@ const toggleTV = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .tv-info h4 {
@@ -83,7 +84,14 @@ const toggleTV = () => {
   color: var(--color-text-primary);
 }
 
-.tv-info p {
+.tv-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tv-status-row p {
   margin: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
@@ -92,7 +100,6 @@ const toggleTV = () => {
 .tv-switch {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .switch-button {

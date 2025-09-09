@@ -9,13 +9,15 @@
     </div>
     <div class="music-info">
       <h4>Music</h4>
-      <p>{{ musicStatus ? 'On' : 'Off' }}</p>
-    </div>
-    <div class="music-switch">
-      <div 
-        :class="['switch-button', { active: musicStatus }]"
-        @click="toggleMusic"
-      ></div>
+      <div class="music-status-row">
+        <p>{{ musicStatus ? 'On' : 'Off' }}</p>
+        <div class="music-switch">
+          <div 
+            :class="['switch-button', { active: musicStatus }]"
+            @click="toggleMusic"
+          ></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -53,19 +55,18 @@ const toggleMusic = () => {
 }
 
 .music-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--color-bg-secondary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-button-dark);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px 12px;
 }
 
 .music-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--color-text-primary);
 }
 
@@ -73,7 +74,7 @@ const toggleMusic = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .music-info h4 {
@@ -83,7 +84,14 @@ const toggleMusic = () => {
   color: var(--color-text-primary);
 }
 
-.music-info p {
+.music-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.music-status-row p {
   margin: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
@@ -92,7 +100,6 @@ const toggleMusic = () => {
 .music-switch {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .switch-button {

@@ -195,7 +195,7 @@ const setActiveRoom = (roomId) => {
    ========================= */
 .main-content {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 500px;
   gap: 16px;
   align-items: start;
 }
@@ -226,7 +226,7 @@ const setActiveRoom = (roomId) => {
 .right-section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
   align-self: start;
 }
 

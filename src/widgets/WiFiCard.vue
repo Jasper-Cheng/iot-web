@@ -10,13 +10,15 @@
     </div>
     <div class="wifi-info">
       <h4>Wi-Fi</h4>
-      <p>{{ wifiStatus ? 'On' : 'Off' }}</p>
-    </div>
-    <div class="wifi-switch">
-      <div 
-        :class="['switch-button', { active: wifiStatus }]"
-        @click="toggleWiFi"
-      ></div>
+      <div class="wifi-status-row">
+        <p>{{ wifiStatus ? 'On' : 'Off' }}</p>
+        <div class="wifi-switch">
+          <div 
+            :class="['switch-button', { active: wifiStatus }]"
+            @click="toggleWiFi"
+          ></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -54,19 +56,18 @@ const toggleWiFi = () => {
 }
 
 .wifi-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--color-bg-secondary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-button-dark);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px 12px;
 }
 
 .wifi-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--color-text-primary);
 }
 
@@ -74,7 +75,7 @@ const toggleWiFi = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .wifi-info h4 {
@@ -84,7 +85,14 @@ const toggleWiFi = () => {
   color: var(--color-text-primary);
 }
 
-.wifi-info p {
+.wifi-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wifi-status-row p {
   margin: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
@@ -93,7 +101,6 @@ const toggleWiFi = () => {
 .wifi-switch {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .switch-button {

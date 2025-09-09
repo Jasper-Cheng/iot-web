@@ -12,13 +12,15 @@
     </div>
     <div class="sockets-info">
       <h4>Sockets</h4>
-      <p>{{ socketsStatus ? 'On' : 'Off' }}</p>
-    </div>
-    <div class="sockets-switch">
-      <div 
-        :class="['switch-button', { active: socketsStatus }]"
-        @click="toggleSockets"
-      ></div>
+      <div class="sockets-status-row">
+        <p>{{ socketsStatus ? 'On' : 'Off' }}</p>
+        <div class="sockets-switch">
+          <div 
+            :class="['switch-button', { active: socketsStatus }]"
+            @click="toggleSockets"
+          ></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -56,19 +58,18 @@ const toggleSockets = () => {
 }
 
 .sockets-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--color-bg-secondary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-button-dark);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px 12px;
 }
 
 .sockets-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--color-text-primary);
 }
 
@@ -76,7 +77,7 @@ const toggleSockets = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .sockets-info h4 {
@@ -86,7 +87,14 @@ const toggleSockets = () => {
   color: var(--color-text-primary);
 }
 
-.sockets-info p {
+.sockets-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sockets-status-row p {
   margin: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
@@ -95,7 +103,6 @@ const toggleSockets = () => {
 .sockets-switch {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .switch-button {
