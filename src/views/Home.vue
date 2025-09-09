@@ -56,8 +56,9 @@
 
       <!-- 右侧内容区域 -->
       <div class="right-section">
-        <div class="wifi-container">
+        <div class="cards-row">
           <WiFiCard />
+          <TvCard />
         </div>
       </div>
     </div>
@@ -78,6 +79,7 @@ import SmartTvCard from '../widgets/SmartTvCard.vue'
 import FallDetectionCard from '../widgets/FallDetectionCard.vue'
 import SmartSocketCard from '../widgets/SmartSocketCard.vue'
 import WiFiCard from '../widgets/WiFiCard.vue'
+import TvCard from '../widgets/TvCard.vue'
 
 // =========================
 // Room navigation data/state
@@ -188,7 +190,8 @@ const setActiveRoom = (roomId) => {
 .main-content {
   display: grid;
   grid-template-columns: 1fr 400px;
-  gap: 32px;
+  gap: 16px;
+  align-items: start;
 }
 
 /* =========================
@@ -218,13 +221,17 @@ const setActiveRoom = (roomId) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 18px;
+  align-self: start;
 }
 
-.wifi-container {
-  width: 50%;
+.cards-row {
   display: flex;
-  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.cards-row > * {
+  flex: 1;
 }
 
 .room-content {

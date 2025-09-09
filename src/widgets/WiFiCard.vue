@@ -40,11 +40,12 @@ const toggleWiFi = () => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px;
   display: flex;
   align-items: center;
   gap: 12px;
   transition: all 0.3s ease;
+  min-height: 80px;
 }
 
 .wifi-card:hover {
