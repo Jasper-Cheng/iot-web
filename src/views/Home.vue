@@ -28,32 +28,30 @@
 
         <!-- 智能设备列表 -->
       <div class="devices-list">
-        <div 
-          v-for="device in devices" 
+        <SmartLightCard 
+          v-for="device in devices.filter(d => d.type === 'light')" 
           :key="device.id"
-          class="device-card"
-        >
-          <div class="device-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path v-if="device.type === 'light'" d="M12 2a7 7 0 0 0-7 7c0 3 2 5 4 6v3h6v-3c2-1 4-3 4-6a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-
-              <path v-else-if="device.type === 'tv'" d="M3 7h18v10H3zM7 17v2M17 17v2" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path v-else-if="device.type === 'detection'" d="M12 2a10 10 0 0 0-10 10c0 5.5 4.5 10 10 10s10-4.5 10-10c0-5.5-4.5-10-10-10z" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path v-else-if="device.type === 'socket'" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-          </div>
-          <div class="device-info">
-            <h4>{{ device.name }}</h4>
-            <p>{{ device.model }}</p>
-          </div>
-          <div class="device-switch">
-            <span class="switch-label">{{ device.power ? 'On' : 'Off' }}</span>
-            <div 
-              :class="['switch-button', { active: device.power }]"
-              @click="toggleDevice(device.id)"
-            ></div>
-          </div>
-        </div>
+          :device="device"
+          @toggle="toggleDevice"
+        />
+        <SmartTvCard 
+          v-for="device in devices.filter(d => d.type === 'tv')" 
+          :key="device.id"
+          :device="device"
+          @toggle="toggleDevice"
+        />
+        <FallDetectionCard 
+          v-for="device in devices.filter(d => d.type === 'detection')" 
+          :key="device.id"
+          :device="device"
+          @toggle="toggleDevice"
+        />
+        <SmartSocketCard 
+          v-for="device in devices.filter(d => d.type === 'socket')" 
+          :key="device.id"
+          :device="device"
+          @toggle="toggleDevice"
+        />
       </div>
       
         <!-- 摄像头模块（移动到下方） -->
@@ -97,6 +95,10 @@ import WashingMachineCard from '../widgets/WashingMachineCard.vue'
 import RefrigeratorCard from '../widgets/RefrigeratorCard.vue'
 import SpeakerCard from '../widgets/SpeakerCard.vue'
 import AirPurifierCard from '../widgets/AirPurifierCard.vue'
+import SmartLightCard from '../widgets/SmartLightCard.vue'
+import SmartTvCard from '../widgets/SmartTvCard.vue'
+import FallDetectionCard from '../widgets/FallDetectionCard.vue'
+import SmartSocketCard from '../widgets/SmartSocketCard.vue'
 
 // =========================
 // Room navigation data/state
@@ -409,58 +411,6 @@ const toggleDevice = (deviceId) => {
   gap: 16px;
 }
 
-.device-card {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 16px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 12px;
-  transition: all 0.3s ease;
-}
-
-.device-card:hover {
-  border: 1px solid var(--color-primary);
-}
-
-.device-icon {
-  padding: 10px 10px;
-  background: var(--color-button-dark);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.device-icon svg {
-  width: 24px;
-  height: 24px;
-  color: var(--color-text-secondary);
-}
-
-.device-info h4 {
-  margin: 0 0 6px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.device-info p {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-
-
-.device-switch {
-  display: flex;
-  margin-left: auto;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
 
 /* =========================
    Washing machine start button
