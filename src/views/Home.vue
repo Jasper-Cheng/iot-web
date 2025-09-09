@@ -360,8 +360,6 @@ const rooms = ref([
 const activeRoom = ref('all')
 
 // =========================
-// AC extracted to widget
-
 // 设备数据
 const devices = ref([
   { id: 1, name: 'Smart Light', model: 'Bardi Smart Light', type: 'light', power: false },
@@ -377,7 +375,6 @@ const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
 }
 
-// Camera moved to widget
 
 // 示例：按房间提供不同演示视频地址（可接入真实流）
 const cameraSources = {
@@ -388,15 +385,7 @@ const cameraSources = {
   backyard: 'https://media.w3.org/2010/05/video/movie_300.mp4'
 }
 
-// Camera moved to widget
-
 // =========================
-// Voice input (local speech recognition to text)
-// =========================
-// Camera moved to widget
-
-// AC methods moved to widget
-
 // 切换设备开关
 const toggleDevice = (deviceId) => {
   const device = devices.value.find(d => d.id === deviceId)
@@ -404,12 +393,6 @@ const toggleDevice = (deviceId) => {
     device.power = !device.power
   }
 }
-
-// AC methods moved to widget
-
-// Vacuum moved to widget
-
-// Washing machine moved to widget; keep record dialog states only
 const showVacuumRecords = ref(false)
 const showWashingMachineRecords = ref(false)
 
@@ -476,14 +459,6 @@ const imageError = ref(false)
 const progressBar = ref(null)
 const isDragging = ref(false)
 
-
-
-// Washing machine moved to widget
-
-// Washing machine moved to widget
-
-// Washing machine moved to widget
-
 // 音响状态文本
 const speakerStatusText = computed(() => {
   if (!speakerPower.value) return 'Offline'
@@ -502,16 +477,6 @@ const progressPercentage = computed(() => {
 })
 
 // =========================
-// Camera power state
-// =========================
-// Camera moved to widget
-
-// Vacuum moved to widget
-
-// Washing machine moved to widget
-
-// Washing machine moved to widget
-
 // 取消关闭洗衣机
 const cancelTurnOffWashingMachine = () => {
   showWashConfirmDialog.value = false
@@ -679,20 +644,6 @@ const stopPlaybackSimulation = () => {
     playbackInterval = null
   }
 }
-
-
-// Washing machine moved to widget
-
-// Washing machine moved to widget
-
-// Washing machine moved to widget
-
-// Washing machine moved to widget
-
-// Camera moved to widget
-
-// =========================
-// Camera moved to widget
 
 // =========================
 // Air Purifier state and modes
@@ -892,76 +843,27 @@ onBeforeUnmount(() => stopAirSimulation())
   gap: 16px;
 }
 
-/* =========================
-   Air cooler card
-   ========================= */
-/* Air cooler card styles moved to widget */
-
-/* =========================
-   Vacuum robot card
-   ========================= */
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
-/* Vacuum styles moved to widget */
-
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
-/* Vacuum styles moved to widget */
 
 /* =========================
    Washing machine card
    ========================= */
-/* Washing machine styles moved to widget */
 
-/* Washing machine styles moved to widget */
 
-/* Washing machine styles moved to widget */
 
-/* Washing machine styles moved to widget */
 
-/* Washing machine styles moved to widget */
 
 .washing-progress {
   display: flex;
@@ -969,10 +871,8 @@ onBeforeUnmount(() => stopAirSimulation())
   gap: 8px;
 }
 
-/* Washing machine styles moved to widget */
 
 /* 洗衣机详细设置样式 */
-/* Washing machine styles moved to widget */
 
 .setting-group {
   display: flex;
@@ -1024,19 +924,6 @@ onBeforeUnmount(() => stopAirSimulation())
   opacity: 0.5;
   cursor: not-allowed;
 }
-
-/* 洗衣机状态图标样式 */
-/* Washing machine styles moved to widget */
-
-/* Washing machine styles moved to widget */
-
-/* Washing machine styles moved to widget */
-
-/* Washing machine styles moved to widget */
-
-/* Washing machine styles moved to widget */
-
-/* Camera styles moved to widget */
 
 .card-header {
   display: flex;
@@ -1100,9 +987,7 @@ onBeforeUnmount(() => stopAirSimulation())
   left: 16px;
 }
 
-/* Air cooler temperature section styles moved to widget */
 
-/* Air cooler mode control styles moved to widget */
 
 /* =========================
    Devices list
@@ -1170,7 +1055,6 @@ onBeforeUnmount(() => stopAirSimulation())
 /* =========================
    Washing machine start button
    ========================= */
-/* Washing machine styles moved to widget */
 
 .start-btn {
   display: flex;
