@@ -81,6 +81,8 @@ export default {
     const brightness = ref(55)
     const selectedColor = ref({ hue: 0 })
     const colorWheel = ref(null)
+    const isBootstrapping = ref(true)
+    const STORAGE_KEY = 'colorControlThemeV1'
 
     const colorPresets = [
       { id: 'primary', name: 'primary' },
@@ -98,6 +100,98 @@ export default {
 const innerRadius = 70
 const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环半径差
 
+    // 与 .color-wheel 的 conic-gradient 一致的颜色停靠点（角度→颜色）
+    const colorStops = [
+      { angle: 0, color: '#ff0000' },
+      { angle: 30, color: '#ff8000' },
+      { angle: 60, color: '#ffff00' },
+      { angle: 90, color: '#80ff00' },
+      { angle: 120, color: '#00ff00' },
+      { angle: 150, color: '#BFFE01' },
+      { angle: 180, color: '#00ffff' },
+      { angle: 210, color: '#0080ff' },
+      { angle: 240, color: '#18181a' },
+      { angle: 270, color: '#8000ff' },
+      { angle: 300, color: '#FFFFFF' },
+      { angle: 330, color: '#ff0080' },
+      { angle: 360, color: '#ff0000' }
+    ]
+
+    const backgroundGradient = computed(() => {
+      const stops = colorStops.map(s => `${s.color} ${s.angle}deg`).join(', ')
+      return `conic-gradient(from 0deg, ${stops})`
+    })
+
+    const clampAngle = (deg) => {
+      let a = deg % 360
+      if (a < 0) a += 360
+      return a
+    }
+
+    const lerp = (a, b, t) => Math.round(a + (b - a) * t)
+
+    const hexToRgb = (hex) => {
+      const { r, g, b } = hexToRgba(hex)
+      return { r, g, b }
+    }
+
+    const rgbToHex = (r, g, b) => {
+      const toHex = (v) => v.toString(16).padStart(2, '0')
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase()
+    }
+
+    const getInterpolatedColorAtAngle = (deg) => {
+      const angle = clampAngle(deg)
+      let left = colorStops[0]
+      let right = colorStops[colorStops.length - 1]
+      for (let i = 0; i < colorStops.length - 1; i++) {
+        const a0 = colorStops[i].angle
+        const a1 = colorStops[i + 1].angle
+        if (angle >= a0 && angle <= a1) {
+          left = colorStops[i]
+          right = colorStops[i + 1]
+          break
+        }
+      }
+      const span = right.angle - left.angle || 1
+      const t = Math.min(1, Math.max(0, (angle - left.angle) / span))
+      const c0 = hexToRgb(left.color)
+      const c1 = hexToRgb(right.color)
+      const r = lerp(c0.r, c1.r, t)
+      const g = lerp(c0.g, c1.g, t)
+      const b = lerp(c0.b, c1.b, t)
+      return { r, g, b }
+    }
+
+    const normalizeHex6 = (hex) => {
+      let h = hex.trim()
+      if (!h.startsWith('#')) return null
+      h = h.replace('#', '')
+      if (h.length === 3) h = h.split('').map(c => c + c).join('')
+      if (h.length === 8) h = h.slice(2)
+      if (h.length !== 6) return null
+      return ('#' + h).toUpperCase()
+    }
+
+    const getHueFromCssValue = (value) => {
+      if (!value) return 0
+      const v = value.trim()
+      let normalized = null
+      if (v.startsWith('#')) {
+        normalized = normalizeHex6(v)
+      } else if (v.startsWith('rgb')) {
+        const nums = v.replace(/rgba?\(|\)|\s/g, '').split(',').map(Number)
+        const [r, g, b] = nums
+        normalized = rgbToHex(r, g, b)
+      }
+      if (normalized) {
+        const hit = colorStops.find(s => s.color.toUpperCase() === normalized)
+        if (hit) return hit.angle
+      }
+      const { h } = parseCssColorToHsla(v)
+      return h
+    }
+
 
     const selectorStyle = computed(() => {
       const hue = selectedColor.value.hue
@@ -112,7 +206,7 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     top: `${y}%`,
     width: `${ballSize}px`,     // ✅ 动态宽度
     height: `${ballSize}px`,    // ✅ 动态高度
-    backgroundColor: `hsl(${hue}, 100%, 50%)`
+    backgroundColor: (() => { const { r, g, b } = getInterpolatedColorAtAngle(hue); return `rgb(${r}, ${g}, ${b})` })()
   }
     })
 
@@ -131,25 +225,70 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     // 计算当前选中颜色的十六进制值（包含透明度）
     const selectedColorHex = computed(() => {
       const hue = selectedColor.value.hue
-      const saturation = 100
-      const lightness = 50
-      const alpha = Math.round((brightness.value / 100) * 255) // 将0-100转换为0-255
-      const hex = hslToHex(hue, saturation, lightness)
+      const { r, g, b } = getInterpolatedColorAtAngle(hue)
+      const alpha = Math.round((brightness.value / 100) * 255)
+      const hex = rgbToHex(r, g, b)
       const alphaHex = alpha.toString(16).padStart(2, '0').toUpperCase()
-      return '#' + alphaHex + hex.substring(1) // 透明度在前两位
+      return '#' + alphaHex + hex.substring(1)
     })
 
     // 计算白色小球选中的颜色（包含透明度，用于滑块小球）
     const selectedColorForSlider = computed(() => {
       const hue = selectedColor.value.hue
-      const saturation = 100
-      const lightness = 50
-      const alpha = brightness.value / 100 // 将0-100转换为0-1
-      return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`
+      const { r, g, b } = getInterpolatedColorAtAngle(hue)
+      const alpha = brightness.value / 100
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`
     })
+
+    const readThemeFromStorage = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (!raw) return null
+        return JSON.parse(raw)
+      } catch (e) {
+        return null
+      }
+    }
+
+    const writeThemeToStorage = (data) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const getCurrentThemeObject = () => {
+      const cs = getComputedStyle(document.documentElement)
+      const base = readThemeFromStorage() || {}
+      return {
+        primary: cs.getPropertyValue('--color-primary').trim(),
+        bgCard: cs.getPropertyValue('--color-bg-card').trim(),
+        text: cs.getPropertyValue('--color-text-primary').trim(),
+        primaryAngle: base.primaryAngle ?? null,
+        bgCardAngle: base.bgCardAngle ?? null,
+        textAngle: base.textAngle ?? null
+      }
+    }
+
+    const readThemeDefaults = (themeName) => {
+      const probe = document.createElement('div')
+      probe.setAttribute('data-theme', themeName)
+      probe.style.display = 'none'
+      document.body.appendChild(probe)
+      const cs = getComputedStyle(probe)
+      const vals = {
+        primary: (cs.getPropertyValue('--color-primary') || '').trim(),
+        bgCard: (cs.getPropertyValue('--color-bg-card') || '').trim(),
+        text: (cs.getPropertyValue('--color-text-primary') || '').trim()
+      }
+      document.body.removeChild(probe)
+      return vals
+    }
 
     const applyCurrentColorToTheme = () => {
       if (!colorControlOn.value) return
+      if (isBootstrapping.value) return
       const root = document.documentElement
       const colorValue = selectedColorForSlider.value
       let varName = null
@@ -157,6 +296,13 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       else if (activePreset.value === 'bg-card') varName = '--color-bg-card'
       else if (activePreset.value === 'text') varName = '--color-text-primary'
       if (varName) root.style.setProperty(varName, colorValue)
+      // persist theme variables and last angle for the active preset
+      const theme = getCurrentThemeObject()
+      const angle = clampAngle(selectedColor.value.hue || 0)
+      if (activePreset.value === 'primary') theme.primaryAngle = angle
+      if (activePreset.value === 'bg-card') theme.bgCardAngle = angle
+      if (activePreset.value === 'text') theme.textAngle = angle
+      writeThemeToStorage(theme)
     }
 
     // 将任意颜色字符串解析为 HSLA
@@ -224,8 +370,17 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       if (presetId === 'bg-card') varName = '--color-bg-card'
       else if (presetId === 'text') varName = '--color-text-primary'
       const raw = cs.getPropertyValue(varName)
-      const { h, a } = parseCssColorToHsla(raw)
-      selectedColor.value = { hue: h }
+      const { a } = parseCssColorToHsla(raw)
+      // Prefer saved angle for the preset if present
+      const saved = readThemeFromStorage()
+      let savedAngle = null
+      if (saved) {
+        if (presetId === 'primary') savedAngle = saved.primaryAngle
+        if (presetId === 'bg-card') savedAngle = saved.bgCardAngle
+        if (presetId === 'text') savedAngle = saved.textAngle
+      }
+      const finalHue = (savedAngle != null) ? clampAngle(savedAngle) : getHueFromCssValue(raw)
+      selectedColor.value = { hue: finalHue }
       const alphaPercent = Math.round((a ?? 1) * 100)
       brightness.value = alphaPercent
       colorIntensity.value = alphaPercent
@@ -248,11 +403,25 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
       // 同步更新色轮选中和滑块（根据默认颜色解析）
       if (defaultColor) {
-        const { h, a } = parseCssColorToHsla(defaultColor)
-        selectedColor.value = { hue: h }
+        const hue = getHueFromCssValue(defaultColor)
+        selectedColor.value = { hue }
+        const { a } = parseCssColorToHsla(defaultColor)
         const alphaPercent = Math.round((a ?? 1) * 100)
         brightness.value = alphaPercent
         colorIntensity.value = alphaPercent
+        // 直接持久化当前 CSS 变量（保持与默认值完全一致），避免被插值覆盖
+        const theme = getCurrentThemeObject()
+        const saved = readThemeFromStorage() || {}
+        const angle = clampAngle(hue)
+        if (activePreset.value === 'primary') saved.primaryAngle = angle
+        if (activePreset.value === 'bg-card') saved.bgCardAngle = angle
+        if (activePreset.value === 'text') saved.textAngle = angle
+        writeThemeToStorage({
+          ...theme,
+          primaryAngle: saved.primaryAngle ?? null,
+          bgCardAngle: saved.bgCardAngle ?? null,
+          textAngle: saved.textAngle ?? null
+        })
       }
     }
 
@@ -316,15 +485,37 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     }
 
     onMounted(() => {
-      // 记录初始默认主题值（使用提供的初始值）
-      defaultPrimary.value = '#BFFE01'
-      defaultBgCard.value = '#18181a'
-      defaultTextPrimary.value = '#FFFFFF'
+      // 从 dark 主题读取默认颜色（作为“恢复默认”的目标）
+      const darkDefaults = readThemeDefaults('dark')
+      defaultPrimary.value = darkDefaults.primary || '#BFFE01'
+      defaultBgCard.value = darkDefaults.bgCard || '#18181a'
+      defaultTextPrimary.value = darkDefaults.text || '#FFFFFF'
+      console.log('[ColorControl] defaults from theme:', {
+        primary: defaultPrimary.value,
+        bgCard: defaultBgCard.value,
+        text: defaultTextPrimary.value
+      })
 
-      setActivePreset('primary')
-      // 首次根据当前主题变量加载颜色
-      loadPresetColorFromTheme(activePreset.value)
-      applyCurrentColorToTheme()
+      // 优先从本地存储恢复（如存在），否则保留当前主题不改动
+      const saved = readThemeFromStorage()
+      const root = document.documentElement
+      if (saved && saved.primary && saved.bgCard && saved.text) {
+        root.style.setProperty('--color-primary', saved.primary)
+        root.style.setProperty('--color-bg-card', saved.bgCard)
+        root.style.setProperty('--color-text-primary', saved.text)
+      }
+
+      activePreset.value = 'primary'
+      // 初始化小球角度与透明度：优先使用保存的角度与颜色，其次使用当前主题
+      const initialPrimary = (saved && saved.primary) ? saved.primary : defaultPrimary.value
+      const initHue = (saved && saved.primaryAngle != null) ? clampAngle(saved.primaryAngle) : getHueFromCssValue(initialPrimary)
+      const { a: initA } = parseCssColorToHsla(initialPrimary)
+      selectedColor.value = { hue: initHue }
+      const initAlphaPercent = Math.round((initA ?? 1) * 100)
+      brightness.value = initAlphaPercent
+      colorIntensity.value = initAlphaPercent
+      // 启动完成后才允许写回主题与持久化
+      isBootstrapping.value = false
     })
 
     return {
@@ -338,6 +529,7 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       selectorStyle,
       selectedColorHex,
       selectedColorForSlider,
+      backgroundGradient,
       toggleColorControl,
       setActivePreset,
       startDrag,
@@ -497,22 +689,7 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    #ff0000 0deg,      /* 红色 */
-    #ff8000 30deg,     /* 橙红色 */
-    #ffff00 60deg,     /* 黄色 */
-    #80ff00 90deg,     /* 黄绿色 */
-    #00ff00 120deg,    /* 绿色 */
-    #00ff80 150deg,    /* 青绿色 */
-    #00ffff 180deg,    /* 青色 */
-    #0080ff 210deg,    /* 青蓝色 */
-    #0000ff 240deg,    /* 蓝色 */
-    #8000ff 270deg,    /* 蓝紫色 */
-    #ff00ff 300deg,    /* 紫色 */
-    #ff0080 330deg,    /* 紫红色 */
-    #ff0000 360deg     /* 红色 */
-  );
+  background: v-bind(backgroundGradient);
   position: absolute;
   top: 0;
   left: 0;
