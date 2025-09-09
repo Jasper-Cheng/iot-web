@@ -53,6 +53,13 @@
           <AirPurifierCard />
         </div>
       </div>
+
+      <!-- 右侧内容区域 -->
+      <div class="right-section">
+        <div class="wifi-container">
+          <WiFiCard />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -70,6 +77,7 @@ import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
 import FallDetectionCard from '../widgets/FallDetectionCard.vue'
 import SmartSocketCard from '../widgets/SmartSocketCard.vue'
+import WiFiCard from '../widgets/WiFiCard.vue'
 
 // =========================
 // Room navigation data/state
@@ -201,6 +209,22 @@ const setActiveRoom = (roomId) => {
 
 .left-section::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
+}
+
+/* =========================
+   Right section container
+   ========================= */
+.right-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 18px;
+}
+
+.wifi-container {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
 }
 
 .room-content {
