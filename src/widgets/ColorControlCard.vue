@@ -28,14 +28,18 @@
       </div>
     </div>
 
+    <!-- ✅ 修改后的颜色环 -->
     <div class="color-wheel-section">
-      <div class="color-wheel-container">
-        <div class="color-wheel" ref="colorWheel" @click="handleColorWheelClick">
-          <div class="color-selector" :style="selectorStyle"></div>
-        </div>
+      <div class="color-wheel-container" ref="colorWheel" @mousedown="startDrag" @touchstart="startDrag">
+        <div class="color-wheel"></div>
+        <!-- 黑色内环 -->
+        <div class="inner-circle"></div>
+        <!-- 白色小球 -->
+        <div class="color-selector" :style="selectorStyle"></div>
+        <!-- 中间强度显示 -->
         <div class="intensity-display">
           <div class="intensity-value">{{ colorIntensity }}%</div>
-          <div class="intensity-label">Color intensity</div>
+          <div class="intensity-label">{{ selectedColorHex }}</div>
         </div>
       </div>
     </div>
@@ -63,7 +67,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 export default {
   name: 'ColorControlCard',
@@ -72,7 +76,7 @@ export default {
     const activePreset = ref('neon')
     const colorIntensity = ref(55)
     const brightness = ref(55)
-    const selectedColor = ref({ hue: 0, saturation: 100 })
+    const selectedColor = ref({ hue: 0 })
     const colorWheel = ref(null)
 
     const colorPresets = [
@@ -81,16 +85,47 @@ export default {
       { id: 'cool', name: 'Cool' }
     ]
 
+    // 半径配置：外环半径、内环半径
+    const outerRadius = 100
+const innerRadius = 70
+const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环半径差
+
+
     const selectorStyle = computed(() => {
       const hue = selectedColor.value.hue
-      const saturation = selectedColor.value.saturation
-      const x = 50 + (saturation / 100) * 40 * Math.cos((hue - 90) * Math.PI / 180)
-      const y = 50 + (saturation / 100) * 40 * Math.sin((hue - 90) * Math.PI / 180)
-      return {
-        left: `${x}%`,
-        top: `${y}%`,
-        backgroundColor: `hsl(${hue}, ${saturation}%, 50%)`
+  const rad = (hue - 90) * Math.PI / 180
+  const trackRadius = (outerRadius + innerRadius) / 2  // ✅ 轨道半径
+
+  const x = 50 + (trackRadius / outerRadius) * 50 * Math.cos(rad)
+  const y = 50 + (trackRadius / outerRadius) * 50 * Math.sin(rad)
+
+  return {
+    left: `${x}%`,
+    top: `${y}%`,
+    width: `${ballSize}px`,     // ✅ 动态宽度
+    height: `${ballSize}px`,    // ✅ 动态高度
+    backgroundColor: `hsl(${hue}, 100%, 50%)`
+  }
+    })
+
+    // 将HSL转换为十六进制颜色
+    const hslToHex = (h, s, l) => {
+      l /= 100
+      const a = s * Math.min(l, 1 - l) / 100
+      const f = n => {
+        const k = (n + h / 30) % 12
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+        return Math.round(255 * color).toString(16).padStart(2, '0')
       }
+      return `#${f(0)}${f(8)}${f(4)}`
+    }
+
+    // 计算当前选中颜色的十六进制值
+    const selectedColorHex = computed(() => {
+      const hue = selectedColor.value.hue
+      const saturation = 100
+      const lightness = 50
+      return hslToHex(hue, saturation, lightness)
     })
 
     const toggleColorControl = () => {
@@ -99,51 +134,63 @@ export default {
 
     const setActivePreset = (presetId) => {
       activePreset.value = presetId
-      // Apply preset colors
       switch (presetId) {
         case 'neon':
-          selectedColor.value = { hue: 0, saturation: 100 }
-          colorIntensity.value = 80
+          selectedColor.value = { hue: 0 }
+          // 预设只改变颜色，不改变透明度
           break
         case 'warm':
-          selectedColor.value = { hue: 30, saturation: 80 }
-          colorIntensity.value = 60
+          selectedColor.value = { hue: 30 }
           break
         case 'cool':
-          selectedColor.value = { hue: 200, saturation: 70 }
-          colorIntensity.value = 50
+          selectedColor.value = { hue: 200 }
           break
       }
     }
 
-    const handleColorWheelClick = (event) => {
-      if (!colorControlOn.value) return
-      
+    const updateHueFromPosition = (clientX, clientY) => {
       const rect = colorWheel.value.getBoundingClientRect()
       const centerX = rect.left + rect.width / 2
       const centerY = rect.top + rect.height / 2
-      
-      const x = event.clientX - centerX
-      const y = event.clientY - centerY
-      
-      const angle = Math.atan2(y, x) * 180 / Math.PI + 90
-      const distance = Math.sqrt(x * x + y * y)
-      const maxDistance = rect.width / 2
-      
-      const hue = (angle + 360) % 360
-      const saturation = Math.min(100, (distance / maxDistance) * 100)
-      
-      selectedColor.value = { hue, saturation }
-      colorIntensity.value = Math.round(saturation)
+
+      const x = clientX - centerX
+      const y = clientY - centerY
+
+      let angle = Math.atan2(y, x) * 180 / Math.PI + 90
+      if (angle < 0) angle += 360
+
+      // 小球只负责选择颜色，不改变透明度
+      selectedColor.value.hue = angle
+    }
+
+    const startDrag = (event) => {
+      if (!colorControlOn.value) return
+      updateHueFromPosition(event.clientX || event.touches[0].clientX, event.clientY || event.touches[0].clientY)
+
+      const onMove = (e) => {
+        updateHueFromPosition(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY)
+      }
+
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+        window.removeEventListener('touchmove', onMove)
+        window.removeEventListener('touchend', onUp)
+      }
+
+      window.addEventListener('mousemove', onMove)
+      window.addEventListener('mouseup', onUp)
+      window.addEventListener('touchmove', onMove)
+      window.addEventListener('touchend', onUp)
     }
 
     const updateBrightness = () => {
-      // Update brightness logic here
-      console.log('Brightness updated:', brightness.value)
+      // 滑块只负责调整透明度
+      colorIntensity.value = brightness.value
+      console.log('Transparency updated:', brightness.value)
     }
 
     onMounted(() => {
-      // Initialize with neon preset
       setActivePreset('neon')
     })
 
@@ -156,9 +203,10 @@ export default {
       colorWheel,
       colorPresets,
       selectorStyle,
+      selectedColorHex,
       toggleColorControl,
       setActivePreset,
-      handleColorWheelClick,
+      startDrag,
       updateBrightness
     }
   }
@@ -304,28 +352,46 @@ export default {
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    #ff0000 0deg,
-    #ffff00 60deg,
-    #00ff00 120deg,
-    #00ffff 180deg,
-    #0000ff 240deg,
-    #ff00ff 300deg,
-    #ff0000 360deg
+    #ff0000 0deg,      /* 红色 */
+    #ff8000 30deg,     /* 橙红色 */
+    #ffff00 60deg,     /* 黄色 */
+    #80ff00 90deg,     /* 黄绿色 */
+    #00ff00 120deg,    /* 绿色 */
+    #00ff80 150deg,    /* 青绿色 */
+    #00ffff 180deg,    /* 青色 */
+    #0080ff 210deg,    /* 青蓝色 */
+    #0000ff 240deg,    /* 蓝色 */
+    #8000ff 270deg,    /* 蓝紫色 */
+    #ff00ff 300deg,    /* 紫色 */
+    #ff0080 330deg,    /* 紫红色 */
+    #ff0000 360deg     /* 红色 */
   );
-  position: relative;
-  cursor: pointer;
-  border: 2px solid var(--color-border);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* ✅ 黑色内环 */
+.inner-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;  /* 内环直径，可以调节 */
+  height: 140px;
+  border-radius: 50%;
+  background: #000;
+  z-index: 1;
 }
 
 .color-selector {
   position: absolute;
-  width: 16px;
-  height: 16px;
   border-radius: 50%;
-  border: 3px solid white;
+  border: 5px solid white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transform: translate(-50%, -50%);
   pointer-events: none;
+  z-index: 3;
 }
 
 .intensity-display {
@@ -337,6 +403,7 @@ export default {
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   pointer-events: none;
+  z-index: 2;
 }
 
 .intensity-value {
