@@ -82,7 +82,15 @@ export default {
     const selectedColor = ref({ hue: 0 })
     const colorWheel = ref(null)
     const isBootstrapping = ref(true)
-    const STORAGE_KEY = 'colorControlThemeV1'
+    const STORAGE_KEY_BASE = 'colorControlThemeV1'
+
+    // 仅区分模式：light 或 dark（非 light 一律视为 dark）
+    const getThemeMode = () => {
+      const savedThemeName = localStorage.getItem('theme')
+      const attrThemeName = document.documentElement.getAttribute('data-theme')
+      const themeName = savedThemeName || attrThemeName || 'dark'
+      return themeName === 'light' ? 'light' : 'dark'
+    }
 
     const colorPresets = [
       { id: 'primary', name: 'primary' },
@@ -242,7 +250,9 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
     const readThemeFromStorage = () => {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const mode = getThemeMode()
+        const key = `${STORAGE_KEY_BASE}:${mode}`
+        const raw = localStorage.getItem(key)
         if (!raw) return null
         return JSON.parse(raw)
       } catch (e) {
@@ -252,7 +262,12 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
     const writeThemeToStorage = (data) => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+        const mode = getThemeMode()
+        const key = `${STORAGE_KEY_BASE}:${mode}`
+        const raw = localStorage.getItem(key)
+        const prev = raw ? JSON.parse(raw) : {}
+        const next = { ...(prev || {}), ...(data || {}) }
+        localStorage.setItem(key, JSON.stringify(next))
       } catch (e) {
         // ignore
       }
@@ -485,28 +500,33 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     }
 
     onMounted(() => {
-      // 从 dark 主题读取默认颜色（作为“恢复默认”的目标）
-      const darkDefaults = readThemeDefaults('dark')
-      defaultPrimary.value = darkDefaults.primary || '#BFFE01'
-      defaultBgCard.value = darkDefaults.bgCard || '#18181a'
-      defaultTextPrimary.value = darkDefaults.text || '#FFFFFF'
-      console.log('[ColorControl] defaults from theme:', {
+      // 根据当前主题模式读取默认颜色（作为“恢复默认”的目标）
+      const mode = getThemeMode()
+      const modeDefaults = readThemeDefaults(mode)
+      defaultPrimary.value = modeDefaults.primary || '#BFFE01'
+      defaultBgCard.value = modeDefaults.bgCard || '#18181a'
+      defaultTextPrimary.value = modeDefaults.text || '#FFFFFF'
+      console.log('[ColorControl] defaults from current mode:', mode, {
         primary: defaultPrimary.value,
         bgCard: defaultBgCard.value,
         text: defaultTextPrimary.value
       })
 
-      // 优先从本地存储恢复（如存在），否则保留当前主题不改动
+      // 优先从当前模式的本地存储恢复；否则应用该模式默认值
       const saved = readThemeFromStorage()
       const root = document.documentElement
       if (saved && saved.primary && saved.bgCard && saved.text) {
         root.style.setProperty('--color-primary', saved.primary)
         root.style.setProperty('--color-bg-card', saved.bgCard)
         root.style.setProperty('--color-text-primary', saved.text)
+      } else {
+        root.style.setProperty('--color-primary', defaultPrimary.value)
+        root.style.setProperty('--color-bg-card', defaultBgCard.value)
+        root.style.setProperty('--color-text-primary', defaultTextPrimary.value)
       }
 
       activePreset.value = 'primary'
-      // 初始化小球角度与透明度：优先使用保存的角度与颜色，其次使用当前主题
+      // 初始化小球角度与透明度：优先使用保存的角度与颜色，其次使用该模式默认值
       const initialPrimary = (saved && saved.primary) ? saved.primary : defaultPrimary.value
       const initHue = (saved && saved.primaryAngle != null) ? clampAngle(saved.primaryAngle) : getHueFromCssValue(initialPrimary)
       const { a: initA } = parseCssColorToHsla(initialPrimary)
