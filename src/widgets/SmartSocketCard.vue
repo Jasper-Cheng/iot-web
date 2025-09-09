@@ -20,22 +20,20 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { ref } from 'vue'
 
-// Props
-const props = defineProps({
-  device: {
-    type: Object,
-    required: true
-  }
+// Device information
+const device = ref({
+  id: 4,
+  name: 'Smart Socket',
+  model: 'Tuya Zigbe',
+  type: 'socket',
+  power: false
 })
-
-// Emits
-const emit = defineEmits(['toggle'])
 
 // Methods
 const toggleDevice = () => {
-  emit('toggle', props.device.id)
+  device.value.power = !device.value.power
 }
 </script>
 

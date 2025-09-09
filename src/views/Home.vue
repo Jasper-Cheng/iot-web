@@ -28,30 +28,10 @@
 
         <!-- 智能设备列表 -->
       <div class="devices-list">
-        <SmartLightCard 
-          v-for="device in devices.filter(d => d.type === 'light')" 
-          :key="device.id"
-          :device="device"
-          @toggle="toggleDevice"
-        />
-        <SmartTvCard 
-          v-for="device in devices.filter(d => d.type === 'tv')" 
-          :key="device.id"
-          :device="device"
-          @toggle="toggleDevice"
-        />
-        <FallDetectionCard 
-          v-for="device in devices.filter(d => d.type === 'detection')" 
-          :key="device.id"
-          :device="device"
-          @toggle="toggleDevice"
-        />
-        <SmartSocketCard 
-          v-for="device in devices.filter(d => d.type === 'socket')" 
-          :key="device.id"
-          :device="device"
-          @toggle="toggleDevice"
-        />
+        <SmartLightCard />
+        <SmartTvCard />
+        <FallDetectionCard />
+        <SmartSocketCard />
       </div>
       
         <!-- 摄像头模块（移动到下方） -->
@@ -118,15 +98,6 @@ const rooms = ref([
 const activeRoom = ref('all')
 
 // =========================
-// 设备数据
-const devices = ref([
-  { id: 1, name: 'Smart Light', model: 'Bardi Smart Light', type: 'light', power: false },
-  { id: 2, name: 'Smart TV', model: 'Samsung QBOC', type: 'tv', power: true },
-  { id: 3, name: 'Fall Detection', model: 'KLAZ Vacuum', type: 'detection', power: false },
-  { id: 4, name: 'Smart Socket', model: 'Tuya Zigbe', type: 'socket', power: false }
-])
-
-// =========================
 // Navigation / Mode handlers
 // =========================
 const setActiveRoom = (roomId) => {
@@ -142,16 +113,6 @@ const cameraSources = {
   bathroom: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
   backyard: 'https://media.w3.org/2010/05/video/movie_300.mp4'
 }
-
-// =========================
-// 切换设备开关
-const toggleDevice = (deviceId) => {
-  const device = devices.value.find(d => d.id === deviceId)
-  if (device) {
-    device.power = !device.power
-  }
-}
-
 
 </script>
 
