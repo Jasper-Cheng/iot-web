@@ -306,12 +306,16 @@ onBeforeUnmount(() => stopAirSimulation())
 }
 
 .mode-row .mode-btn {
-  height: 32px; 
-  padding: 0 12px; 
-  border-radius: 8px;
-  border: 1px solid var(--color-border); 
-  background: var(--color-bg);
-  color: var(--color-text-primary);
+  padding: 10px 10px;
+  background: var(--color-button-dark);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .mode-row .mode-btn.active { 

@@ -481,10 +481,13 @@ const toggleFreezerSterilization = () => {
 }
 
 .refrigerator-modes-header .mode-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: transparent;
+  padding: 10px 10px;
+  background: var(--color-button-dark);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
   color: var(--color-text-secondary);
   font-size: 11px;
   font-weight: 500;

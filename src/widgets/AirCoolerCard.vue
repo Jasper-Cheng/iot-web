@@ -16,10 +16,9 @@
 
     <div class="temperature-section">
       <div class="ac-temp">
-        <div class="temp-header">
-          <h4>AC</h4>
-          <h4>Temperature</h4>
-        </div>
+         <div class="temp-header">
+           <h4>AC Temperature</h4>
+         </div>
         <div class="temp-display" :style="{ '--temp-end-color': tempEndColor }">{{ acTemp }}°</div>
       </div>
       <div class="room-temp">
@@ -184,6 +183,7 @@ const toggleAC = () => {
 .temperature-section {
   display: flex;
   gap: 24px;
+  align-items: center;
 }
 
 .ac-temp{
@@ -196,35 +196,37 @@ const toggleAC = () => {
 
 .room-temp {
   text-align: center;
+  display: flex;
   flex-direction: column;
   flex: 3;
   align-items: center;
+  justify-content: center;
 }
 
 .temp-header h4 {
-  margin: 0 0 6px 0;
+  margin: 0 0 12px 0;
   font-size: 12px;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .room-temp h4 {
-  margin: 0 0 18px 0;
+  margin: 0 0 12px 0;
   font-size: 12px;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .temp-display {
-  margin-top: 20px;
-  font-size: 28px;
+  margin-top: 0;
+  font-size: 18px;
   font-weight: 400;
   color: white;
   background: linear-gradient(180deg, var(--color-temp-gradient-start) 0%, var(--temp-end-color, var(--color-blue-500)) 100%);
-  border-radius: 32px;
+  border-radius: 16px;
   text-align: center;
-  width: 100%;
-  height: 100%;
+  width: 100px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,13 +235,16 @@ const toggleAC = () => {
 
 .room-image {
   position: relative;
-  border-radius: 12px;
+  border-radius: 6px;
   overflow: hidden;
+  width: 240px;
+  height: 160px;
 }
 
 .room-image img {
   width: 100%;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
 }
 
 .room-image::after {
@@ -255,11 +260,11 @@ const toggleAC = () => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 28px;
+  font-size: 16px;
   font-weight: 400;
   color: white;
   text-shadow: 0 2px 4px var(--color-border-light);
-  padding: 20px 18px;
+  padding: 12px 10px;
   border-radius: 50%;
   backdrop-filter: blur(6px);
 }
@@ -279,13 +284,16 @@ const toggleAC = () => {
 }
 
 .mode-btn {
-  border: none;
-  border-radius: 10px;
+  padding: 10px 10px;
   background: var(--color-button-dark);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  padding: 10px 24px;
 }
 
 .mode-btn:hover {
@@ -299,15 +307,14 @@ const toggleAC = () => {
 }
 
 .mode-btn svg {
-  width: 28px;
-  height: 28px;
-  color: white;
-  stroke: white;
+  width: 24px;
+  height: 24px;
+  color: var(--color-text-secondary);
 }
 
 .mode-btn.active svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   color: var(--color-primary);
 }
 

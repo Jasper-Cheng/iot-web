@@ -254,11 +254,11 @@ const closeRecordDialog = () => {
 
 /* Mode buttons used inside this widget */
 .mode-div { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 1; }
-.mode-btn { border: none; border-radius: 10px; background: var(--color-button-dark); color: var(--color-white); cursor: pointer; transition: all 0.3s ease; padding: 10px 24px; }
+.mode-btn { padding: 10px 10px; background: var(--color-button-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: none; color: var(--color-white); cursor: pointer; transition: all 0.3s ease; }
 .mode-btn:hover { background: var(--color-button-dark-hover); transform: translateY(-2px); }
 .mode-btn.active { border: 1px solid var(--color-primary); color: var(--color-white); }
 .mode-btn:disabled, .mode-btn.disabled { opacity: 0.5; cursor: not-allowed; }
-.mode-btn svg { width: 28px; height: 28px; color: var(--color-white); stroke: var(--color-white); }
+.mode-btn svg { width: 24px; height: 24px; color: var(--color-text-secondary); }
 .mode-btn.active svg { color: var(--color-primary); }
 .mode-div span { font-size: 12px; font-weight: 500; color: var(--color-text-primary); text-align: center; }
 
