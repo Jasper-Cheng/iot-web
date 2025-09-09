@@ -332,6 +332,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import '../styles/colors.css';
+
 .speaker-card {
   background: var(--color-bg-card);
   border-radius: 16px;
@@ -589,7 +591,7 @@ onBeforeUnmount(() => {
   opacity: 0;
   transition: opacity 0.2s ease;
   border: 2px solid var(--color-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
 }
 
 .progress-bar:hover .progress-thumb {

@@ -200,6 +200,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import '../styles/colors.css';
+
 .camera-card {
   display: flex;
   flex-direction: column;
@@ -269,8 +271,8 @@ onBeforeUnmount(() => {
 .camera-placeholder p { margin: 0; }
 .camera-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-.fullscreen-button { position: absolute; right: 10px; bottom: 10px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--color-border); background: rgba(0, 0, 0, 0.6); color: #fff; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; }
-.camera-view:hover .fullscreen-button:hover { background: rgba(0, 0, 0, 0.8); }
+.fullscreen-button { position: absolute; right: 10px; bottom: 10px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--color-border); background: var(--color-shadow-dark); color: var(--color-white); display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; }
+.camera-view:hover .fullscreen-button:hover { background: var(--color-shadow-darker); }
 .fullscreen-button svg { width: 18px; height: 18px; }
 
 .voice-output { margin-top: 8px; font-size: 12px; color: var(--color-text-secondary); }

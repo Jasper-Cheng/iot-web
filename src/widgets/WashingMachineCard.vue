@@ -364,6 +364,8 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 </script>
 
 <style scoped>
+@import '../styles/colors.css';
+
 .washing-machine-card { display: flex; flex-direction: column; flex: 1; border: 1px solid var(--color-border); border-radius: 16px; padding: 24px 18px; }
 .washing-machine-card-info h3 { margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
 .washing-machine-card-info p { margin: 0; color: var(--color-text-secondary); font-size: 12px; }
@@ -393,11 +395,11 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 
 /* Mode buttons used inside this widget */
 .mode-div { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 1; }
-.mode-btn { border: none; border-radius: 10px; background: var(--color-button-dark); color: #fff; cursor: pointer; transition: all 0.3s ease; padding: 10px 24px; }
+.mode-btn { border: none; border-radius: 10px; background: var(--color-button-dark); color: var(--color-white); cursor: pointer; transition: all 0.3s ease; padding: 10px 24px; }
 .mode-btn:hover { background: var(--color-button-dark-hover); transform: translateY(-2px); }
-.mode-btn.active { border: 1px solid var(--color-primary); color: #fff; }
+.mode-btn.active { border: 1px solid var(--color-primary); color: var(--color-white); }
 .mode-btn:disabled, .mode-btn.disabled { opacity: 0.5; cursor: not-allowed; }
-.mode-btn svg { width: 28px; height: 28px; color: #fff; stroke: #fff; }
+.mode-btn svg { width: 28px; height: 28px; color: var(--color-white); stroke: var(--color-white); }
 .mode-btn.active svg { color: var(--color-primary); }
 .mode-div span { font-size: 12px; font-weight: 500; color: var(--color-text-primary); text-align: center; }
 
@@ -436,18 +438,18 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 .setting-group h5 { margin: 0 0 8px 0; font-size: 12px; color: var(--color-text-secondary); }
 .setting-options { display: flex; gap: 8px; flex-wrap: wrap; }
 .setting-btn { height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary); font-size: 12px; }
-.setting-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.setting-btn.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-white); }
 .setting-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* States */
 .washing-machine-card .status-icon.idle { background: var(--color-button-dark); }
 .washing-machine-card .status-icon.washing { background: var(--color-blue-500); animation: pulse 2s infinite; }
-.washing-machine-card .status-icon.rinsing { background: #60a5fa; animation: pulse 2s infinite; }
+.washing-machine-card .status-icon.rinsing { background: var(--color-blue-400); animation: pulse 2s infinite; }
 .washing-machine-card .status-icon.spinning { background: var(--color-blue-600); animation: pulse 1.5s infinite; }
-.washing-machine-card .status-icon.done { background: #10b981; animation: pulse 1s infinite; }
+.washing-machine-card .status-icon.done { background: var(--color-emerald-500); animation: pulse 1s infinite; }
 
 /* Confirm dialog styles (match Home.vue) */
-.confirm-dialog-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.confirm-dialog-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--color-shadow-overlay); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .confirm-dialog { background: var(--color-bg-secondary); border-radius: 16px; padding: 20px; width: 360px; box-shadow: 0 10px 30px var(--shadow-strong); border: 1px solid var(--color-border); }
 .confirm-dialog-header { margin-bottom: 16px; }
 .confirm-dialog-header h3 { margin: 0; font-size: 18px; color: var(--color-text-primary); font-weight: 700; }
@@ -458,8 +460,8 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 .cancel-btn, .confirm-btn { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary); cursor: pointer; transition: all 0.2s ease; }
 .cancel-btn { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
 .cancel-btn:hover { background: var(--color-hover); color: var(--color-text-primary); }
-.confirm-btn { background: #ef4444; color: #fff; }
-.confirm-btn:hover { background: #dc2626; transform: translateY(-1px); }
+.confirm-btn { background: var(--color-red-500); color: var(--color-white); }
+.confirm-btn:hover { background: var(--color-red-500); transform: translateY(-1px); }
 </style>
 
 

@@ -52,6 +52,25 @@
   --temp-color-4: #f59e0b; /* 23-26 温暖黄 */
   --temp-color-5: #f97316; /* 27-30 炎热橙 */
   --temp-color-6: #ef4444; /* >=31 炙热红 */
+
+  /* 空气质量等级颜色（深色默认） */
+  --color-green-500: #22c55e; /* 优 - 绿色 */
+  --color-yellow-500: #eab308; /* 良 - 黄色 */
+  --color-orange-500: #f97316; /* 轻度污染 - 橙色 */
+  --color-red-500: #ef4444; /* 重度污染 - 红色 */
+
+  /* 状态颜色（深色默认） */
+  --color-emerald-500: #10b981; /* 完成状态 - 翠绿色 */
+  --color-blue-600: #2563eb; /* 蓝色变体 */
+  --color-blue-400: #60a5fa; /* 浅蓝色 */
+  --color-white: #ffffff; /* 白色 */
+  --color-black: #000000; /* 黑色 */
+  --color-gray-900: #1a1a1a; /* 深灰色 */
+  --color-shadow-light: rgba(0, 0, 0, 0.2); /* 浅阴影 */
+  --color-shadow-medium: rgba(0, 0, 0, 0.3); /* 中等阴影 */
+  --color-shadow-overlay: rgba(0, 0, 0, 0.5); /* 覆盖层阴影 */
+  --color-shadow-dark: rgba(0, 0, 0, 0.6); /* 深阴影 */
+  --color-shadow-darker: rgba(0, 0, 0, 0.8); /* 更深阴影 */
 }
 
 /* 浅色主题 */
@@ -98,6 +117,25 @@
   --temp-color-4: #fbbf24;
   --temp-color-5: #fb923c;
   --temp-color-6: #f87171;
+
+  /* 空气质量等级颜色（浅色） */
+  --color-green-500: #16a34a; /* 优 - 深绿色 */
+  --color-yellow-500: #ca8a04; /* 良 - 深黄色 */
+  --color-orange-500: #ea580c; /* 轻度污染 - 深橙色 */
+  --color-red-500: #dc2626; /* 重度污染 - 深红色 */
+
+  /* 状态颜色（浅色） */
+  --color-emerald-500: #059669; /* 完成状态 - 深翠绿色 */
+  --color-blue-600: #1d4ed8; /* 蓝色变体 */
+  --color-blue-400: #3b82f6; /* 浅蓝色 */
+  --color-white: #ffffff; /* 白色 */
+  --color-black: #000000; /* 黑色 */
+  --color-gray-900: #111827; /* 深灰色 */
+  --color-shadow-light: rgba(0, 0, 0, 0.1); /* 浅阴影 */
+  --color-shadow-medium: rgba(0, 0, 0, 0.15); /* 中等阴影 */
+  --color-shadow-overlay: rgba(0, 0, 0, 0.3); /* 覆盖层阴影 */
+  --color-shadow-dark: rgba(0, 0, 0, 0.4); /* 深阴影 */
+  --color-shadow-darker: rgba(0, 0, 0, 0.6); /* 更深阴影 */
 }
 
 /* 深色主题（默认） */
@@ -145,6 +183,25 @@
   --temp-color-4: #f59e0b;
   --temp-color-5: #f97316;
   --temp-color-6: #ef4444;
+
+  /* 空气质量等级颜色（深色） */
+  --color-green-500: #22c55e; /* 优 - 绿色 */
+  --color-yellow-500: #eab308; /* 良 - 黄色 */
+  --color-orange-500: #f97316; /* 轻度污染 - 橙色 */
+  --color-red-500: #ef4444; /* 重度污染 - 红色 */
+
+  /* 状态颜色（深色） */
+  --color-emerald-500: #10b981; /* 完成状态 - 翠绿色 */
+  --color-blue-600: #2563eb; /* 蓝色变体 */
+  --color-blue-400: #60a5fa; /* 浅蓝色 */
+  --color-white: #ffffff; /* 白色 */
+  --color-black: #000000; /* 黑色 */
+  --color-gray-900: #1a1a1a; /* 深灰色 */
+  --color-shadow-light: rgba(0, 0, 0, 0.2); /* 浅阴影 */
+  --color-shadow-medium: rgba(0, 0, 0, 0.3); /* 中等阴影 */
+  --color-shadow-overlay: rgba(0, 0, 0, 0.5); /* 覆盖层阴影 */
+  --color-shadow-dark: rgba(0, 0, 0, 0.6); /* 深阴影 */
+  --color-shadow-darker: rgba(0, 0, 0, 0.8); /* 更深阴影 */
 }
 
 

@@ -215,6 +215,8 @@ const toggleFreezerSterilization = () => {
 </script>
 
 <style scoped>
+@import '../styles/colors.css';
+
 .refrigerator-card {
   background: var(--color-bg-card);
   border-radius: 16px;
@@ -271,14 +273,14 @@ const toggleFreezerSterilization = () => {
 }
 
 .status-icon.defrosting {
-  background: #f59e0b;
-  color: white;
+  background: var(--color-orange-500);
+  color: var(--color-white);
   animation: pulse 2s infinite;
 }
 
 .status-icon.error {
-  background: #ef4444;
-  color: white;
+  background: var(--color-red-500);
+  color: var(--color-white);
   animation: pulse 2s infinite;
 }
 
@@ -375,13 +377,13 @@ const toggleFreezerSterilization = () => {
   background: var(--color-primary);
   cursor: pointer;
   border: 2px solid white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px var(--color-shadow-light);
   transition: all 0.3s ease;
 }
 
 .temp-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px var(--color-shadow-medium);
 }
 
 .temp-slider::-moz-range-thumb {
@@ -391,13 +393,13 @@ const toggleFreezerSterilization = () => {
   background: var(--color-primary);
   cursor: pointer;
   border: 2px solid white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px var(--color-shadow-light);
   transition: all 0.3s ease;
 }
 
 .temp-slider::-moz-range-thumb:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px var(--color-shadow-medium);
 }
 
 .temp-slider:disabled {
@@ -493,7 +495,7 @@ const toggleFreezerSterilization = () => {
 
 .refrigerator-modes-header .mode-btn.active {
   background: var(--color-primary);
-  color: #1a1a1a;
+  color: var(--color-gray-900);
   border-color: var(--color-primary);
   font-weight: 600;
 }

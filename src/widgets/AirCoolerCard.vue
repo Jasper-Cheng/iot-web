@@ -109,6 +109,8 @@ const toggleAC = () => {
 </script>
 
 <style scoped>
+@import '../styles/colors.css';
+
 .air-cooler-card {
   display: flex;
   flex-direction: column;
