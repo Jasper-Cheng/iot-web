@@ -60,7 +60,7 @@
         <CameraCard :rooms="rooms" :activeRoom="activeRoom" />
 
         <!-- 扫地机器人控制面板 -->
-        <VacuumCard @show-records="onShowVacuumRecords" />
+        <VacuumCard />
 
         <!-- 洗衣机控制面板 -->
         <WashingMachineCard />
@@ -68,43 +68,19 @@
         <!-- 冰箱控制面板 -->
         <RefrigeratorCard />
          
-        <!-- 音响控制面板 -->
+         <!-- 音响控制面板 -->
         <SpeakerCard />
          
         <!-- 空气净化器模块 -->
         <AirPurifierCard />
          
-       </div>
-       </div>
-
-     </div>
-   </div>
-
-
-  <!-- 扫地机器人记录对话框 -->
-  <div v-if="showVacuumRecords" class="record-dialog-overlay" @click="closeRecordDialog">
-    <div class="record-dialog" @click.stop>
-      <div class="record-dialog-header">
-        <h3>清洁记录</h3>
-        <button class="close-btn" @click="closeRecordDialog">×</button>
-      </div>
-      <div class="record-dialog-content">
-        <div class="record-list">
-          <div v-for="record in vacuumRecords" :key="record.id" class="record-item">
-            <div class="record-date">
-              <span class="date">{{ record.date }}</span>
-              <span class="time">{{ record.time }}</span>
+              </div>
             </div>
-            <div class="record-details">
-              <span class="mode">{{ record.mode }}</span>
-              <span class="duration">{{ record.duration }}</span>
-              <span class="status completed">{{ record.status }}</span>
+
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
+
+
 
 
 </template>
@@ -172,22 +148,6 @@ const toggleDevice = (deviceId) => {
   if (device) {
     device.power = !device.power
   }
-}
-const showVacuumRecords = ref(false)
-
-
-// =========================
-
-// 子组件传上来的扫地记录，打开对话框
-const vacuumRecords = ref([])
-const onShowVacuumRecords = (records) => {
-  vacuumRecords.value = Array.isArray(records) ? records : []
-  showVacuumRecords.value = true
-}
-
-// 关闭记录对话框
-const closeRecordDialog = () => {
-  showVacuumRecords.value = false
 }
 
 
@@ -584,181 +544,6 @@ const closeRecordDialog = () => {
   fill: currentColor;
 }
 
-/* =========================
-   Record dialog styles
-   ========================= */
-.record-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.record-dialog {
-  background: var(--color-bg);
-  border-radius: 16px;
-  padding: 0;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-  opacity: 1;
-  backdrop-filter: none;
-}
-
-.record-dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
-}
-
-.record-dialog-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: var(--color-hover);
-  color: var(--color-text-primary);
-}
-
-.record-dialog-content {
-  padding: 0;
-  max-height: 60vh;
-  overflow-y: auto;
-  background: var(--color-bg-secondary);
-}
-
-.record-list {
-  padding: 0;
-  background: var(--color-bg-secondary);
-}
-
-.record-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--color-border);
-  transition: background 0.2s ease;
-  background: var(--color-bg);
-  opacity: 1;
-}
-
-.record-item:last-child {
-  border-bottom: none;
-}
-
-.record-item:hover {
-  background: var(--color-hover);
-}
-
-.record-date {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.record-date .date {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.record-date .time {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.record-details {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.record-details .mode {
-  padding: 4px 8px;
-  background: var(--color-primary-light, rgba(191, 254, 1, 0.2));
-  color: var(--color-primary);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--color-primary);
-}
-
-/* 白天主题下的模式标签优化 */
-[data-theme="light"] .record-details .mode {
-  background: rgba(191, 254, 1, 0.3);
-  color: #1a1a1a;
-  border: 1px solid #8b8b8b;
-  font-weight: 700;
-  text-shadow: none;
-}
-
-.record-details .duration {
-  font-size: 12px;
-  color: var(--color-text-primary);
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.record-details .status {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.record-details .status.completed {
-  background: #dcfce7;
-  color: #16a34a;
-  border: 1px solid #16a34a;
-  font-weight: 700;
-}
-
-/* 白天主题下的状态标签优化 */
-[data-theme="light"] .record-details .status.completed {
-  background: #dcfce7;
-  color: #15803d;
-  border: 1px solid #15803d;
-  font-weight: 700;
-  text-shadow: none;
-}
 
 
 /* Generic mode styles (used by vacuum, washing machine, refrigerator) */
