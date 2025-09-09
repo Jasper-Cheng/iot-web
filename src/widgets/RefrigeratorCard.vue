@@ -255,8 +255,8 @@ const toggleFreezerSterilization = () => {
 }
 
 .status-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -264,6 +264,12 @@ const toggleFreezerSterilization = () => {
   background: var(--color-button-dark);
   color: var(--color-text-secondary);
   transition: all 0.3s ease;
+}
+
+.status-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-text-secondary);
 }
 
 .status-icon.cooling {
