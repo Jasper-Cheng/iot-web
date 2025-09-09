@@ -63,7 +63,7 @@
         <VacuumCard @show-records="onShowVacuumRecords" />
 
         <!-- 洗衣机控制面板 -->
-        <WashingMachineCard @show-records="onShowWashingMachineRecords" />
+        <WashingMachineCard />
         
         <!-- 冰箱控制面板 -->
         <RefrigeratorCard />
@@ -122,30 +122,6 @@
     </div>
   </div>
 
-  <!-- 洗衣机记录对话框 -->
-  <div v-if="showWashingMachineRecords" class="record-dialog-overlay" @click="closeRecordDialog">
-    <div class="record-dialog" @click.stop>
-      <div class="record-dialog-header">
-        <h3>洗衣记录</h3>
-        <button class="close-btn" @click="closeRecordDialog">×</button>
-      </div>
-      <div class="record-dialog-content">
-        <div class="record-list">
-          <div v-for="record in washingMachineRecords" :key="record.id" class="record-item">
-            <div class="record-date">
-              <span class="date">{{ record.date }}</span>
-              <span class="time">{{ record.time }}</span>
-            </div>
-            <div class="record-details">
-              <span class="mode">{{ record.mode }}</span>
-              <span class="duration">{{ record.duration }}</span>
-              <span class="status completed">{{ record.status }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
 </template>
 
@@ -214,10 +190,6 @@ const toggleDevice = (deviceId) => {
   }
 }
 const showVacuumRecords = ref(false)
-const showWashingMachineRecords = ref(false)
-
-// Washing machine records stored in child; receive via event when needed
-const washingMachineRecords = ref([])
 
 
 // =========================
@@ -233,16 +205,9 @@ const onShowVacuumRecords = (records) => {
   showVacuumRecords.value = true
 }
 
-// 子组件传上来的洗衣记录，打开对话框
-const onShowWashingMachineRecords = (records) => {
-  washingMachineRecords.value = Array.isArray(records) ? records : []
-  showWashingMachineRecords.value = true
-}
-
 // 关闭记录对话框
 const closeRecordDialog = () => {
   showVacuumRecords.value = false
-  showWashingMachineRecords.value = false
 }
 
 

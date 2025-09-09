@@ -9,7 +9,7 @@
       <div class="record-button">
         <button 
           class="record-btn"
-          @click="$emit('show-records', washingMachineRecords)"
+          @click="showWashingMachineRecords = true"
           title="查看洗衣记录">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -164,6 +164,29 @@
     </div>
 
   </div>
+
+  <!-- 洗衣记录对话框 -->
+  <div v-if="showWashingMachineRecords" class="record-dialog-overlay" @click="closeRecordDialog">
+    <div class="record-dialog" @click.stop>
+      <div class="record-dialog-header">
+        <h3>洗衣记录</h3>
+        <button class="close-btn" @click="closeRecordDialog">×</button>
+      </div>
+      <div class="record-list">
+        <div v-for="record in washingMachineRecords" :key="record.id" class="record-item">
+          <div class="record-date">
+            <span class="date">{{ record.date }}</span>
+            <span class="time">{{ record.time }}</span>
+          </div>
+          <div class="record-details">
+            <span class="mode">{{ record.mode }}</span>
+            <span class="duration">{{ record.duration }}</span>
+            <span class="status" :class="record.status">{{ record.status }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -221,6 +244,9 @@ const washingMachineRecords = ref([
   { id: 2, date: '2024-01-14', time: '10:30', duration: '30分钟', mode: 'Quick', status: '完成' },
   { id: 3, date: '2024-01-13', time: '19:15', duration: '60分钟', mode: 'Heavy', status: '完成' }
 ])
+
+// Record dialog state
+const showWashingMachineRecords = ref(false)
 
 const washingMachineSettings = ref({
   temperature: 'cold',
@@ -360,6 +386,11 @@ const startWashingMachine = () => {
   }, 1000)
 }
 
+// Close record dialog
+const closeRecordDialog = () => {
+  showWashingMachineRecords.value = false
+}
+
 onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 </script>
 
@@ -462,6 +493,135 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 .cancel-btn:hover { background: var(--color-hover); color: var(--color-text-primary); }
 .confirm-btn { background: var(--color-red-500); color: var(--color-white); }
 .confirm-btn:hover { background: var(--color-red-500); transform: translateY(-1px); }
+
+/* Record dialog styles */
+.record-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-shadow-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.record-dialog {
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  padding: 20px;
+  width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  border: 1px solid var(--color-border);
+}
+
+.record-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.record-dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.record-item:hover {
+  background: var(--color-hover);
+}
+
+.record-date {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.record-date .date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.record-date .time {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.record-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.record-details .mode {
+  font-size: 12px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.record-details .duration {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.record-details .status {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.record-details .status.完成 {
+  background: var(--color-emerald-500);
+  color: var(--color-white);
+}
 </style>
 
 
