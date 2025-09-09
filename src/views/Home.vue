@@ -60,6 +60,10 @@
           <WiFiCard />
           <TvCard />
         </div>
+        <div class="music-row">
+          <MusicCard />
+          <SocketsCard />
+        </div>
       </div>
     </div>
   </div>
@@ -80,6 +84,8 @@ import FallDetectionCard from '../widgets/FallDetectionCard.vue'
 import SmartSocketCard from '../widgets/SmartSocketCard.vue'
 import WiFiCard from '../widgets/WiFiCard.vue'
 import TvCard from '../widgets/TvCard.vue'
+import MusicCard from '../widgets/MusicCard.vue'
+import SocketsCard from '../widgets/SocketsCard.vue'
 
 // =========================
 // Room navigation data/state
@@ -231,6 +237,16 @@ const setActiveRoom = (roomId) => {
 }
 
 .cards-row > * {
+  flex: 1;
+}
+
+.music-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.music-row > * {
   flex: 1;
 }
 
