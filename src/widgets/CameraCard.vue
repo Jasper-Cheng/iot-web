@@ -208,7 +208,7 @@ onBeforeUnmount(() => {
   flex: 1;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 24px 18px;
+  padding: 16px 18px;
 }
 
 .camera-header {

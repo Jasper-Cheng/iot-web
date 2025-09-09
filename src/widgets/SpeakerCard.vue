@@ -337,7 +337,7 @@ onBeforeUnmount(() => {
 .speaker-card {
   background: var(--color-bg-card);
   border-radius: 16px;
-  padding: 24px;
+  padding: 16px 18px;
   border: 1px solid var(--color-border);
   margin-bottom: 24px;
 }

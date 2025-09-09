@@ -175,7 +175,7 @@ onBeforeUnmount(() => stopAirSimulation())
 .air-card {
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 16px;

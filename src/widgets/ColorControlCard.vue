@@ -167,7 +167,7 @@ export default {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px 18px;
   gap: 20px;
 }
 

@@ -191,7 +191,7 @@ const closeRecordDialog = () => {
   flex: 1;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 24px 18px;
+  padding: 16px 18px;
 }
 
 .card-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;}

@@ -41,7 +41,7 @@ const toggleMusic = () => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
