@@ -121,7 +121,7 @@
                 {{ getRoomName(selectedDevice.roomId) }}
               </span>
             </div>
-            <button class="action-btn" @click="removeDevice(selectedDevice)">
+            <button class="action-btn danger" @click="removeDevice(selectedDevice)">
               Remove Device
             </button>
           </div>
@@ -185,11 +185,11 @@ const widgetsPage = ref(null)
 
 // 房间数据
 const rooms = ref([
-  { id: 'living-room', name: 'Living Room', color: '#3b82f6' },
-  { id: 'bedroom', name: 'Bedroom', color: '#10b981' },
-  { id: 'kitchen', name: 'Kitchen', color: '#f59e0b' },
-  { id: 'bathroom', name: 'Bathroom', color: '#ef4444' },
-  { id: 'backyard', name: 'Backyard', color: '#8b5cf6' }
+  { id: 'living-room', name: 'Living Room', color: 'var(--room-living)' },
+  { id: 'bedroom', name: 'Bedroom', color: 'var(--room-bedroom)' },
+  { id: 'kitchen', name: 'Kitchen', color: 'var(--room-kitchen)' },
+  { id: 'bathroom', name: 'Bathroom', color: 'var(--room-bathroom)' },
+  { id: 'backyard', name: 'Backyard', color: 'var(--room-backyard)' }
 ])
 
 // 设备数据
@@ -479,7 +479,7 @@ const confirmAddRoom = () => {
   const newRoom = {
     id: roomName.toLowerCase().replace(/\s+/g, '-'),
     name: roomName,
-    color: '#6b7280'
+    color: 'var(--room-default)'
   }
   rooms.value.push(newRoom)
   addRoomModalOpen.value = false
@@ -618,8 +618,8 @@ const cancelAddRoom = () => {
 }
 
 .delete-room-btn:hover {
-  color: var(--color-danger, #ef4444);
-  border-color: var(--color-danger, #ef4444);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 .room-title {
@@ -722,11 +722,11 @@ const cancelAddRoom = () => {
 }
 
 .device-status.online {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .device-status.offline {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .status-dot {
@@ -821,11 +821,11 @@ const cancelAddRoom = () => {
 }
 
 .detail-item span.online {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .detail-item span.offline {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .modal-footer {
@@ -923,28 +923,28 @@ const cancelAddRoom = () => {
 }
 
 .action-btn.danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: color-mix(in oklab, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in oklab, var(--color-danger) 30%, transparent);
 }
 
 .action-btn.danger:hover {
-  background: #ef4444;
-  color: #ffffff;
-  border-color: #ef4444;
+  background: var(--color-danger);
+  color: var(--color-white);
+  border-color: var(--color-danger);
 }
 
 /* 浅绿色成功按钮（Add） */
 .action-btn.success {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.35);
+  background: color-mix(in oklab, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+  border-color: color-mix(in oklab, var(--color-success) 35%, transparent);
 }
 
 .action-btn.success:hover {
-  background: #10b981;
-  color: #ffffff;
-  border-color: #10b981;
+  background: var(--color-success);
+  color: var(--color-white);
+  border-color: var(--color-success);
 }
 
 /* 设备大图预览 */
@@ -1001,11 +1001,11 @@ const cancelAddRoom = () => {
 }
 
 .device-status-info.online .status-dot {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .device-status-info.offline .status-dot {
-  background: #ef4444;
+  background: var(--color-danger);
 }
 
 .device-room-info {
