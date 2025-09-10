@@ -66,6 +66,7 @@
         </div>
         <ColorControlCard />
         <EnergyCard />
+        <DeviceStatsCard :rooms="roomsWithDevices" />
       </div>
     </div>
   </div>
@@ -90,6 +91,7 @@ import MusicCard from '../widgets/MusicCard.vue'
 import SocketsCard from '../widgets/SocketsCard.vue'
 import ColorControlCard from '../widgets/ColorControlCard.vue'
 import EnergyCard from '../widgets/EnergyCard.vue'
+import DeviceStatsCard from '../widgets/DeviceStatsCard.vue'
 
 // =========================
 // Room navigation data/state
@@ -107,6 +109,40 @@ const rooms = ref([
 
 // 当前选中的房间
 const activeRoom = ref('all')
+
+// 房间设备统计数据
+const roomsWithDevices = ref([
+  { 
+    id: 'living', 
+    name: 'Living Room', 
+    devices: { total: 8, online: 7, offline: 1 },
+    color: '#3b82f6'
+  },
+  { 
+    id: 'bedroom', 
+    name: 'Bed Room', 
+    devices: { total: 6, online: 5, offline: 1 },
+    color: '#10b981'
+  },
+  { 
+    id: 'dining', 
+    name: 'Dining Room', 
+    devices: { total: 4, online: 4, offline: 0 },
+    color: '#f59e0b'
+  },
+  { 
+    id: 'bathroom', 
+    name: 'Bath Room', 
+    devices: { total: 3, online: 2, offline: 1 },
+    color: '#ef4444'
+  },
+  { 
+    id: 'backyard', 
+    name: 'Backyard', 
+    devices: { total: 2, online: 1, offline: 1 },
+    color: '#8b5cf6'
+  }
+])
 
 // =========================
 // Navigation / Mode handlers
