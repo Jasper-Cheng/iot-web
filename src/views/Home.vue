@@ -64,8 +64,8 @@
           <MusicCard />
           <SocketsCard />
         </div>
-        <EnergyCard />
         <ColorControlCard />
+        <EnergyCard />
       </div>
     </div>
   </div>
