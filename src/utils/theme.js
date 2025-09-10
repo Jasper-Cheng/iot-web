@@ -89,9 +89,8 @@ export function clearColorControlStorage() {
     const mode = getCurrentTheme() === 'light' ? 'light' : 'dark'
     const key = `${STORAGE_KEY_BASE}:${mode}`
     localStorage.removeItem(key)
-    console.log(`[Theme] ColorControl storage cleared for ${mode} theme`)
   } catch (e) {
-    console.warn('[Theme] Failed to clear ColorControl storage:', e)
+    // ignore
   }
 }
 
@@ -102,9 +101,8 @@ export function clearAllColorControlStorage() {
     const darkKey = `${STORAGE_KEY_BASE}:dark`
     localStorage.removeItem(lightKey)
     localStorage.removeItem(darkKey)
-    console.log('[Theme] ColorControl storage cleared for all themes')
   } catch (e) {
-    console.warn('[Theme] Failed to clear all ColorControl storage:', e)
+    // ignore
   }
 }
 
@@ -116,7 +114,6 @@ export function getCurrentTheme() {
 // 设置主题
 export function setTheme(themeName) {
   if (!themes[themeName]) {
-    console.warn(`Theme "${themeName}" not found, using default theme`)
     themeName = defaultTheme
   }
   

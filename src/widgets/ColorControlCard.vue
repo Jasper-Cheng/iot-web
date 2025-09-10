@@ -429,7 +429,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       // 只有在开关开启时才能调整透明度
       if (!colorControlOn.value) return
       colorIntensity.value = brightness.value
-      console.log('Transparency updated:', brightness.value)
       applyCurrentColorToTheme()
     }
 
@@ -441,11 +440,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       defaultPrimary.value = modeDefaults.primary
       defaultBgCard.value = modeDefaults.bgCard
       defaultTextPrimary.value = modeDefaults.text
-      console.log('[ColorControl] defaults from current mode:', mode, {
-        primary: defaultPrimary.value,
-        bgCard: defaultBgCard.value,
-        text: defaultTextPrimary.value
-      })
 
       // 从当前模式的本地存储恢复（如果没有存储则返回默认值）
       const saved = readThemeFromStorage()
@@ -466,7 +460,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
     // 监听主题变化
     const handleThemeChange = () => {
-      console.log('[ColorControl] Theme changed, reinitializing...')
       isBootstrapping.value = true
       initializeColorControl()
     }
