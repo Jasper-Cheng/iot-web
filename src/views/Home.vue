@@ -14,12 +14,6 @@
           >
             {{ room.name }}
           </button>
-          <button class="add-room-btn">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            Add Room
-          </button>
         </div>
 
         <div class="room-content">
@@ -195,8 +189,8 @@ const setActiveRoom = (roomId) => {
   text-align: center;
   background-color: var(--color-nav-idle);
   border: 1px solid var(--color-border);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .room-btn:hover {
@@ -209,30 +203,7 @@ const setActiveRoom = (roomId) => {
   color: var(--color-primary);
 }
 
-.add-room-btn {
-  margin-left: auto;
-  padding: 0px 18px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 12px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.add-room-btn:hover {
-  background: var(--color-bg-card);
-}
-
-.add-room-btn svg {
-  width: 16px;
-  height: 16px;
-}
+/* removed add-room button */
 
 /* =========================
    Main content grid
