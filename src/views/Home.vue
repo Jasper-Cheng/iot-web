@@ -64,6 +64,8 @@
           <MusicCard />
           <SocketsCard />
         </div>
+        <!-- 智能控制面板 -->
+        <SmartControlPanel />
         <ColorControlCard />
         <EnergyCard />
         <DeviceStatsCard :rooms="roomsWithDevices" />
@@ -92,6 +94,7 @@ import SocketsCard from '../widgets/SocketsCard.vue'
 import ColorControlCard from '../widgets/ColorControlCard.vue'
 import EnergyCard from '../widgets/EnergyCard.vue'
 import DeviceStatsCard from '../widgets/DeviceStatsCard.vue'
+import SmartControlPanel from '../widgets/SmartControlPanel.vue'
 
 // =========================
 // Room navigation data/state
@@ -150,6 +153,7 @@ const roomsWithDevices = ref([
 const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
 }
+
 </script>
 
 <style scoped>
@@ -279,6 +283,7 @@ const setActiveRoom = (roomId) => {
   gap: 12px;
   align-self: start;
 }
+
 
 .cards-row {
   display: flex;
