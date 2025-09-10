@@ -2,13 +2,26 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Index from '../views/Index.vue'
 import Home from '../views/Home.vue'
+import Widgets from '../views/Widgets.vue'
+import Members from '../views/Members.vue'
+import Mall from '../views/Mall.vue'
 import { ElMessage } from 'element-plus'
 
 const routes = [
-  { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
-  { path: '/home', component: Home, meta: { requiresAuth: true } },
-  {path: '/Index', component: Index, meta: { requiresAuth: true } },
+  { 
+    path: '/', 
+    component: Index, 
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', redirect: 'home' },
+      { path: 'home', component: Home },
+      { path: 'widgets', component: Widgets },
+      { path: 'members', component: Members },
+      { path: 'mall', component: Mall }
+    ]
+  },
+  { path: '/', redirect: '/login' }
 ]
 
 const router = createRouter({

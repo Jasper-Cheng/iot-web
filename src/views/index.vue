@@ -17,9 +17,15 @@
 
       <!-- 导航菜单 -->
       <ul class="nav-menu">
-        <li class="nav-item active">
+        <li 
+          v-for="navItem in navigationItems" 
+          :key="navItem.id"
+          :class="['nav-item', { active: activeNavItem === navItem.id }]"
+          @click="navigateTo(navItem)"
+        >
           <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Home图标 -->
+            <svg v-if="navItem.id === 'home'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
               <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2" fill="none"/>
               <!-- Wi-Fi符号 -->
@@ -27,47 +33,32 @@
               <path d="M9 13 L15 13" stroke="currentColor" stroke-width="2" fill="none"/>
               <path d="M7 10 L17 10" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
-          </div>
-          <span>Home</span>
-        </li>
-        <li class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- 2x2网格图标 -->
+            <!-- Widgets图标 -->
+            <svg v-else-if="navItem.id === 'widgets'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="4" y="4" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
               <rect x="14" y="4" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
               <rect x="4" y="14" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
               <rect x="14" y="14" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
-          </div>
-          <span>Widgets</span>
-        </li>
-        <li class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- 三个人的图标 -->
+            <!-- Members图标 -->
+            <svg v-else-if="navItem.id === 'members'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
               <circle cx="6" cy="16" r="2" stroke="currentColor" stroke-width="2" fill="none"/>
               <circle cx="18" cy="16" r="2" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
-          </div>
-          <span>Members</span>
-        </li>
-        <li class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- 购物袋图标 -->
+            <!-- Mall图标 -->
+            <svg v-else-if="navItem.id === 'mall'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" stroke-width="2" fill="none"/>
               <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
               <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
           </div>
-          <span>Mall</span>
+          <span>{{ navItem.name }}</span>
         </li>
       </ul>
 
       <!-- 退出按钮 -->
-      <div class="logout">
+      <div class="logout" @click="logout">
         <div class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- 左箭头然后弯曲的图标 -->
@@ -133,23 +124,60 @@
         </div>
       </header>
       
-      <!-- Home 内容区域 -->
-      <Home />
+      <!-- 主要内容区域 -->
+      <div class="main-content">
+        <router-view />
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
-import Home from './Home.vue'
 import { initTheme, setTheme } from '../utils/theme.js'
+
+// Index.vue 现在只作为布局容器，不需要导入具体的widget组件
+
+const router = useRouter()
+const route = useRoute()
 
 // 控制登录弹窗显示（预留）
 const showLogin = ref(false)
 
 // 当前主题
 const currentTheme = ref('dark')
+
+// Index.vue 现在只作为布局容器，不需要房间和设备数据
+
+// 导航配置
+const navigationItems = ref([
+  { id: 'home', name: 'Home', route: '/home', icon: 'home' },
+  { id: 'widgets', name: 'Widgets', route: '/widgets', icon: 'widgets' },
+  { id: 'members', name: 'Members', route: '/members', icon: 'members' },
+  { id: 'mall', name: 'Mall', route: '/mall', icon: 'mall' }
+])
+
+// 当前活动导航项
+const activeNavItem = computed(() => {
+  const currentPath = route.path
+  const navItem = navigationItems.value.find(item => item.route === currentPath)
+  return navItem ? navItem.id : 'home'
+})
+
+// 导航切换函数
+const navigateTo = (navItem) => {
+  if (navItem.route) {
+    router.push(navItem.route)
+  }
+}
+
+// 退出登录
+const logout = () => {
+  localStorage.removeItem('token')
+  router.push('/login')
+}
 
 // 操作：设置为明亮/黑暗
 const setToLight = () => {
@@ -188,6 +216,7 @@ body, html {
 .home {
   display: flex;
   height: 100vh;
+  width: 100vw;
   background: var(--gradient-bg);
   color: var(--color-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -312,6 +341,7 @@ body, html {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* 顶部头部 */

@@ -49,8 +49,14 @@
           <a href="#" class="forgot-password">忘记密码?</a>
         </div>
 
-        <button type="submit" class="login-btn">
-          登录
+        <!-- 错误信息显示 -->
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
+        <button type="submit" class="login-btn" :disabled="isLoading">
+          <span v-if="isLoading" class="loading-spinner"></span>
+          {{ isLoading ? '登录中...' : '登录' }}
         </button>
       </form>
 
@@ -65,6 +71,9 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // 表单数据
 const formData = reactive({
@@ -72,6 +81,10 @@ const formData = reactive({
   password: '',
   rememberMe: false
 })
+
+// 加载状态
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 // 关闭登录弹窗
 const closeLogin = () => {
@@ -83,9 +96,43 @@ const closeLogin = () => {
 const emit = defineEmits(['close'])
 
 // 处理登录
-const handleLogin = () => {
-  console.log('登录信息:', formData)
-  // 这里实现登录逻辑
+const handleLogin = async () => {
+  // 清除之前的错误信息
+  errorMessage.value = ''
+  
+  // 验证输入
+  if (!formData.username || !formData.password) {
+    errorMessage.value = '请输入用户名和密码'
+    return
+  }
+  
+  // 设置加载状态
+  isLoading.value = true
+  
+  try {
+    // 模拟API调用延迟
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // 验证登录凭据
+    if (formData.username === 'admin' && formData.password === 'admin123') {
+      // 登录成功
+      localStorage.setItem('token', 'admin-token-' + Date.now())
+      localStorage.setItem('user', JSON.stringify({
+        username: formData.username,
+        loginTime: new Date().toISOString()
+      }))
+      
+      // 跳转到Index界面
+      router.push('/home')
+    } else {
+      // 登录失败
+      errorMessage.value = '用户名或密码错误'
+    }
+  } catch (error) {
+    errorMessage.value = '登录失败，请重试'
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -290,6 +337,42 @@ const handleLogin = () => {
 
 .login-btn:active {
   transform: translateY(0);
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 错误信息样式 */
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #fcc;
+  margin-bottom: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .bottom-links {
