@@ -17,9 +17,15 @@
 
 <style scoped>
 .mall-page {
-  padding: 24px;
-  background: var(--color-bg-primary);
-  min-height: 100vh;
+  width: 100%;
+  padding: 8px 24px;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.mall-page::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .page-header h1 {
