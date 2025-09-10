@@ -1,11 +1,7 @@
 <template>
-  <div class="widgets-page">
+  <div class="widgets-page" ref="widgetsPage" @dragover.prevent="handlePageDragOver">
     <!-- 页面头部 -->
     <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">Device Management</h1>
-        <p class="page-description">Organize your smart devices by room. Drag devices between rooms to manage your home.</p>
-      </div>
       <div class="header-actions">
         <button class="add-room-btn" @click="addRoom">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -18,17 +14,14 @@
 
     <!-- 房间和设备管理 -->
     <div class="rooms-container">
-      <!-- 未分配设备区域 -->
-      <div class="room-section">
+      <!-- 左侧：未分配设备区域 -->
+      <div class="all-devices-section" @drop="handleDrop($event, 'unassigned')" @dragover.prevent @dragenter.prevent>
         <div class="room-header">
           <h3 class="room-title">All Devices</h3>
           <span class="device-count">{{ unassignedDevices.length }} devices</span>
         </div>
         <div 
           class="devices-grid"
-          @drop="handleDrop($event, 'unassigned')"
-          @dragover.prevent
-          @dragenter.prevent
         >
           <div 
             v-for="device in unassignedDevices" 
@@ -36,10 +29,12 @@
             class="device-card"
             :draggable="true"
             @dragstart="handleDragStart($event, device)"
+            @dragend="handleDragEnd($event)"
+            @dragenter.prevent="handleDragEnterCard($event, 'unassigned', device)"
             @click="selectDevice(device)"
           >
             <div class="device-preview">
-              <img :src="getDeviceThumbnail(device.name)" :alt="device.name" class="device-thumbnail" />
+              <img :src="getDeviceThumbnail(device.name)" :alt="device.name" class="device-thumbnail" draggable="false" />
             </div>
             <div class="device-info">
               <h4 class="device-name">{{ device.name }}</h4>
@@ -52,39 +47,43 @@
         </div>
       </div>
 
-      <!-- 各房间设备区域 -->
-      <div 
-        v-for="room in rooms" 
-        :key="room.id"
-        class="room-section"
-      >
-        <div class="room-header">
-          <h3 class="room-title">{{ room.name }}</h3>
-          <span class="device-count">{{ getRoomDevices(room.id).length }} devices</span>
-        </div>
+      <!-- 右侧：房间区域 -->
+      <div class="rooms-grid">
         <div 
-          class="devices-grid"
+          v-for="room in rooms" 
+          :key="room.id"
+          class="room-section"
           @drop="handleDrop($event, room.id)"
           @dragover.prevent
           @dragenter.prevent
         >
+          <div class="room-header">
+            <h3 class="room-title">{{ room.name }}</h3>
+            <span class="device-count">{{ getRoomDevices(room.id).length }} devices</span>
+          </div>
           <div 
-            v-for="device in getRoomDevices(room.id)" 
-            :key="device.id"
-            class="device-card"
-            :draggable="true"
-            @dragstart="handleDragStart($event, device)"
-            @click="selectDevice(device)"
+            class="devices-grid"
           >
-            <div class="device-preview">
-              <img :src="getDeviceThumbnail(device.name)" :alt="device.name" class="device-thumbnail" />
-            </div>
-            <div class="device-info">
-              <h4 class="device-name">{{ device.name }}</h4>
-            </div>
-            <div class="device-status" :class="device.status">
-              <div class="status-dot"></div>
-              <span>{{ device.status }}</span>
+            <div 
+              v-for="device in getRoomDevices(room.id)" 
+              :key="device.id"
+              class="device-card"
+              :draggable="true"
+              @dragstart="handleDragStart($event, device)"
+              @dragend="handleDragEnd($event)"
+              @dragenter.prevent="handleDragEnterCard($event, room.id, device)"
+              @click="selectDevice(device)"
+            >
+              <div class="device-preview">
+                <img :src="getDeviceThumbnail(device.name)" :alt="device.name" class="device-thumbnail" draggable="false" />
+              </div>
+              <div class="device-info">
+                <h4 class="device-name">{{ device.name }}</h4>
+              </div>
+              <div class="device-status" :class="device.status">
+                <div class="status-dot"></div>
+                <span>{{ device.status }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -140,12 +139,16 @@ import AirPurifierCard from '../widgets/AirPurifierCard.vue'
 import FallDetectionCard from '../widgets/FallDetectionCard.vue'
 import SmartSocketCard from '../widgets/SmartSocketCard.vue'
 
+// 页面容器引用用于滚动
+const widgetsPage = ref(null)
+
 // 房间数据
 const rooms = ref([
   { id: 'living-room', name: 'Living Room', color: '#3b82f6' },
   { id: 'bedroom', name: 'Bedroom', color: '#10b981' },
   { id: 'kitchen', name: 'Kitchen', color: '#f59e0b' },
-  { id: 'bathroom', name: 'Bathroom', color: '#ef4444' }
+  { id: 'bathroom', name: 'Bathroom', color: '#ef4444' },
+  { id: 'backyard', name: 'Backyard', color: '#8b5cf6' }
 ])
 
 // 设备数据
@@ -256,7 +259,44 @@ const getRoomName = (roomId) => {
 const handleDragStart = (event, device) => {
   draggedDevice.value = device
   event.dataTransfer.effectAllowed = 'move'
-  event.target.style.opacity = '0.5'
+  event.target.style.opacity = '0.6'
+  // 设置自定义拖拽预览为“当前设备”的缩略图
+  try {
+    const preview = document.createElement('div')
+    preview.style.width = '180px'
+    preview.style.height = '120px'
+    preview.style.border = '1px solid rgba(0,0,0,0.12)'
+    preview.style.borderRadius = '10px'
+    preview.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)'
+    preview.style.display = 'flex'
+    preview.style.flexDirection = 'column'
+    preview.style.alignItems = 'center'
+    preview.style.justifyContent = 'center'
+    preview.style.background = 'var(--color-bg-card)'
+    preview.style.pointerEvents = 'none'
+    preview.style.position = 'fixed'
+    preview.style.left = '-9999px'
+
+    const img = document.createElement('img')
+    img.src = getDeviceThumbnail(device.name)
+    img.alt = device.name
+    img.style.width = '100%'
+    img.style.height = '100%'
+    img.style.objectFit = 'contain'
+    img.style.borderRadius = '10px'
+
+    preview.appendChild(img)
+    document.body.appendChild(preview)
+
+    event.dataTransfer.setDragImage(preview, preview.clientWidth / 2, preview.clientHeight / 2)
+
+    // 清理预览节点（稍后移除，避免闪烁）
+    setTimeout(() => {
+      if (preview && preview.parentNode) preview.parentNode.removeChild(preview)
+    }, 0)
+  } catch (_) {
+    // 忽略不支持 setDragImage 的环境
+  }
 }
 
 // 拖拽结束
@@ -275,6 +315,44 @@ const handleDrop = (event, targetRoomId) => {
   }
   
   draggedDevice.value = null
+}
+
+// 在同一房间内拖拽经过其他卡片时，进行排序
+const handleDragEnterCard = (event, targetRoomId, targetDevice) => {
+  if (!draggedDevice.value) return
+
+  // 只在同一房间内进行排序（不改变roomId）
+  if (draggedDevice.value.roomId !== targetRoomId) return
+
+  if (draggedDevice.value.id === targetDevice.id) return
+
+  // 在数组中交换两项的位置
+  const list = devices.value
+  const fromIndex = list.findIndex(d => d.id === draggedDevice.value.id)
+  const toIndex = list.findIndex(d => d.id === targetDevice.id)
+  if (fromIndex === -1 || toIndex === -1) return
+
+  // 仅当两者在同一房间时才排序
+  if (list[fromIndex].roomId !== list[toIndex].roomId) return
+
+  const [moved] = list.splice(fromIndex, 1)
+  list.splice(toIndex, 0, moved)
+}
+
+// 拖拽时自动滚动页面（向上/向下）
+const handlePageDragOver = (event) => {
+  const container = widgetsPage.value
+  if (!container) return
+
+  const rect = container.getBoundingClientRect()
+  const threshold = 80 // 离顶部/底部阈值
+  const scrollSpeed = 20 // 每次事件的滚动像素
+
+  if (event.clientY < rect.top + threshold) {
+    container.scrollTop -= scrollSpeed
+  } else if (event.clientY > rect.bottom - threshold) {
+    container.scrollTop += scrollSpeed
+  }
 }
 
 // 选择设备
@@ -397,16 +475,32 @@ const addRoom = () => {
 
 .rooms-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 300px 1fr;
   gap: 24px;
+  align-items: start; /* 防止左右两列互相拉伸同高 */
+}
+
+.all-devices-section {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  min-height: 200px; /* 左侧仍保持基础高度，以便展示 */
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  align-self: start; /* 按内容高度自适应，不随左侧高度拉伸 */
 }
 
 .room-section {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 20px;
-  min-height: 200px;
+  padding: 16px 18px;
+  /* 让房间高度随内容而变，不设固定最小高度以免被左侧同步拉高 */
 }
 
 .room-header {
@@ -649,7 +743,8 @@ const addRoom = () => {
 /* 设备大图预览 */
 .device-large-preview {
   width: 100%;
-  height: 200px;
+  height: 500px;
+  padding: 10px;
   background: var(--color-bg-secondary);
   border-radius: 12px;
   overflow: hidden;
@@ -714,6 +809,10 @@ const addRoom = () => {
 
 @media (max-width: 768px) {
   .rooms-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .rooms-grid {
     grid-template-columns: 1fr;
   }
   
