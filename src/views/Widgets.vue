@@ -146,6 +146,23 @@
       </div>
     </div>
   </div>
+
+  <!-- 新增房间弹窗 -->
+  <div v-if="addRoomModalOpen" class="device-modal" @click="cancelAddRoom">
+    <div class="delete-modal-content" @click.stop>
+      <div class="delete-modal-header">
+        <h3>Add Room</h3>
+        <button class="delete-close-btn" @click="cancelAddRoom">X</button>
+      </div>
+      <div class="delete-modal-body">
+        <input class="input" v-model="newRoomName" placeholder="Enter room name" @keyup.enter="confirmAddRoom" />
+      </div>
+      <div class="delete-modal-footer">
+        <button class="action-btn" @click="cancelAddRoom">Cancel</button>
+        <button class="action-btn success" @click="confirmAddRoom">Add</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -444,16 +461,32 @@ const getDeviceThumbnail = (deviceName) => {
 }
 
 // 添加房间
+// 新增房间：使用弹窗输入房间名
+const addRoomModalOpen = ref(false)
+const newRoomName = ref('')
+
 const addRoom = () => {
-  const roomName = prompt('Enter room name:')
-  if (roomName) {
-    const newRoom = {
-      id: roomName.toLowerCase().replace(/\s+/g, '-'),
-      name: roomName,
-      color: '#6b7280'
-    }
-    rooms.value.push(newRoom)
+  newRoomName.value = ''
+  addRoomModalOpen.value = true
+}
+
+const confirmAddRoom = () => {
+  const roomName = newRoomName.value.trim()
+  if (!roomName) {
+    addRoomModalOpen.value = false
+    return
   }
+  const newRoom = {
+    id: roomName.toLowerCase().replace(/\s+/g, '-'),
+    name: roomName,
+    color: '#6b7280'
+  }
+  rooms.value.push(newRoom)
+  addRoomModalOpen.value = false
+}
+
+const cancelAddRoom = () => {
+  addRoomModalOpen.value = false
 }
 
 // 移除了图标组件定义，现在使用实际的widget组件
@@ -850,6 +883,20 @@ const addRoom = () => {
   color: var(--color-text-secondary);
 }
 
+.delete-modal-body .input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.delete-modal-body .input:focus {
+  border-color: var(--color-primary);
+}
+
 .delete-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -885,6 +932,19 @@ const addRoom = () => {
   background: #ef4444;
   color: #ffffff;
   border-color: #ef4444;
+}
+
+/* 浅绿色成功按钮（Add） */
+.action-btn.success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.action-btn.success:hover {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
 }
 
 /* 设备大图预览 */
