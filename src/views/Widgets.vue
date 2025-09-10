@@ -59,7 +59,14 @@
         >
           <div class="room-header">
             <h3 class="room-title">{{ room.name }}</h3>
-            <span class="device-count">{{ getRoomDevices(room.id).length }} devices</span>
+            <div class="room-actions">
+              <span class="device-count">{{ getRoomDevices(room.id).length }} devices</span>
+              <button class="delete-room-btn" title="Delete room" @click.stop="openDeleteConfirm(room)">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 7h12M9 7v12m6-12v12M10 4h4a1 1 0 0 1 1 1v2H9V5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div 
             class="devices-grid"
@@ -119,6 +126,23 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除房间确认弹窗（独立样式） -->
+  <div v-if="roomPendingDelete" class="device-modal" @click="closeDeleteConfirm">
+    <div class="delete-modal-content" @click.stop>
+      <div class="delete-modal-header">
+        <h3>Delete Room</h3>
+        <button class="delete-close-btn" @click="closeDeleteConfirm">X</button>
+      </div>
+      <div class="delete-modal-body">
+        <p>Are you sure you want to delete "{{ roomPendingDelete.name }}"? Devices in this room will be moved to All Devices.</p>
+      </div>
+      <div class="delete-modal-footer">
+        <button class="action-btn" @click="closeDeleteConfirm">Cancel</button>
+        <button class="action-btn danger" @click="removeRoom">Delete</button>
       </div>
     </div>
   </div>
@@ -253,6 +277,32 @@ const getRoomName = (roomId) => {
   if (roomId === 'unassigned') return 'Unassigned'
   const room = rooms.value.find(r => r.id === roomId)
   return room ? room.name : 'Unknown'
+}
+
+// 删除房间确认弹窗状态
+const roomPendingDelete = ref(null)
+const openDeleteConfirm = (room) => {
+  roomPendingDelete.value = room
+}
+const closeDeleteConfirm = () => {
+  roomPendingDelete.value = null
+}
+
+// 删除房间（将房间内设备移回 All Devices）
+const removeRoom = () => {
+  const room = roomPendingDelete.value
+  if (!room) return
+
+  // 将该房间的设备移动到 unassigned
+  devices.value = devices.value.map(d => (
+    d.roomId === room.id ? { ...d, roomId: 'unassigned' } : d
+  ))
+
+  // 从房间列表移除
+  const idx = rooms.value.findIndex(r => r.id === room.id)
+  if (idx > -1) rooms.value.splice(idx, 1)
+
+  closeDeleteConfirm()
 }
 
 // 拖拽开始
@@ -490,9 +540,11 @@ const addRoom = () => {
 
 .rooms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* 每列不超过 600px，最小 300px，自动换行 */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 320px));
   gap: 20px;
   align-self: start; /* 按内容高度自适应，不随左侧高度拉伸 */
+  justify-content: start; /* 左对齐，避免最后一行拉伸 */
 }
 
 .room-section {
@@ -501,6 +553,7 @@ const addRoom = () => {
   border-radius: 16px;
   padding: 16px 18px;
   /* 让房间高度随内容而变，不设固定最小高度以免被左侧同步拉高 */
+  width: 100%;
 }
 
 .room-header {
@@ -510,6 +563,30 @@ const addRoom = () => {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.room-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-room-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-room-btn:hover {
+  color: var(--color-danger, #ef4444);
+  border-color: var(--color-danger, #ef4444);
 }
 
 .room-title {
@@ -723,6 +800,64 @@ const addRoom = () => {
   border-top: 1px solid var(--color-border);
 }
 
+/* 删除房间确认弹窗独立样式 */
+.delete-modal-content {
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+
+.delete-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.delete-modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.delete-close-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.delete-close-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.delete-modal-body {
+  margin: 8px 0 16px;
+}
+
+.delete-modal-body p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.delete-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
 .action-btn {
   padding: 12px 12px;
   border: 1px solid var(--color-border);
@@ -738,6 +873,18 @@ const addRoom = () => {
   background: var(--color-primary);
   color: var(--color-primary-text);
   border-color: var(--color-primary);
+}
+
+.action-btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.action-btn.danger:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
 }
 
 /* 设备大图预览 */
