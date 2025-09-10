@@ -12,20 +12,6 @@ export const themes = {
 // 默认主题
 export const defaultTheme = themes.dark
 
-// 主题默认颜色配置
-export const themeDefaults = {
-  light: {
-    primary: '#BFFE01',
-    bgCard: '#ffffff',
-    text: '#212529'
-  },
-  dark: {
-    primary: '#BFFE01',
-    bgCard: '#18181a',
-    text: '#FFFFFF'
-  }
-}
-
 // 读取并应用 ColorControl 持久化的颜色变量
 function readColorControlForMode(mode) {
   try {
@@ -49,11 +35,6 @@ export function applyColorControlVars(data) {
 // 读取主题默认值（优先使用静态配置，回退到探针元素）
 export function readThemeDefaults(themeName) {
   const mode = themeName === 'light' ? 'light' : 'dark'
-  
-  // 优先使用静态配置的默认值
-  if (themeDefaults[mode]) {
-    return themeDefaults[mode]
-  }
   
   // 回退到探针元素读取
   const probe = document.createElement('div')
