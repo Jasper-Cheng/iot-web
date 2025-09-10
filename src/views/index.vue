@@ -56,32 +56,13 @@
         <li class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- 闪电图标 -->
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <!-- 购物袋图标 -->
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
           </div>
-          <span>Electricity</span>
-        </li>
-        <li class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- 音符图标 -->
-              <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="2" fill="none"/>
-              <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-              <circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-          </div>
-          <span>Player</span>
-        </li>
-        <li class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- 时钟/饼图图标 -->
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-          </div>
-          <span>Bills</span>
+          <span>Mall</span>
         </li>
       </ul>
 
@@ -270,8 +251,8 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 0px;
-  margin: 18px 12px;
+  padding: 20px 0px;
+  margin: 20px 12px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
