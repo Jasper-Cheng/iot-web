@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 // 导入实际的widget组件
 import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
@@ -332,9 +332,9 @@ const handleDragStart = (event, device) => {
     const preview = document.createElement('div')
     preview.style.width = '180px'
     preview.style.height = '120px'
-    preview.style.border = '1px solid rgba(0,0,0,0.12)'
+    preview.style.border = '1px solid var(--color-widgets-preview-border)'
     preview.style.borderRadius = '10px'
-    preview.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)'
+    preview.style.boxShadow = '0 6px 16px var(--color-widgets-preview-shadow)'
     preview.style.display = 'flex'
     preview.style.flexDirection = 'column'
     preview.style.alignItems = 'center'
@@ -488,6 +488,36 @@ const confirmAddRoom = () => {
 const cancelAddRoom = () => {
   addRoomModalOpen.value = false
 }
+
+// 主题变化处理函数
+const handleThemeChange = () => {
+  // 强制重新渲染页面以应用新的主题颜色
+  const widgetsPage = document.querySelector('.widgets-page')
+  if (widgetsPage) {
+    // 临时改变一个属性来强制重新渲染
+    widgetsPage.style.transform = 'translateZ(0)'
+    setTimeout(() => {
+      widgetsPage.style.transform = ''
+    }, 0)
+  }
+}
+
+// 生命周期钩子
+onMounted(() => {
+  // 监听主题变化事件
+  window.addEventListener('themeChanged', handleThemeChange)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme') {
+      handleThemeChange()
+    }
+  })
+})
+
+onUnmounted(() => {
+  // 清理事件监听器
+  window.removeEventListener('themeChanged', handleThemeChange)
+  window.removeEventListener('storage', handleThemeChange)
+})
 
 // 移除了图标组件定义，现在使用实际的widget组件
 </script>
@@ -670,7 +700,7 @@ const cancelAddRoom = () => {
 
 .device-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--color-widgets-card-shadow);
   border-color: var(--color-primary);
 }
 
@@ -743,7 +773,7 @@ const cancelAddRoom = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-widgets-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -841,7 +871,7 @@ const cancelAddRoom = () => {
   padding: 20px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 12px 32px var(--color-widgets-modal-shadow);
 }
 
 .delete-modal-header {

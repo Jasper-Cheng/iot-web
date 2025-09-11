@@ -112,6 +112,13 @@
   --color-login-error-text: #c33;                      /* 错误文字 */
   --color-login-error-border: #fcc;                    /* 错误边框 */
   --color-login-spinner-border: #ffffff;               /* 加载动画边框 */
+  
+  /* Widgets页面专用颜色 */
+  --color-widgets-preview-border: rgba(0,0,0,0.12);    /* 预览边框 */
+  --color-widgets-preview-shadow: rgba(0,0,0,0.18);    /* 预览阴影 */
+  --color-widgets-card-shadow: rgba(0, 0, 0, 0.1);     /* 卡片阴影 */
+  --color-widgets-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
+  --color-widgets-modal-shadow: rgba(0,0,0,0.25);      /* 模态框阴影 */
 
   /* 房间主题色（Widgets 使用） */
   --room-living: #3b82f6;    /* 蓝色 */
@@ -238,6 +245,13 @@
   --color-login-error-text: #dc2626;
   --color-login-error-border: #fecaca;
   --color-login-spinner-border: #212529;
+  
+  /* Widgets页面专用颜色 */
+  --color-widgets-preview-border: rgba(0,0,0,0.12);
+  --color-widgets-preview-shadow: rgba(0,0,0,0.18);
+  --color-widgets-card-shadow: rgba(0, 0, 0, 0.1);
+  --color-widgets-modal-overlay: rgba(0, 0, 0, 0.5);
+  --color-widgets-modal-shadow: rgba(0,0,0,0.25);
 
   /* 房间主题色（Widgets 使用） */
   --room-living: #3b82f6;
