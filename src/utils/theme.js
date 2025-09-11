@@ -123,7 +123,13 @@ export function setTheme(themeName) {
   // 应用该主题的 ColorControl 颜色设置
   const mode = themeName === 'light' ? 'light' : 'dark'
   const saved = readColorControlForMode(mode)
-  applyColorControlVars(saved)
+  if (saved) {
+    applyColorControlVars(saved)
+  } else {
+    // 如果没有保存的颜色数据，则使用当前主题的默认颜色
+    const defaults = readThemeDefaults(themeName)
+    applyColorControlVars(defaults)
+  }
   
   // 触发主题变化事件
   if (typeof window !== 'undefined') {
@@ -150,10 +156,7 @@ export function initTheme() {
   const theme = savedTheme && themes[savedTheme] ? savedTheme : defaultTheme
   
   setTheme(theme)
-  // 确保 ColorControl 颜色也被应用
-  const mode = theme === 'light' ? 'light' : 'dark'
-  const saved = readColorControlForMode(mode)
-  applyColorControlVars(saved)
+  // setTheme 已经处理了颜色应用，这里不需要重复处理
   
   return theme
 }
