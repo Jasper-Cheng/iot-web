@@ -533,17 +533,18 @@ const cancelAddRoom = () => {
 }
 
 .add-room-btn {
+  background-color: var(--color-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: var(--color-primary);
-  color: var(--color-primary-text);
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
 .add-room-btn:hover {
