@@ -8,8 +8,8 @@
       <div class="logo-section">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#BFFE01" stroke-width="2" fill="none"/>
-            <polyline points="9,22 9,12 15,12 15,22" stroke="#BFFE01" stroke-width="2" fill="none"/>
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="var(--color-login-gradient-start)" stroke-width="2" fill="none"/>
+            <polyline points="9,22 9,12 15,12 15,22" stroke="var(--color-login-gradient-start)" stroke-width="2" fill="none"/>
           </svg>
         </div>
         <h1 class="platform-title">IoT 管理平台</h1>
@@ -143,7 +143,7 @@ const handleLogin = async () => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(9, 9, 11, 0.8);
+  background: var(--color-login-overlay);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
@@ -152,15 +152,15 @@ const handleLogin = async () => {
 }
 
 .login-modal {
-  background: rgba(39, 39, 42, 0.95);
+  background: var(--color-login-modal-bg);
   backdrop-filter: blur(20px);
-  border: 1px solid #71717A;
+  border: 1px solid var(--color-login-border);
   border-radius: 20px;
   padding: 40px;
   width: 420px;
   max-width: 90vw;
   position: relative;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px var(--color-login-shadow);
 }
 
 .close-btn {
@@ -169,7 +169,7 @@ const handleLogin = async () => {
   right: 20px;
   background: none;
   border: none;
-  color: #71717A;
+  color: var(--color-login-text-muted);
   font-size: 28px;
   cursor: pointer;
   width: 32px;
@@ -182,8 +182,8 @@ const handleLogin = async () => {
 }
 
 .close-btn:hover {
-  background-color: rgba(191, 254, 1, 0.1);
-  color: #BFFE01;
+  background-color: var(--color-login-primary-hover);
+  color: var(--color-login-gradient-start);
 }
 
 .logo-section {
@@ -209,8 +209,8 @@ const handleLogin = async () => {
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 700;
-  color: #FFFFFF;
-  background: linear-gradient(45deg, #BFFE01, #38A0FF);
+  color: var(--color-login-text-primary);
+  background: linear-gradient(45deg, var(--color-login-gradient-start), var(--color-login-gradient-end));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -218,7 +218,7 @@ const handleLogin = async () => {
 
 .platform-subtitle {
   margin: 0;
-  color: #71717A;
+  color: var(--color-login-text-muted);
   font-size: 16px;
 }
 
@@ -233,7 +233,7 @@ const handleLogin = async () => {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #FFFFFF;
+  color: var(--color-login-text-primary);
   font-weight: 500;
   font-size: 14px;
 }
@@ -241,10 +241,10 @@ const handleLogin = async () => {
 .form-group input {
   width: 100%;
   padding: 16px;
-  background: rgba(9, 9, 11, 0.6);
-  border: 2px solid #71717A;
+  background: var(--color-login-input-bg);
+  border: 2px solid var(--color-login-border);
   border-radius: 12px;
-  color: #FFFFFF;
+  color: var(--color-login-text-primary);
   font-size: 16px;
   transition: all 0.3s ease;
   box-sizing: border-box;
@@ -252,12 +252,12 @@ const handleLogin = async () => {
 
 .form-group input:focus {
   outline: none;
-  border-color: #BFFE01;
-  background: rgba(9, 9, 11, 0.8);
+  border-color: var(--color-login-gradient-start);
+  background: var(--color-login-input-bg-focus);
 }
 
 .form-group input::placeholder {
-  color: #71717A;
+  color: var(--color-login-text-muted);
 }
 
 .form-options {
@@ -271,7 +271,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  color: #71717A;
+  color: var(--color-login-text-muted);
   font-size: 14px;
 }
 
@@ -282,7 +282,7 @@ const handleLogin = async () => {
 .checkmark {
   width: 20px;
   height: 20px;
-  border: 2px solid #71717A;
+  border: 2px solid var(--color-login-border);
   border-radius: 4px;
   margin-right: 8px;
   position: relative;
@@ -290,8 +290,8 @@ const handleLogin = async () => {
 }
 
 .checkbox-container input[type="checkbox"]:checked + .checkmark {
-  background-color: #BFFE01;
-  border-color: #BFFE01;
+  background-color: var(--color-login-checkbox-bg);
+  border-color: var(--color-login-checkbox-bg);
 }
 
 .checkbox-container input[type="checkbox"]:checked + .checkmark::after {
@@ -300,26 +300,26 @@ const handleLogin = async () => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #09090B;
+  color: var(--color-login-checkbox-text);
   font-size: 14px;
   font-weight: bold;
 }
 
 .forgot-password {
-  color: #38A0FF;
+  color: var(--color-login-link);
   text-decoration: none;
   font-size: 14px;
   transition: color 0.3s ease;
 }
 
 .forgot-password:hover {
-  color: #BFFE01;
+  color: var(--color-login-link-hover);
 }
 
 .login-btn {
   width: 100%;
-  background: linear-gradient(135deg, #BFFE01, #38A0FF);
-  color: #09090B;
+  background: linear-gradient(135deg, var(--color-login-gradient-start), var(--color-login-gradient-end));
+  color: var(--color-login-checkbox-text);
   border: none;
   padding: 16px;
   border-radius: 12px;
@@ -332,7 +332,7 @@ const handleLogin = async () => {
 
 .login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(191, 254, 1, 0.3);
+  box-shadow: 0 10px 25px var(--color-login-btn-shadow);
 }
 
 .login-btn:active {
@@ -347,11 +347,11 @@ const handleLogin = async () => {
 
 /* 错误信息样式 */
 .error-message {
-  background: #fee;
-  color: #c33;
+  background: var(--color-login-error-bg);
+  color: var(--color-login-error-text);
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid #fcc;
+  border: 1px solid var(--color-login-error-border);
   margin-bottom: 16px;
   font-size: 14px;
   text-align: center;
@@ -362,7 +362,7 @@ const handleLogin = async () => {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--color-login-spinner-border);
   border-radius: 50%;
   border-top-color: transparent;
   animation: spin 1s ease-in-out infinite;
@@ -377,19 +377,19 @@ const handleLogin = async () => {
 
 .bottom-links {
   text-align: center;
-  color: #71717A;
+  color: var(--color-login-text-muted);
   font-size: 14px;
 }
 
 .register-link {
-  color: #BFFE01;
+  color: var(--color-login-gradient-start);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .register-link:hover {
-  color: #38A0FF;
+  color: var(--color-login-gradient-end);
 }
 
 /* 响应式设计 */

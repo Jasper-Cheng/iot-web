@@ -90,6 +90,28 @@
   --color-member-shadow-light: rgba(0, 0, 0, 0.1);    /* 浅阴影 */
   --color-member-shadow-medium: rgba(0, 0, 0, 0.25);  /* 中等阴影 */
   --color-member-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
+  
+  /* Login页面专用颜色 */
+  --color-login-overlay: rgba(9, 9, 11, 0.8);         /* 登录遮罩背景 */
+  --color-login-modal-bg: rgba(39, 39, 42, 0.95);     /* 登录模态框背景 */
+  --color-login-border: #71717A;                       /* 登录边框 */
+  --color-login-shadow: rgba(0, 0, 0, 0.5);           /* 登录阴影 */
+  --color-login-text-muted: #71717A;                   /* 登录次要文字 */
+  --color-login-text-primary: #FFFFFF;                 /* 登录主要文字 */
+  --color-login-input-bg: rgba(9, 9, 11, 0.6);        /* 输入框背景 */
+  --color-login-input-bg-focus: rgba(9, 9, 11, 0.8);  /* 输入框聚焦背景 */
+  --color-login-primary-hover: rgba(191, 254, 1, 0.1); /* 主色悬停背景 */
+  --color-login-gradient-start: #BFFE01;               /* 渐变起始色 */
+  --color-login-gradient-end: #38A0FF;                 /* 渐变结束色 */
+  --color-login-checkbox-bg: #BFFE01;                  /* 复选框背景 */
+  --color-login-checkbox-text: #09090B;                /* 复选框文字 */
+  --color-login-link: #38A0FF;                         /* 链接颜色 */
+  --color-login-link-hover: #BFFE01;                   /* 链接悬停颜色 */
+  --color-login-btn-shadow: rgba(191, 254, 1, 0.3);   /* 按钮阴影 */
+  --color-login-error-bg: #fee;                        /* 错误背景 */
+  --color-login-error-text: #c33;                      /* 错误文字 */
+  --color-login-error-border: #fcc;                    /* 错误边框 */
+  --color-login-spinner-border: #ffffff;               /* 加载动画边框 */
 
   /* 房间主题色（Widgets 使用） */
   --room-living: #3b82f6;    /* 蓝色 */
@@ -194,6 +216,28 @@
   --color-member-shadow-light: rgba(0, 0, 0, 0.1);
   --color-member-shadow-medium: rgba(0, 0, 0, 0.25);
   --color-member-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Login页面专用颜色 */
+  --color-login-overlay: rgba(248, 249, 250, 0.8);
+  --color-login-modal-bg: rgba(255, 255, 255, 0.95);
+  --color-login-border: #dee2e6;
+  --color-login-shadow: rgba(0, 0, 0, 0.2);
+  --color-login-text-muted: #6c757d;
+  --color-login-text-primary: #212529;
+  --color-login-input-bg: rgba(248, 249, 250, 0.6);
+  --color-login-input-bg-focus: rgba(248, 249, 250, 0.8);
+  --color-login-primary-hover: rgba(191, 254, 1, 0.1);
+  --color-login-gradient-start: #BFFE01;
+  --color-login-gradient-end: #38A0FF;
+  --color-login-checkbox-bg: #BFFE01;
+  --color-login-checkbox-text: #ffffff;
+  --color-login-link: #38A0FF;
+  --color-login-link-hover: #BFFE01;
+  --color-login-btn-shadow: rgba(191, 254, 1, 0.3);
+  --color-login-error-bg: #fef2f2;
+  --color-login-error-text: #dc2626;
+  --color-login-error-border: #fecaca;
+  --color-login-spinner-border: #212529;
 
   /* 房间主题色（Widgets 使用） */
   --room-living: #3b82f6;
