@@ -1,8 +1,7 @@
 <template>
   <div class="login-overlay">
     <div class="login-modal">
-      <!-- 关闭按钮 -->
-      <button class="close-btn" @click="closeLogin">×</button>
+      
       
       <!-- Logo区域 -->
       <div class="logo-section">
@@ -16,8 +15,16 @@
         <p class="platform-subtitle">智能设备管理与监控系统</p>
       </div>
 
+      <!-- 登录/注册切换 -->
+      <div class="form-options" style="margin-top: -10px; margin-bottom: 10px; justify-content: center;">
+        <label class="checkbox-container" style="gap:8px;cursor:default;">
+          <span class="checkmark" style="display:none"></span>
+          <span style="color: var(--color-login-text-primary); font-weight:600;">{{ isRegister ? '注册' : '登录' }}</span>
+        </label>
+      </div>
+
       <!-- 登录表单 -->
-      <form class="login-form" @submit.prevent="handleLogin">
+      <form v-if="!isRegister" class="login-form" @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="username">用户名</label>
           <input 
@@ -60,10 +67,73 @@
         </button>
       </form>
 
-      <!-- 底部链接 -->
+      <!-- 注册表单 -->
+      <form v-else class="login-form" @submit.prevent="handleRegister">
+        <div class="form-grid">
+          <div class="form-group avatar-group">
+            <label for="reg_avatar_file">头像</label>
+            <input ref="avatarInput" type="file" id="reg_avatar_file" accept="image/*" @change="onAvatarChange" style="display:none" />
+            <button type="button" class="avatar-uploader" @click="triggerAvatarSelect">
+              <img v-if="registerData.avatar" :src="registerData.avatar" alt="avatar" />
+              <span v-else class="plus">+</span>
+            </button>
+          </div>
+          <div class="form-group">
+            <label for="reg_username">用户名 <span class="required">*</span></label>
+            <input type="text" id="reg_username" v-model="registerData.username" placeholder="请输入用户名" required />
+          </div>
+          <div class="form-group">
+            <label for="reg_phone">手机号 <span class="required">*</span></label>
+            <input type="tel" id="reg_phone" v-model="registerData.phone" placeholder="请输入手机号" required />
+          </div>
+
+          <div class="form-group">
+            <label for="reg_email">邮箱</label>
+            <input type="email" id="reg_email" v-model="registerData.email" placeholder="请输入邮箱" />
+          </div>
+          <div class="form-group">
+            <label for="reg_role">角色</label>
+            <select id="reg_role" class="compact" v-model="registerData.role">
+              <option value="admin">管理员</option>
+              <option value="member">成员</option>
+              <option value="guest">访客</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="reg_gender">性别</label>
+            <select id="reg_gender" class="compact" v-model="registerData.gender">
+              <option value="male">男</option>
+              <option value="female">女</option>
+            </select>
+          </div>
+          
+
+          <div class="form-group">
+            <label for="reg_password">密码 <span class="required">*</span></label>
+            <input type="password" id="reg_password" v-model="registerData.password" placeholder="请输入密码" required />
+          </div>
+          <div class="form-group">
+            <label for="reg_confirm">确认密码 <span class="required">*</span></label>
+            <input type="password" id="reg_confirm" v-model="registerData.confirmPassword" placeholder="请再次输入密码" required />
+          </div>
+        </div>
+
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
+        <button type="submit" class="login-btn" :disabled="isLoading">
+          <span v-if="isLoading" class="loading-spinner"></span>
+          {{ isLoading ? '注册中...' : '注册' }}
+        </button>
+      </form>
+
+      <!-- 底部链接：切换登录/注册 -->
       <div class="bottom-links">
-        <span>还没有账号? </span>
-        <a href="#" class="register-link">立即注册</a>
+        <span v-if="!isRegister">还没有账号? </span>
+        <span v-else>已经有账号? </span>
+        <a href="#" class="register-link" @click.prevent="toggleMode">{{ isRegister ? '去登录' : '立即注册' }}</a>
       </div>
     </div>
   </div>
@@ -82,9 +152,22 @@ const formData = reactive({
   rememberMe: false
 })
 
+// 注册数据
+const registerData = reactive({
+  username: '',
+  avatar: '',
+  phone: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  role: 'member',
+  gender: 'male'
+})
+
 // 加载状态
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isRegister = ref(false)
 
 // 关闭登录弹窗
 const closeLogin = () => {
@@ -134,6 +217,72 @@ const handleLogin = async () => {
     isLoading.value = false
   }
 }
+
+// 切换模式
+const toggleMode = () => {
+  errorMessage.value = ''
+  isRegister.value = !isRegister.value
+}
+
+// 处理注册
+const handleRegister = async () => {
+  errorMessage.value = ''
+
+  // 基础校验
+  if (!registerData.username || !registerData.phone || !registerData.email) {
+    errorMessage.value = '请填写用户名、手机号和邮箱'
+    return
+  }
+  if (!registerData.password || registerData.password.length < 6) {
+    errorMessage.value = '密码至少6位'
+    return
+  }
+  if (registerData.password !== registerData.confirmPassword) {
+    errorMessage.value = '两次输入的密码不一致'
+    return
+  }
+
+  isLoading.value = true
+  try {
+    // 模拟注册
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    const user = {
+      id: Date.now(),
+      username: registerData.username,
+      avatar: registerData.avatar,
+      phone: registerData.phone,
+      email: registerData.email,
+      role: registerData.role,
+      gender: registerData.gender,
+      createdAt: new Date().toISOString()
+    }
+    localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('token', 'token-' + user.id)
+    router.push('/home')
+  } catch (e) {
+    errorMessage.value = '注册失败，请重试'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 头像文件选择
+const onAvatarChange = async (e) => {
+  const file = e.target.files && e.target.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    registerData.avatar = String(reader.result || '')
+  }
+  reader.readAsDataURL(file)
+}
+
+// 触发文件选择
+const avatarInput = ref(null)
+const triggerAvatarSelect = () => {
+  const el = avatarInput.value
+  if (el) el.click()
+}
 </script>
 
 <style scoped>
@@ -157,7 +306,7 @@ const handleLogin = async () => {
   border: 1px solid var(--color-login-border);
   border-radius: 20px;
   padding: 40px;
-  width: 420px;
+  width: 520px;
   max-width: 90vw;
   position: relative;
   box-shadow: 0 25px 50px var(--color-login-shadow);
@@ -226,6 +375,90 @@ const handleLogin = async () => {
   margin-bottom: 30px;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px 18px;
+}
+
+.form-group.full-row {
+  grid-column: 1 / -1;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 16px;
+  background: var(--color-login-input-bg);
+  border: 2px solid var(--color-login-border);
+  border-radius: 12px;
+  color: var(--color-login-text-primary);
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-group select.compact {
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-login-gradient-start);
+  background: var(--color-login-input-bg-focus);
+}
+
+.avatar-preview {
+  margin-top: 8px;
+}
+
+.avatar-preview img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-login-border);
+}
+
+.avatar-uploader {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px dashed var(--color-login-border);
+  background: var(--color-login-input-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.avatar-uploader:hover {
+  border-color: var(--color-login-gradient-start);
+  background: var(--color-login-input-bg-focus);
+}
+
+.avatar-uploader .plus {
+  color: var(--color-login-text-muted);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.avatar-uploader img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .form-group {
   margin-bottom: 24px;
 }
@@ -236,6 +469,10 @@ const handleLogin = async () => {
   color: var(--color-login-text-primary);
   font-weight: 500;
   font-size: 14px;
+}
+
+.required {
+  color: var(--color-login-error-text);
 }
 
 .form-group input {
