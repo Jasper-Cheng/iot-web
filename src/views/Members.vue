@@ -580,7 +580,7 @@ onMounted(() => {
 
 .count-progress {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), #10b981);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-member-online));
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -647,7 +647,7 @@ onMounted(() => {
 
 .member-node:hover {
   border-color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--color-member-shadow-light);
   transform: translateY(-2px);
 }
 
@@ -741,11 +741,11 @@ onMounted(() => {
 }
 
 .status-indicator.active {
-  background-color: #10b981;
+  background-color: var(--color-member-online);
 }
 
 .status-indicator.inactive {
-  background-color: #ef4444;
+  background-color: var(--color-member-offline);
 }
 
 .member-details h3 {
@@ -796,18 +796,18 @@ onMounted(() => {
 }
 
 .role-badge.admin {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--color-member-warning-bg);
+  color: var(--color-member-warning-text);
 }
 
 .role-badge.member {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: var(--color-member-info-bg);
+  color: var(--color-member-info-text);
 }
 
 .role-badge.guest {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: var(--color-member-default-bg);
+  color: var(--color-member-default-text);
 }
 
 .member-actions {
@@ -848,8 +848,8 @@ onMounted(() => {
 }
 
 .action-btn.danger:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: var(--color-member-border-danger);
+  color: var(--color-member-border-danger);
 }
 
 .action-btn.small {
@@ -875,8 +875,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-member-text-warning);
+  background: var(--color-member-bg-warning);
   border-radius: 6px;
   cursor: help;
 }
@@ -908,7 +908,7 @@ onMounted(() => {
 .admin-permission-note svg {
   width: 16px;
   height: 16px;
-  color: #f59e0b;
+  color: var(--color-member-text-warning);
 }
 
 .permission-toggle {
@@ -939,7 +939,7 @@ onMounted(() => {
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: #f59e0b;
+  color: var(--color-member-text-warning);
   cursor: help;
 }
 
@@ -1022,7 +1022,7 @@ onMounted(() => {
 
 .device-control-item:hover {
   border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-member-shadow-light);
 }
 
 .device-info {
@@ -1225,7 +1225,7 @@ input:checked + .toggle-slider:before {
 .admin-role-note svg {
   width: 14px;
   height: 14px;
-  color: #f59e0b;
+  color: var(--color-member-text-warning);
 }
 
 .form-actions {
@@ -1272,7 +1272,7 @@ input:checked + .toggle-slider:before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-member-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1285,7 +1285,7 @@ input:checked + .toggle-slider:before {
   padding: 20px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 12px 32px var(--color-member-shadow-medium);
 }
 
 .delete-modal-header {
