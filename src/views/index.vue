@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="home" @click="closeUserMenu">
     <!-- 左侧导航栏 -->
     <nav class="sidebar">
       <!-- Logo区域 -->
@@ -116,10 +116,59 @@
               <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
           </button>
-          <div class="user-profile">
+          <div class="user-profile" @click.stop="toggleUserMenu">
             <img src="https://api.dicebear.com/7.x/adventurer/png?size=80&seed=bala" alt="Profile Avatar" class="profile-avatar">
             <span class="user-name">Bala Hatun</span>
-            <span class="dropdown-arrow">▼</span>
+            <span class="dropdown-arrow" :class="{ active: showUserMenu }">▼</span>
+          </div>
+          
+          <!-- 用户下拉菜单 -->
+          <div v-if="showUserMenu" class="user-dropdown" @click.stop>
+            <div class="user-info">
+              <img src="https://api.dicebear.com/7.x/adventurer/png?size=80&seed=bala" alt="Profile Avatar" class="dropdown-avatar">
+              <div class="user-details">
+                <h4>Bala Hatun</h4>
+                <p class="user-email">bala.hatun@example.com</p>
+                <p class="user-phone">+86 138 0013 8000</p>
+                <div class="user-meta">
+                  <span class="user-role">管理员</span>
+                  <span class="user-gender">女</span>
+                </div>
+              </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                个人资料
+              </a>
+              <a href="#" class="dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                设置
+              </a>
+              <a href="#" class="dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                帮助
+              </a>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item logout">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <polyline points="16,17 21,12 16,7" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                退出登录
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -145,6 +194,9 @@ const route = useRoute()
 
 // 控制登录弹窗显示（预留）
 const showLogin = ref(false)
+
+// 控制用户下拉菜单显示
+const showUserMenu = ref(false)
 
 // 当前主题
 const currentTheme = ref('dark')
@@ -187,6 +239,16 @@ const setToLight = () => {
 const setToDark = () => {
   setTheme('dark')
   currentTheme.value = 'dark'
+}
+
+// 切换用户下拉菜单
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+// 关闭用户下拉菜单
+const closeUserMenu = () => {
+  showUserMenu.value = false
 }
 
 // 初始化主题
@@ -350,6 +412,8 @@ body, html {
   justify-content: space-between;
   align-items: center;
   padding: 32px 24px;
+  position: relative;
+  z-index: 100;
 }
 
 .header-left h1 {
@@ -474,6 +538,7 @@ body, html {
   padding: 8px 16px;
   border-radius: 8px;
   transition: background-color 0.3s ease;
+  position: relative;
 }
 
 .user-profile:hover {
@@ -495,6 +560,145 @@ body, html {
 .dropdown-arrow {
   color: var(--color-text-secondary);
   font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.active {
+  transform: rotate(180deg);
+}
+
+/* 用户下拉菜单样式 */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% - 20px);
+  right: 16px;
+  background: var(--color-shadow-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  min-width: 320px;
+  z-index: 9999;
+  overflow: hidden;
+  margin-top: 0;
+}
+
+.user-info {
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dropdown-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-details h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.user-details p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.user-email {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.user-phone {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.user-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.user-role {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.user-gender {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
+}
+
+.dropdown-menu {
+  background: var(--color-bg-secondary);
+  padding: 8px 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary);
+  transition: color 0.2s ease;
+}
+
+.dropdown-item:hover svg {
+  color: var(--color-text-primary);
+}
+
+.dropdown-item.logout {
+  color: var(--color-danger);
+}
+
+.dropdown-item.logout:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.dropdown-item.logout svg {
+  color: var(--color-danger);
 }
 
 .toggle-icon {
