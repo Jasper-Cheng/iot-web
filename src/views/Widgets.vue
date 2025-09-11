@@ -489,34 +489,9 @@ const cancelAddRoom = () => {
   addRoomModalOpen.value = false
 }
 
-// 主题变化处理函数
-const handleThemeChange = () => {
-  // 强制重新渲染页面以应用新的主题颜色
-  const widgetsPage = document.querySelector('.widgets-page')
-  if (widgetsPage) {
-    // 临时改变一个属性来强制重新渲染
-    widgetsPage.style.transform = 'translateZ(0)'
-    setTimeout(() => {
-      widgetsPage.style.transform = ''
-    }, 0)
-  }
-}
-
 // 生命周期钩子
 onMounted(() => {
-  // 监听主题变化事件
-  window.addEventListener('themeChanged', handleThemeChange)
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'theme') {
-      handleThemeChange()
-    }
-  })
-})
-
-onUnmounted(() => {
-  // 清理事件监听器
-  window.removeEventListener('themeChanged', handleThemeChange)
-  window.removeEventListener('storage', handleThemeChange)
+  // 组件挂载时的初始化逻辑
 })
 
 // 移除了图标组件定义，现在使用实际的widget组件

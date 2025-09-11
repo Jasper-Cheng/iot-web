@@ -512,28 +512,8 @@ const resetNewMemberForm = () => {
 }
 
 // 生命周期
-// 主题变化处理函数
-const handleThemeChange = () => {
-  // 强制重新渲染页面以应用新的主题颜色
-  // 这里可以添加任何需要在主题变化时执行的逻辑
-}
-
 onMounted(() => {
   loadData()
-  
-  // 监听主题变化事件
-  window.addEventListener('themeChanged', handleThemeChange)
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'theme') {
-      handleThemeChange()
-    }
-  })
-})
-
-onUnmounted(() => {
-  // 清理事件监听器
-  window.removeEventListener('themeChanged', handleThemeChange)
-  window.removeEventListener('storage', handleThemeChange)
 })
 </script>
 
