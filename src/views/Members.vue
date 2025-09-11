@@ -1193,7 +1193,7 @@ input:checked + .toggle-slider:before {
   padding: 12px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--color-bg);
+  background: var(--color-bg-secondary);
   color: var(--color-text-primary);
   font-size: 14px;
   transition: all 0.2s ease;
