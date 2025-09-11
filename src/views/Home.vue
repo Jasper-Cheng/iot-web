@@ -113,31 +113,31 @@ const roomsWithDevices = ref([
     id: 'living', 
     name: 'Living Room', 
     devices: { total: 8, online: 7, offline: 1 },
-    color: '#3b82f6'
+    color: 'var(--room-living)'
   },
   { 
     id: 'bedroom', 
     name: 'Bed Room', 
     devices: { total: 6, online: 5, offline: 1 },
-    color: '#10b981'
+    color: 'var(--room-bedroom)'
   },
   { 
     id: 'dining', 
     name: 'Dining Room', 
     devices: { total: 4, online: 4, offline: 0 },
-    color: '#f59e0b'
+    color: 'var(--room-kitchen)'
   },
   { 
     id: 'bathroom', 
     name: 'Bath Room', 
     devices: { total: 3, online: 2, offline: 1 },
-    color: '#ef4444'
+    color: 'var(--room-bathroom)'
   },
   { 
     id: 'backyard', 
     name: 'Backyard', 
     devices: { total: 2, online: 1, offline: 1 },
-    color: '#8b5cf6'
+    color: 'var(--room-backyard)'
   }
 ])
 
