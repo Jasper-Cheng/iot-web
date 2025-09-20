@@ -24,21 +24,14 @@ export function register(data) {
 
 // 用户登录
 export function login(data) {
-  // 将数据转换为form-urlencoded格式
-  const formData = new URLSearchParams()
-  formData.append('username', data.username)
-  formData.append('password', data.password)
-  formData.append('grant_type', '')
-  formData.append('scope', '')
-  formData.append('client_id', '')
-  formData.append('client_secret', '')
+  console.log('Login request data:', data)
   
   return request({
     url: '/auth/login',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+    data: {
+      account: data.username,
+      password: data.password
     }
   })
 }

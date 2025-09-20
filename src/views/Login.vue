@@ -142,8 +142,12 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useGlobalStore } from '../stores/global'
+import { login } from '../api/auth'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const globalStore = useGlobalStore()
 
 // 表单数据
 const formData = reactive({
@@ -191,30 +195,54 @@ const handleLogin = async () => {
   
   // 设置加载状态
   isLoading.value = true
+  globalStore.loading.auth = true
   
   try {
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 调用登录API
+    const response = await login({
+      username: formData.username,
+      password: formData.password
+    })
     
-    // 验证登录凭据
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      // 登录成功
-      localStorage.setItem('token', 'admin-token-' + Date.now())
-      localStorage.setItem('user', JSON.stringify({
-        username: formData.username,
-        loginTime: new Date().toISOString()
-      }))
-      
-      // 跳转到Index界面
-      router.push('/home')
-    } else {
-      // 登录失败
-      errorMessage.value = '用户名或密码错误'
-    }
+    // 登录成功，保存用户信息到全局状态
+    globalStore.setAuth(response.account, response.access_token)
+    
+    // 显示成功消息
+    ElMessage.success('登录成功')
+    
+    // 跳转到首页
+    router.push('/home')
+    
   } catch (error) {
-    errorMessage.value = '登录失败，请重试'
+    console.error('Login error:', error)
+    console.error('Error response:', error.response)
+    console.error('Error data:', error.response?.data)
+    console.error('Error detail:', error.response?.data?.detail)
+    
+    // 处理错误响应
+    if (error.response && error.response.data) {
+      if (error.response.data.detail) {
+        // 处理detail数组或字符串
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage.value = error.response.data.detail.join(', ')
+        } else {
+          errorMessage.value = error.response.data.detail
+        }
+      } else if (error.response.data.message) {
+        errorMessage.value = error.response.data.message
+      } else if (typeof error.response.data === 'string') {
+        errorMessage.value = error.response.data
+      } else {
+        errorMessage.value = `登录失败 (${error.response.status}): ${JSON.stringify(error.response.data)}`
+      }
+    } else if (error.message) {
+      errorMessage.value = error.message
+    } else {
+      errorMessage.value = '登录失败，请重试'
+    }
   } finally {
     isLoading.value = false
+    globalStore.loading.auth = false
   }
 }
 

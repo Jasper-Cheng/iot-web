@@ -5,6 +5,11 @@ import { getRooms } from '../api/rooms'
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
+		// 用户认证状态
+		isAuthenticated: false,
+		user: null,
+		token: null,
+		// 设备数据
 		devices: [], // from devices API: detailed runtime status
 		members: [],
 		profile: null,
@@ -13,13 +18,15 @@ export const useGlobalStore = defineStore('global', {
 			devices: false,
 			members: false,
 			profile: false,
-			rooms: false
+			rooms: false,
+			auth: false
 		},
 		errors: {
 			devices: null,
 			members: null,
 			profile: null,
-			rooms: null
+			rooms: null,
+			auth: null
 		}
 	}),
 	actions: {
@@ -78,6 +85,43 @@ export const useGlobalStore = defineStore('global', {
 				this.loadMembers(),
 				this.loadProfile(userId)
 			])
+		},
+		// 认证相关方法
+		setAuth(user, token) {
+			this.isAuthenticated = true
+			this.user = user
+			this.token = token
+			// 保存到localStorage
+			localStorage.setItem('token', token)
+			localStorage.setItem('user', JSON.stringify(user))
+		},
+		clearAuth() {
+			this.isAuthenticated = false
+			this.user = null
+			this.token = null
+			// 清除localStorage
+			localStorage.removeItem('token')
+			localStorage.removeItem('user')
+		},
+		// 从localStorage恢复认证状态
+		restoreAuth() {
+			const token = localStorage.getItem('token')
+			const userStr = localStorage.getItem('user')
+			
+			if (token && userStr) {
+				try {
+					const user = JSON.parse(userStr)
+					this.isAuthenticated = true
+					this.user = user
+					this.token = token
+					return true
+				} catch (error) {
+					console.error('Failed to parse user data from localStorage:', error)
+					this.clearAuth()
+					return false
+				}
+			}
+			return false
 		}
 	}
 })
