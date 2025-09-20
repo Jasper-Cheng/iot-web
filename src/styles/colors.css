@@ -75,6 +75,17 @@
   --color-warning: #f59e0b;                  /* 警告 */
   --color-info: #3b82f6;                     /* 信息 */
   
+  /* 危险色变体 */
+  --color-danger-light: #f8d7da;             /* 危险浅色背景 */
+  --color-danger-dark: #721c24;              /* 危险深色 */
+  
+  /* 警告色变体 */
+  --color-warning-bg: #fef3c7;               /* 警告背景 */
+  --color-warning-text: #92400e;             /* 警告文字 */
+  
+  /* 背景色变体 */
+  --color-bg-tertiary: #2a2a2a;              /* 三级背景 */
+  
   /* Members页面专用颜色 */
   --color-member-online: #10b981;            /* 在线状态 */
   --color-member-offline: #ef4444;           /* 离线状态 */
@@ -207,6 +218,17 @@
   --color-danger: var(--color-red-500);
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
+  
+  /* 危险色变体 */
+  --color-danger-light: #fef2f2;             /* 危险浅色背景 */
+  --color-danger-dark: #991b1b;              /* 危险深色 */
+  
+  /* 警告色变体 */
+  --color-warning-bg: #fef3c7;               /* 警告背景 */
+  --color-warning-text: #92400e;             /* 警告文字 */
+  
+  /* 背景色变体 */
+  --color-bg-tertiary: #e5e7eb;              /* 三级背景 */
   
   /* Members页面专用颜色 */
   --color-member-online: #059669;

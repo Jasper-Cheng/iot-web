@@ -146,36 +146,25 @@
             </div>
             <div class="dropdown-divider"></div>
             <div class="dropdown-menu">
-              <a href="#" class="dropdown-item">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-                个人资料
-              </a>
-              <a href="#" class="dropdown-item">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-                设置
-              </a>
-              <a href="#" class="dropdown-item">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-                帮助
-              </a>
-              <div class="dropdown-divider"></div>
-              <a href="#" class="dropdown-item logout" @click.prevent="logout">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <polyline points="16,17 21,12 16,7" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                退出登录
-              </a>
+              <div class="dropdown-actions">
+                <a href="#" class="dropdown-item" @click.prevent="logout">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <polyline points="16,17 21,12 16,7" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  退出登录
+                </a>
+                <a href="#" class="dropdown-item delete-account" @click.prevent="showDeleteConfirm">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 6h18l-2 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L3 6z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <line x1="10" y1="11" x2="10" y2="17" stroke="currentColor" stroke-width="2"/>
+                    <line x1="14" y1="11" x2="14" y2="17" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  注销
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -186,6 +175,36 @@
         <router-view />
       </div>
     </main>
+  </div>
+
+  <!-- 注销确认弹窗 -->
+  <div v-if="showDeleteConfirmModal" class="confirm-overlay" @click="closeDeleteConfirm">
+    <div class="confirm-modal" @click.stop>
+      <div class="confirm-header">
+        <div class="confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9v4" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M12 17h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
+        <h3>确认注销账户</h3>
+      </div>
+      <div class="confirm-content">
+        <p>此操作将<strong>永久删除</strong>您的账户以及所有相关数据，包括：</p>
+        <ul>
+          <li>所有设备数据</li>
+          <li>所有成员信息</li>
+          <li>所有历史记录</li>
+          <li>所有设置和配置</li>
+        </ul>
+        <p class="warning-text">此操作<strong>无法撤销</strong>，请谨慎操作！</p>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn-cancel" @click="closeDeleteConfirm">取消</button>
+        <button class="btn-delete" @click="confirmDelete">确认注销</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -207,6 +226,9 @@ const showLogin = ref(false)
 
 // 控制用户下拉菜单显示
 const showUserMenu = ref(false)
+
+// 控制注销确认弹窗显示
+const showDeleteConfirmModal = ref(false)
 
 // 当前主题
 const currentTheme = ref('dark')
@@ -280,6 +302,27 @@ const toggleUserMenu = () => {
 // 关闭用户下拉菜单
 const closeUserMenu = () => {
   showUserMenu.value = false
+}
+
+// 显示注销确认弹窗
+const showDeleteConfirm = () => {
+  showDeleteConfirmModal.value = true
+  showUserMenu.value = false
+}
+
+// 关闭注销确认弹窗
+const closeDeleteConfirm = () => {
+  showDeleteConfirmModal.value = false
+}
+
+// 确认注销账户
+const confirmDelete = () => {
+  // 这里可以调用删除账户的API
+  console.log('确认注销账户')
+  // 清除所有数据并跳转到登录页
+  globalStore.clearAuth()
+  showDeleteConfirmModal.value = false
+  router.push('/login')
 }
 
 // 初始化主题
@@ -691,6 +734,38 @@ body, html {
   padding: 8px 0;
 }
 
+.dropdown-actions {
+  display: flex;
+  gap: 0;
+}
+
+.dropdown-actions .dropdown-item {
+  flex: 1;
+  justify-content: center;
+  border-radius: 0;
+  margin: 0;
+}
+
+.dropdown-actions .dropdown-item:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid var(--color-border);
+}
+
+.dropdown-actions .dropdown-item:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.delete-account {
+  color: var(--color-danger) !important;
+}
+
+.delete-account:hover {
+  background-color: var(--color-danger-light) !important;
+  color: var(--color-danger-dark) !important;
+}
+
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -746,5 +821,126 @@ body, html {
   stroke: var(--color-text-primary);
 }
 
+/* 确认弹窗样式 - 参考项目其他弹窗 */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-shadow-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 12px 32px var(--color-widgets-modal-shadow);
+}
+
+.confirm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.confirm-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-warning-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warning);
+  margin-right: 12px;
+}
+
+.confirm-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.confirm-content {
+  margin: 8px 0 16px;
+}
+
+.confirm-content p {
+  margin: 0 0 12px 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.confirm-content ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.confirm-content li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.warning-text {
+  color: var(--color-danger) !important;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.btn-cancel,
+.btn-delete {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.btn-cancel {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.btn-cancel:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.btn-delete {
+  background: color-mix(in oklab, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in oklab, var(--color-danger) 30%, transparent);
+}
+
+.btn-delete:hover {
+  background: var(--color-danger);
+  color: var(--color-white);
+  border-color: var(--color-danger);
+}
 
 </style>
