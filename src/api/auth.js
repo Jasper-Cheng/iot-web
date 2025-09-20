@@ -24,8 +24,6 @@ export function register(data) {
 
 // 用户登录
 export function login(data) {
-  console.log('Login request data:', data)
-  
   return request({
     url: '/auth/login',
     method: 'post',

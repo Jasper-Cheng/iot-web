@@ -214,10 +214,7 @@ const handleLogin = async () => {
     router.push('/home')
     
   } catch (error) {
-    console.error('Login error:', error)
-    console.error('Error response:', error.response)
-    console.error('Error data:', error.response?.data)
-    console.error('Error detail:', error.response?.data?.detail)
+    console.error('Login failed:', error.response?.data || error.message)
     
     // 处理错误响应
     if (error.response && error.response.data) {

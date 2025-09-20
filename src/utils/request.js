@@ -17,8 +17,10 @@ request.interceptors.request.use(config => {
     config.headers['Authorization'] = `Bearer ${token}`
   }
   
-  // 调试日志
-  console.log('[REQUEST]', config.method?.toUpperCase(), config.baseURL + config.url, config.params)
+  // 调试日志（仅在开发环境）
+  if (import.meta.env.DEV) {
+    console.log('[REQUEST]', config.method?.toUpperCase(), config.baseURL + config.url)
+  }
   
   return config
 }, error => {
