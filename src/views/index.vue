@@ -836,20 +836,20 @@ body, html {
 }
 
 .confirm-modal {
-  background: var(--color-bg-card);
-  border-radius: 14px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
   padding: 20px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 12px 32px var(--color-widgets-modal-shadow);
+  box-shadow: 0 10px 30px var(--shadow-soft);
 }
 
 .confirm-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -867,14 +867,14 @@ body, html {
 
 .confirm-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
   flex: 1;
 }
 
 .confirm-content {
-  margin: 8px 0 16px;
+  margin: 0 0 20px;
 }
 
 .confirm-content p {
@@ -906,14 +906,14 @@ body, html {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--color-border);
 }
 
 .btn-cancel,
 .btn-delete {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
