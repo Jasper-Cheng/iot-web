@@ -76,7 +76,7 @@
       <!-- 顶部头部 -->
       <header class="header">
         <div class="header-left">
-          <h1 class="greeting">Greetings from home again, Bala</h1>
+          <h1 class="greeting">Greetings from home again, {{ globalStore.user?.name || globalStore.user?.account || 'happy' }}</h1>
           <p class="status">Every system and gadget is operating as planned.</p>
         </div>
         <div class="header-right">
@@ -117,22 +117,30 @@
             </svg>
           </button>
           <div class="user-profile" @click.stop="toggleUserMenu">
-            <img src="https://api.dicebear.com/7.x/adventurer/png?size=80&seed=bala" alt="Profile Avatar" class="profile-avatar">
-            <span class="user-name">Bala Hatun</span>
+            <img 
+              :src="globalStore.user?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account || 'user'}`" 
+              :alt="globalStore.user?.name || 'User Avatar'" 
+              class="profile-avatar"
+            >
+            <span class="user-name">{{ globalStore.user?.name || globalStore.user?.account || '用户' }}</span>
             <span class="dropdown-arrow" :class="{ active: showUserMenu }">▼</span>
           </div>
           
           <!-- 用户下拉菜单 -->
           <div v-if="showUserMenu" class="user-dropdown" @click.stop>
             <div class="user-info">
-              <img src="https://api.dicebear.com/7.x/adventurer/png?size=80&seed=bala" alt="Profile Avatar" class="dropdown-avatar">
+              <img 
+                :src="globalStore.user?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account || 'user'}`" 
+                :alt="globalStore.user?.name || 'User Avatar'" 
+                class="dropdown-avatar"
+              >
               <div class="user-details">
-                <h4>Bala Hatun</h4>
-                <p class="user-email">bala.hatun@example.com</p>
-                <p class="user-phone">+86 138 0013 8000</p>
+                <h4>{{ globalStore.user?.name || globalStore.user?.account || '用户' }}</h4>
+                <p class="user-email">{{ globalStore.user?.email || '未设置邮箱' }}</p>
+                <p class="user-phone">{{ globalStore.user?.phone || '未设置手机号' }}</p>
                 <div class="user-meta">
-                  <span class="user-role">管理员</span>
-                  <span class="user-gender">女</span>
+                  <span class="user-role">{{ getRoleText(globalStore.user?.role) }}</span>
+                  <span class="user-gender">{{ getGenderText(globalStore.user?.gender) }}</span>
                 </div>
               </div>
             </div>
@@ -160,7 +168,7 @@
                 帮助
               </a>
               <div class="dropdown-divider"></div>
-              <a href="#" class="dropdown-item logout">
+              <a href="#" class="dropdown-item logout" @click.prevent="logout">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" fill="none"/>
                   <polyline points="16,17 21,12 16,7" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -186,11 +194,13 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
 import { initTheme, setTheme } from '../utils/theme.js'
+import { useGlobalStore } from '../stores/global'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
 
 const router = useRouter()
 const route = useRoute()
+const globalStore = useGlobalStore()
 
 // 控制登录弹窗显示（预留）
 const showLogin = ref(false)
@@ -225,9 +235,30 @@ const navigateTo = (navItem) => {
   }
 }
 
+// 角色文本转换
+const getRoleText = (role) => {
+  const roleMap = {
+    'owner': '拥有者',
+    'member': '成员',
+    'admin': '管理员'
+  }
+  return roleMap[role] || '未知'
+}
+
+// 性别文本转换
+const getGenderText = (gender) => {
+  const genderMap = {
+    'male': '男',
+    'female': '女',
+    'other': '其他'
+  }
+  return genderMap[gender] || '未知'
+}
+
 // 退出登录
 const logout = () => {
-  localStorage.removeItem('token')
+  globalStore.clearAuth()
+  showUserMenu.value = false
   router.push('/login')
 }
 
