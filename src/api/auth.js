@@ -2,23 +2,23 @@ import request from '../utils/request'
 
 // 用户注册
 export function register(data) {
-  // 将数据转换为form-urlencoded格式
-  const formData = new URLSearchParams()
-  formData.append('username', data.username)
-  formData.append('email', data.email)
-  formData.append('password', data.password)
-  formData.append('grant_type', '')
-  formData.append('scope', '')
-  formData.append('client_id', '')
-  formData.append('client_secret', '')
+  // 构建注册数据，只包含非空字段
+  const registerData = {
+    account: data.username,
+    password: data.password
+  }
+  
+  // 添加非必填字段（如果存在且不为空）
+  if (data.phone) registerData.phone = data.phone
+  if (data.name) registerData.name = data.name
+  if (data.gender) registerData.gender = data.gender
+  if (data.email) registerData.email = data.email
+  if (data.avatar) registerData.avatar = data.avatar
   
   return request({
     url: '/auth/register',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
+    data: registerData
   })
 }
 

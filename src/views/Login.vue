@@ -83,10 +83,14 @@
             <input type="text" id="reg_username" v-model="registerData.username" placeholder="请输入用户名" required />
           </div>
           <div class="form-group">
+            <label for="reg_name">姓名</label>
+            <input type="text" id="reg_name" v-model="registerData.name" placeholder="请输入姓名" />
+          </div>
+          
+          <div class="form-group">
             <label for="reg_phone">手机号 <span class="required">*</span></label>
             <input type="tel" id="reg_phone" v-model="registerData.phone" placeholder="请输入手机号" required />
           </div>
-
           <div class="form-group">
             <label for="reg_email">邮箱</label>
             <input type="email" id="reg_email" v-model="registerData.email" placeholder="请输入邮箱" />
@@ -94,9 +98,8 @@
           <div class="form-group">
             <label for="reg_role">角色</label>
             <select id="reg_role" class="compact" v-model="registerData.role">
-              <option value="admin">管理员</option>
+              <option value="owner">拥有者</option>
               <option value="member">成员</option>
-              <option value="guest">访客</option>
             </select>
           </div>
 
@@ -105,10 +108,9 @@
             <select id="reg_gender" class="compact" v-model="registerData.gender">
               <option value="male">男</option>
               <option value="female">女</option>
+              <option value="other">其他</option>
             </select>
           </div>
-          
-
           <div class="form-group">
             <label for="reg_password">密码 <span class="required">*</span></label>
             <input type="password" id="reg_password" v-model="registerData.password" placeholder="请输入密码" required />
@@ -143,7 +145,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
-import { login } from '../api/auth'
+import { login, register } from '../api/auth'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -197,13 +199,14 @@ const saveRememberedCredentials = () => {
 // 注册数据
 const registerData = reactive({
   username: '',
+  name: '',
   avatar: '',
   phone: '',
   email: '',
   password: '',
   confirmPassword: '',
-  role: 'member',
-  gender: 'male'
+  role: 'owner',
+  gender: 'other'
 })
 
 // 加载状态
@@ -295,11 +298,11 @@ const handleRegister = async () => {
   errorMessage.value = ''
 
   // 基础校验
-  if (!registerData.username || !registerData.phone || !registerData.email) {
-    errorMessage.value = '请填写用户名、手机号和邮箱'
+  if (!registerData.username || !registerData.password) {
+    errorMessage.value = '请填写用户名和密码'
     return
   }
-  if (!registerData.password || registerData.password.length < 6) {
+  if (registerData.password.length < 6) {
     errorMessage.value = '密码至少6位'
     return
   }
@@ -309,26 +312,65 @@ const handleRegister = async () => {
   }
 
   isLoading.value = true
+  globalStore.loading.auth = true
+  
   try {
-    // 模拟注册
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    const user = {
-      id: Date.now(),
+    // 调用注册API
+    const response = await register({
       username: registerData.username,
-      avatar: registerData.avatar,
+      password: registerData.password,
       phone: registerData.phone,
-      email: registerData.email,
-      role: registerData.role,
+      name: registerData.name || registerData.username, // 使用姓名，如果没有则使用用户名
       gender: registerData.gender,
-      createdAt: new Date().toISOString()
+      email: registerData.email,
+      avatar: registerData.avatar
+    })
+    
+    // 注册成功，显示成功消息
+    ElMessage.success('注册成功，请登录')
+    
+    // 切换到登录模式
+    isRegister.value = false
+    
+    // 清空注册表单
+    Object.assign(registerData, {
+      username: '',
+      name: '',
+      avatar: '',
+      phone: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'owner',
+      gender: 'other'
+    })
+    
+  } catch (error) {
+    console.error('Register failed:', error.response?.data || error.message)
+    
+    // 处理错误响应
+    if (error.response && error.response.data) {
+      if (error.response.data.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage.value = error.response.data.detail.join(', ')
+        } else {
+          errorMessage.value = error.response.data.detail
+        }
+      } else if (error.response.data.message) {
+        errorMessage.value = error.response.data.message
+      } else if (typeof error.response.data === 'string') {
+        errorMessage.value = error.response.data
+      } else {
+        errorMessage.value = `注册失败 (${error.response.status}): ${JSON.stringify(error.response.data)}`
+      }
+    } else if (error.message) {
+      errorMessage.value = error.message
+    } else {
+      errorMessage.value = '注册失败，请重试'
     }
-    localStorage.setItem('user', JSON.stringify(user))
-    localStorage.setItem('token', 'token-' + user.id)
-    router.push('/home')
-  } catch (e) {
-    errorMessage.value = '注册失败，请重试'
   } finally {
     isLoading.value = false
+    globalStore.loading.auth = false
   }
 }
 
@@ -456,7 +498,7 @@ onMounted(() => {
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px 12px;
 }
 
@@ -708,6 +750,12 @@ onMounted(() => {
 }
 
 /* 响应式设计 */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 480px) {
   .login-modal {
     padding: 30px 20px;
@@ -720,6 +768,10 @@ onMounted(() => {
   
   .form-group input {
     padding: 14px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
