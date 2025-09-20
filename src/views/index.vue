@@ -76,7 +76,7 @@
       <!-- 顶部头部 -->
       <header class="header">
         <div class="header-left">
-          <h1 class="greeting">Greetings from home again, {{ globalStore.user?.name || globalStore.user?.account || 'happy' }}</h1>
+          <h1 class="greeting">Greetings from home again, {{ globalStore.user?.account?.name || globalStore.user?.account?.account || 'happy' }}</h1>
           <p class="status">Every system and gadget is operating as planned.</p>
         </div>
         <div class="header-right">
@@ -118,11 +118,11 @@
           </button>
           <div class="user-profile" @click.stop="toggleUserMenu">
             <img 
-              :src="globalStore.user?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account || 'user'}`" 
-              :alt="globalStore.user?.name || 'User Avatar'" 
+              :src="globalStore.user?.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account?.account || 'user'}`" 
+              :alt="globalStore.user?.account?.name || 'User Avatar'" 
               class="profile-avatar"
             >
-            <span class="user-name">{{ globalStore.user?.name || globalStore.user?.account || '用户' }}</span>
+            <span class="user-name">{{ globalStore.user?.account?.name || globalStore.user?.account?.account || '用户' }}</span>
             <span class="dropdown-arrow" :class="{ active: showUserMenu }">▼</span>
           </div>
           
@@ -130,17 +130,17 @@
           <div v-if="showUserMenu" class="user-dropdown" @click.stop>
             <div class="user-info">
               <img 
-                :src="globalStore.user?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account || 'user'}`" 
-                :alt="globalStore.user?.name || 'User Avatar'" 
+                :src="globalStore.user?.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account?.account || 'user'}`" 
+                :alt="globalStore.user?.account?.name || 'User Avatar'" 
                 class="dropdown-avatar"
               >
               <div class="user-details">
-                <h4>{{ globalStore.user?.name || globalStore.user?.account || '用户' }}</h4>
-                <p class="user-email">{{ globalStore.user?.email || '未设置邮箱' }}</p>
-                <p class="user-phone">{{ globalStore.user?.phone || '未设置手机号' }}</p>
+                <h4>{{ globalStore.user?.account?.name || globalStore.user?.account?.account || '用户' }}</h4>
+                <p class="user-email">{{ globalStore.user?.account?.email || '未设置邮箱' }}</p>
+                <p class="user-phone">{{ globalStore.user?.account?.phone || '未设置手机号' }}</p>
                 <div class="user-meta">
-                  <span class="user-role">{{ getRoleText(globalStore.user?.role) }}</span>
-                  <span class="user-gender">{{ getGenderText(globalStore.user?.gender) }}</span>
+                  <span class="user-role">{{ getRoleText(globalStore.user?.account?.role) }}</span>
+                  <span class="user-gender">{{ getGenderText(globalStore.user?.account?.gender) }}</span>
                 </div>
               </div>
             </div>
@@ -158,7 +158,7 @@
                 <a 
                   href="#" 
                   class="dropdown-item delete-account" 
-                  :class="{ disabled: globalStore.user?.role === 'member' }"
+                  :class="{ disabled: globalStore.user?.account?.role === 'member' }"
                   @click.prevent="handleDeleteClick"
                 >
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -319,7 +319,7 @@ const showDeleteConfirm = () => {
 
 // 处理注销按钮点击
 const handleDeleteClick = () => {
-  if (globalStore.user?.role === 'member') {
+  if (globalStore.user?.account?.role === 'member') {
     ElMessage.warning('成员账户不能注销，请联系管理员')
     return
   }
@@ -335,14 +335,14 @@ const closeDeleteConfirm = () => {
 const confirmDelete = async () => {
   try {
     // 检查用户角色，member不可以注销
-    if (globalStore.user?.role === 'member') {
+    if (globalStore.user?.account?.role === 'member') {
       ElMessage.error('成员账户不能注销，请联系管理员')
       showDeleteConfirmModal.value = false
       return
     }
 
-    // 调用删除用户API
-    const response = await deleteUser(globalStore.user?.id)
+    // 调用删除用户API，使用user_id
+    const response = await deleteUser(globalStore.user?.user_id)
     
     if (response.message) {
       ElMessage.success(response.message)
