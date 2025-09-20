@@ -49,7 +49,7 @@
 
         <div class="form-options">
           <label class="checkbox-container">
-            <input type="checkbox" v-model="formData.rememberMe" />
+            <input type="checkbox" v-model="formData.rememberMe" @change="onRememberMeChange" />
             <span class="checkmark"></span>
             记住我
           </label>
@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { login } from '../api/auth'
@@ -155,6 +155,44 @@ const formData = reactive({
   password: '',
   rememberMe: false
 })
+
+// 从localStorage恢复记住的账号密码
+const restoreRememberedCredentials = () => {
+  try {
+    const remembered = localStorage.getItem('rememberedCredentials')
+    if (remembered) {
+      const credentials = JSON.parse(remembered)
+      const now = Date.now()
+      
+      // 检查是否在15天内
+      if (credentials.timestamp && (now - credentials.timestamp) < 15 * 24 * 60 * 60 * 1000) {
+        formData.username = credentials.username || ''
+        formData.password = credentials.password || ''
+        formData.rememberMe = true
+      } else {
+        // 超过15天，清除记住的凭据
+        localStorage.removeItem('rememberedCredentials')
+      }
+    }
+  } catch (error) {
+    console.error('Failed to restore remembered credentials:', error)
+    localStorage.removeItem('rememberedCredentials')
+  }
+}
+
+// 保存记住的账号密码
+const saveRememberedCredentials = () => {
+  if (formData.rememberMe) {
+    const credentials = {
+      username: formData.username,
+      password: formData.password,
+      timestamp: Date.now()
+    }
+    localStorage.setItem('rememberedCredentials', JSON.stringify(credentials))
+  } else {
+    localStorage.removeItem('rememberedCredentials')
+  }
+}
 
 // 注册数据
 const registerData = reactive({
@@ -206,6 +244,9 @@ const handleLogin = async () => {
     
     // 登录成功，保存用户信息到全局状态
     globalStore.setAuth(response.account, response.access_token)
+    
+    // 保存记住的凭据
+    saveRememberedCredentials()
     
     // 显示成功消息
     ElMessage.success('登录成功')
@@ -308,6 +349,19 @@ const triggerAvatarSelect = () => {
   const el = avatarInput.value
   if (el) el.click()
 }
+
+// 处理"记住我"复选框变化
+const onRememberMeChange = () => {
+  if (!formData.rememberMe) {
+    // 如果取消勾选，清除记住的凭据
+    localStorage.removeItem('rememberedCredentials')
+  }
+}
+
+// 组件挂载时恢复记住的凭据
+onMounted(() => {
+  restoreRememberedCredentials()
+})
 </script>
 
 <style scoped>
