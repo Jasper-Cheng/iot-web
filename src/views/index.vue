@@ -155,7 +155,12 @@
                   </svg>
                   退出登录
                 </a>
-                <a href="#" class="dropdown-item delete-account" @click.prevent="showDeleteConfirm">
+                <a 
+                  href="#" 
+                  class="dropdown-item delete-account" 
+                  :class="{ disabled: globalStore.user?.role === 'member' }"
+                  @click.prevent="handleDeleteClick"
+                >
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 6h18l-2 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L3 6z" stroke="currentColor" stroke-width="2" fill="none"/>
                     <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -214,6 +219,8 @@ import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
 import { initTheme, setTheme } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
+import { deleteUser } from '../api/users'
+import { ElMessage } from 'element-plus'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
 
@@ -310,19 +317,60 @@ const showDeleteConfirm = () => {
   showUserMenu.value = false
 }
 
+// 处理注销按钮点击
+const handleDeleteClick = () => {
+  if (globalStore.user?.role === 'member') {
+    ElMessage.warning('成员账户不能注销，请联系管理员')
+    return
+  }
+  showDeleteConfirm()
+}
+
 // 关闭注销确认弹窗
 const closeDeleteConfirm = () => {
   showDeleteConfirmModal.value = false
 }
 
 // 确认注销账户
-const confirmDelete = () => {
-  // 这里可以调用删除账户的API
-  console.log('确认注销账户')
-  // 清除所有数据并跳转到登录页
-  globalStore.clearAuth()
-  showDeleteConfirmModal.value = false
-  router.push('/login')
+const confirmDelete = async () => {
+  try {
+    // 检查用户角色，member不可以注销
+    if (globalStore.user?.role === 'member') {
+      ElMessage.error('成员账户不能注销，请联系管理员')
+      showDeleteConfirmModal.value = false
+      return
+    }
+
+    // 调用删除用户API
+    const response = await deleteUser(globalStore.user?.id)
+    
+    if (response.message) {
+      ElMessage.success(response.message)
+    } else {
+      ElMessage.success('账户注销成功')
+    }
+    
+    // 清除认证状态并跳转到登录页
+    globalStore.clearAuth()
+    showDeleteConfirmModal.value = false
+    router.push('/login')
+  } catch (error) {
+    console.error('注销账户失败:', error)
+    
+    if (error.response && error.response.data) {
+      if (error.response.data.detail) {
+        ElMessage.error(error.response.data.detail)
+      } else if (error.response.data.message) {
+        ElMessage.error(error.response.data.message)
+      } else {
+        ElMessage.error('注销失败，请重试')
+      }
+    } else {
+      ElMessage.error('注销失败，请重试')
+    }
+    
+    showDeleteConfirmModal.value = false
+  }
 }
 
 // 初始化主题
@@ -764,6 +812,17 @@ body, html {
 .delete-account:hover {
   background-color: var(--color-danger-light) !important;
   color: var(--color-danger-dark) !important;
+}
+
+.dropdown-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dropdown-item.disabled:hover {
+  background: transparent !important;
+  color: var(--color-text-muted) !important;
 }
 
 .dropdown-item {
