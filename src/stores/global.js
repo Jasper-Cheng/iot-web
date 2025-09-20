@@ -87,13 +87,13 @@ export const useGlobalStore = defineStore('global', {
 			])
 		},
 		// 认证相关方法
-		setAuth(user, token) {
+		setAuth(response) {
 			this.isAuthenticated = true
-			this.user = user
-			this.token = token
+			this.user = response.account || response
+			this.token = response.access_token
 			// 保存到localStorage
-			localStorage.setItem('token', token)
-			localStorage.setItem('user', JSON.stringify(user))
+			localStorage.setItem('token', response.access_token)
+			localStorage.setItem('user', JSON.stringify(response.account || response))
 		},
 		clearAuth() {
 			this.isAuthenticated = false

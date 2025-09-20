@@ -117,6 +117,12 @@ export const deleteUser = (id) => request.delete(`/users/${id}`)
 export const getUserProfile = (id) => request.get(`/users/${id}/profile`)
 export const updateUserProfile = (id, data) => request.put(`/users/${id}/profile`, data)
 
+// 成员相关API
+export const getMemberDetail = (memberId) => request.get(`/members/${memberId}`)
+
+// 用户详情API
+export const getUserDetail = (userId) => request.get(`/users/${userId}`)
+
 // 家庭成员管理API
 export const getFamilyMembers = () => {
   return new Promise((resolve) => {

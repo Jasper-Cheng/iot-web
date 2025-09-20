@@ -146,6 +146,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { login, register } from '../api/auth'
+import { getMemberDetail, getUserDetail } from '../api/users'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -245,8 +246,38 @@ const handleLogin = async () => {
       password: formData.password
     })
     
-    // 登录成功，保存用户信息到全局状态
-    globalStore.setAuth(response.account, response.access_token)
+    // 先保存token到全局状态
+    globalStore.token = response.access_token
+    localStorage.setItem('token', response.access_token)
+    
+    // 根据角色调用不同的接口获取完整用户信息
+    try {
+      let userData
+      if (response.role === 'owner') {
+        // 如果是owner，调用/users/{user_id}接口
+        const userResponse = await getUserDetail(response.id)
+        userData = userResponse
+      } else if (response.role === 'member') {
+        // 如果是member，调用/members/{member_id}接口
+        const memberResponse = await getMemberDetail(response.id)
+        userData = memberResponse
+      } else {
+        // 其他角色，使用原始响应
+        userData = response
+      }
+      
+      // 将获取到的完整用户信息保存到全局状态
+      globalStore.user = userData
+      globalStore.isAuthenticated = true
+      localStorage.setItem('user', JSON.stringify(userData))
+      
+    } catch (userError) {
+      console.error('获取用户详情失败:', userError)
+      // 即使获取用户详情失败，也继续登录流程，保存原始响应
+      globalStore.user = response
+      globalStore.isAuthenticated = true
+      localStorage.setItem('user', JSON.stringify(response))
+    }
     
     // 保存记住的凭据
     saveRememberedCredentials()
