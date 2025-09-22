@@ -258,14 +258,32 @@ const unassignedDevices = computed(() => {
 
 // 获取指定房间的设备
 const getRoomDevices = (roomId) => {
-  return localDevices.value.filter(device => device.roomId === roomId)
-}
-
-// 获取房间名称
-const getRoomName = (roomId) => {
-  if (roomId === 'unassigned') return 'Unassigned'
-  const room = rooms.value.find(r => r.id === roomId)
-  return room ? room.name : 'Unknown'
+  if (roomId === 'unassigned') {
+    // All Devices 使用 localDevices
+    return localDevices.value.filter(device => device.roomId === 'unassigned')
+  } else {
+    // 房间设备始终从 globalStore.rooms 中获取，保持服务器返回的排序
+    const room = globalStore.rooms?.find(r => r.id === roomId)
+    if (!room || !room.devices) return []
+    
+    // 将房间设备数据转换为设备对象格式
+    return room.devices.map(roomDevice => {
+      // 从 globalStore.devices 中找到对应的设备信息
+      const device = globalStore.devices?.find(d => d.id === roomDevice.device_id)
+      if (!device) return null
+      
+      return {
+        id: device.id,
+        device_id: device.id,
+        name: device.name,
+        status: device.status,
+        roomId: roomId,
+        component: getDeviceComponent(device.cardName),
+        sn: device.sn,
+        cardName: device.cardName
+      }
+    }).filter(Boolean) // 过滤掉 null 值
+  }
 }
 
 // 删除房间确认弹窗状态
@@ -377,10 +395,40 @@ const handleDrop = (event, targetRoomId) => {
       if (deviceIndex !== -1) {
         localDevices.value[deviceIndex].roomId = targetRoomId
       }
+      
+      // 同时更新 globalStore.rooms，让拖动过程中能看到变化
+      updateGlobalStoreRoomDevices(draggedDevice.value.id, draggedDevice.value.roomId, targetRoomId)
     }
   }
   
   // 不在这里调用API，在handleDragEnd中统一调用
+}
+
+// 更新 globalStore.rooms 中的设备房间
+const updateGlobalStoreRoomDevices = (deviceId, fromRoomId, toRoomId) => {
+  // 从原房间移除设备
+  if (fromRoomId !== 'unassigned') {
+    const fromRoom = globalStore.rooms.find(r => r.id === fromRoomId)
+    if (fromRoom && fromRoom.devices) {
+      fromRoom.devices = fromRoom.devices.filter(rd => rd.device_id !== deviceId)
+    }
+  }
+  
+  // 添加到目标房间
+  if (toRoomId !== 'unassigned') {
+    const toRoom = globalStore.rooms.find(r => r.id === toRoomId)
+    if (toRoom) {
+      if (!toRoom.devices) {
+        toRoom.devices = []
+      }
+      // 添加到末尾，API调用时会重新排序
+      toRoom.devices.push({
+        room_id: toRoomId,
+        device_id: deviceId,
+        sort_order: toRoom.devices.length
+      })
+    }
+  }
 }
 
 // 在同一房间内拖拽经过其他卡片时，进行排序
@@ -395,17 +443,17 @@ const handleDragEnterCard = (event, targetRoomId, targetDevice) => {
 
   if (draggedDevice.value.id === targetDevice.id) return
 
-  // 在数组中交换两项的位置
-  const list = localDevices.value // 使用 localDevices
-  const fromIndex = list.findIndex(d => d.id === draggedDevice.value.id)
-  const toIndex = list.findIndex(d => d.id === targetDevice.id)
+  // 在 globalStore.rooms 中交换两项的位置
+  const room = globalStore.rooms.find(r => r.id === targetRoomId)
+  if (!room || !room.devices) return
+
+  const fromIndex = room.devices.findIndex(rd => rd.device_id === draggedDevice.value.id)
+  const toIndex = room.devices.findIndex(rd => rd.device_id === targetDevice.id)
   if (fromIndex === -1 || toIndex === -1) return
 
-  // 仅当两者在同一房间时才排序
-  if (list[fromIndex].roomId !== list[toIndex].roomId) return
-
-  const [moved] = list.splice(fromIndex, 1)
-  list.splice(toIndex, 0, moved)
+  // 交换位置
+  const [moved] = room.devices.splice(fromIndex, 1)
+  room.devices.splice(toIndex, 0, moved)
   
   // 拖动过程中不触发API调用，只在拖动结束时触发
 }
