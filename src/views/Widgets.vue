@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 // 导入实际的widget组件
@@ -217,6 +217,7 @@ const devices = computed(() => {
     
     return {
       id: device.id,
+      device_id: device.id, // 添加 device_id 字段用于 API 调用
       name: device.name,
       status: device.status,
       roomId: roomId,
@@ -227,20 +228,37 @@ const devices = computed(() => {
   })
 })
 
+// 本地设备状态，用于拖动过程中的排序
+const localDevices = ref([])
+// 是否正在拖动中
+const isDragging = ref(false)
+
+// 监听全局设备变化，同步到本地状态
+watch(devices, (newDevices) => {
+  // 只有在非拖动状态下才同步
+  if (!isDragging.value) {
+    localDevices.value = [...newDevices]
+  }
+}, { immediate: true })
+
 // 选中的设备
 const selectedDevice = ref(null)
 
 // 拖拽中的设备
 const draggedDevice = ref(null)
+// 拖拽的目标房间
+const dragTargetRoom = ref(null)
+// 拖拽的原始房间ID
+const dragOriginalRoom = ref(null)
 
 // 计算属性：未分配的设备
 const unassignedDevices = computed(() => {
-  return devices.value.filter(device => device.roomId === 'unassigned')
+  return localDevices.value.filter(device => device.roomId === 'unassigned')
 })
 
 // 获取指定房间的设备
 const getRoomDevices = (roomId) => {
-  return devices.value.filter(device => device.roomId === roomId)
+  return localDevices.value.filter(device => device.roomId === roomId)
 }
 
 // 获取房间名称
@@ -278,10 +296,13 @@ const removeRoom = () => {
 
 // 拖拽开始
 const handleDragStart = (event, device) => {
+  isDragging.value = true
   draggedDevice.value = device
+  dragOriginalRoom.value = device.roomId // 记录拖动的原始房间
+  dragTargetRoom.value = device.roomId // 记录拖动的目标房间
   event.dataTransfer.effectAllowed = 'move'
   event.target.style.opacity = '0.6'
-  // 设置自定义拖拽预览为“当前设备”的缩略图
+  // 设置自定义拖拽预览为"当前设备"的缩略图
   try {
     const preview = document.createElement('div')
     preview.style.width = '180px'
@@ -321,26 +342,53 @@ const handleDragStart = (event, device) => {
 }
 
 // 拖拽结束
-const handleDragEnd = (event) => {
+const handleDragEnd = async (event) => {
   event.target.style.opacity = '1'
+  
+  // 拖动结束时触发更新操作
+  if (draggedDevice.value) {
+    const originalRoomId = dragOriginalRoom.value // 使用记录的原始房间ID
+    const targetRoomId = dragTargetRoom.value // 使用目标房间ID
+    
+    console.log('拖动结束:', { originalRoomId, targetRoomId, draggedDevice: draggedDevice.value })
+    
+    // 根据规则处理不同的拖动场景
+    await handleDragScenarios(originalRoomId, targetRoomId)
+  }
+  
   draggedDevice.value = null
+  dragTargetRoom.value = null
+  dragOriginalRoom.value = null
+  isDragging.value = false
 }
 
 // 处理拖拽放置
 const handleDrop = (event, targetRoomId) => {
   event.preventDefault()
   
-  if (draggedDevice.value && draggedDevice.value.roomId !== targetRoomId) {
-    // 更新设备的房间
-    draggedDevice.value.roomId = targetRoomId
+  if (draggedDevice.value) {
+    // 总是设置目标房间
+    dragTargetRoom.value = targetRoomId
+    
+    // 如果房间不同，更新设备的房间
+    if (draggedDevice.value.roomId !== targetRoomId) {
+      // 更新本地设备状态
+      const deviceIndex = localDevices.value.findIndex(d => d.id === draggedDevice.value.id)
+      if (deviceIndex !== -1) {
+        localDevices.value[deviceIndex].roomId = targetRoomId
+      }
+    }
   }
   
-  draggedDevice.value = null
+  // 不在这里调用API，在handleDragEnd中统一调用
 }
 
 // 在同一房间内拖拽经过其他卡片时，进行排序
 const handleDragEnterCard = (event, targetRoomId, targetDevice) => {
   if (!draggedDevice.value) return
+
+  // 更新拖动的目标房间
+  dragTargetRoom.value = targetRoomId
 
   // 只在同一房间内进行排序（不改变roomId）
   if (draggedDevice.value.roomId !== targetRoomId) return
@@ -348,7 +396,7 @@ const handleDragEnterCard = (event, targetRoomId, targetDevice) => {
   if (draggedDevice.value.id === targetDevice.id) return
 
   // 在数组中交换两项的位置
-  const list = devices.value
+  const list = localDevices.value // 使用 localDevices
   const fromIndex = list.findIndex(d => d.id === draggedDevice.value.id)
   const toIndex = list.findIndex(d => d.id === targetDevice.id)
   if (fromIndex === -1 || toIndex === -1) return
@@ -358,6 +406,63 @@ const handleDragEnterCard = (event, targetRoomId, targetDevice) => {
 
   const [moved] = list.splice(fromIndex, 1)
   list.splice(toIndex, 0, moved)
+  
+  // 拖动过程中不触发API调用，只在拖动结束时触发
+}
+
+// 处理不同的拖动场景
+const handleDragScenarios = async (originalRoomId, targetRoomId) => {
+  try {
+    // 1. 设备从A到all,更新A中的设备数量及排序，重新计算all中的设备
+    if (originalRoomId !== 'unassigned' && targetRoomId === 'unassigned') {
+      console.log('场景1: 设备从房间到All Devices')
+      await updateRoomDevicesSort(originalRoomId)
+    }
+    
+    // 2. 设备从all到A，更新all中的设备数量及排序，重新计算all中的设备
+    else if (originalRoomId === 'unassigned' && targetRoomId !== 'unassigned') {
+      console.log('场景2: 设备从All Devices到房间')
+      await updateRoomDevicesSort(targetRoomId)
+    }
+    
+    // 3. 设备从A到B，更新A、B中的设备数量及排序
+    else if (originalRoomId !== 'unassigned' && targetRoomId !== 'unassigned' && originalRoomId !== targetRoomId) {
+      console.log('场景3: 设备从房间A到房间B')
+      await updateRoomDevicesSort(originalRoomId)
+      await updateRoomDevicesSort(targetRoomId)
+    }
+    
+    // 4. 设备从A到A，更新A中设备的排序
+    else if (originalRoomId !== 'unassigned' && originalRoomId === targetRoomId) {
+      console.log('场景4: 设备在同一房间内排序')
+      await updateRoomDevicesSort(originalRoomId)
+    }
+    
+    // 5. All Devices 内部排序不需要API调用
+    else if (originalRoomId === 'unassigned' && targetRoomId === 'unassigned') {
+      console.log('场景5: All Devices 内部排序，无需API调用')
+    }
+    
+  } catch (error) {
+    console.error('拖动场景处理失败:', error)
+  }
+}
+
+// 更新房间设备排序
+const updateRoomDevicesSort = async (roomId) => {
+  try {
+    const roomDevices = getRoomDevices(roomId)
+    console.log(`准备更新房间 ${roomId} 的设备排序:`, roomDevices.map(d => ({ id: d.id, name: d.name, device_id: d.device_id })))
+    
+    // 即使房间没有设备，也需要调用 API 来清空房间的设备列表
+    // 这样服务器端会正确更新房间的设备关联关系
+    
+    // 调用全局状态管理中的批量更新方法
+    const response = await globalStore.updateRoomDevicesSort(roomId, roomDevices)
+    console.log(`房间 ${roomId} 设备排序更新完成，响应:`, response)
+  } catch (error) {
+    console.error('更新房间设备排序失败:', error)
+  }
 }
 
 // 拖拽时自动滚动页面（向上/向下）

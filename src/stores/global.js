@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
 import { getFamilyMembers, getUserProfile } from '../api/users'
-import { getRooms, getRoomDevices } from '../api/rooms'
+import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 
 export const useGlobalStore = defineStore('global', {
@@ -111,6 +111,9 @@ export const useGlobalStore = defineStore('global', {
 						try {
 							const roomDevicesRes = await getRoomDevices(room.id)
 							const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
+							
+							console.log(`房间 ${room.id} 原始设备数据:`, roomDevices)
+							
 							return {
 								...room,
 								devices: roomDevices
@@ -165,6 +168,38 @@ export const useGlobalStore = defineStore('global', {
 				this.loadProfile(userId)
 			])
 		},
+		
+		// 批量更新房间设备排序
+		async updateRoomDevicesSort(roomId, devices) {
+			try {
+				const data = {
+					room_id: roomId,
+					devices: devices.map((device, index) => ({
+						device_id: device.device_id,
+						sort_order: index
+					}))
+				}
+				
+				console.log('发送到服务器的数据:', data)
+				const response = await batchUpdateRoomDevices(data)
+				console.log('服务器响应:', response)
+				
+				if (response.success && response.data) {
+					// 更新对应房间的设备排序
+					const room = this.rooms.find(r => r.id === roomId)
+					if (room) {
+						console.log(`更新房间 ${roomId} 的设备列表:`, response.data)
+						room.devices = response.data
+					}
+				}
+				
+				return response
+			} catch (error) {
+				console.error('批量更新房间设备排序失败:', error)
+				throw error
+			}
+		},
+		
 		// 认证相关方法
 		setAuth(response) {
 			this.isAuthenticated = true

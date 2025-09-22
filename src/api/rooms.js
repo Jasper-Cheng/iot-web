@@ -25,4 +25,13 @@ export const getRoomDevices = (roomId) => {
 	})
 }
 
+// 批量更新房间设备排序
+export const batchUpdateRoomDevices = (data) => {
+	return request({
+		url: '/room-devices/batch-sort',
+		method: 'put',
+		data: data
+	})
+}
+
 
