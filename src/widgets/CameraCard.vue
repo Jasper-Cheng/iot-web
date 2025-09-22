@@ -19,24 +19,6 @@
             <path d="M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
         </button>
-        <div class="room-selector-wrapper">
-          <button class="room-selector" @click="cameraMenuOpen = !cameraMenuOpen">
-            <span>{{ roomLabel }}</span>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <div v-if="cameraMenuOpen" class="room-selector-menu">
-            <button 
-              v-for="room in rooms.filter(r => r.id !== 'all')"
-              :key="room.id"
-              :class="['room-selector-item', { selected: room.id === selectedCameraRoom }]"
-              @click.stop="selectCameraRoom(room.id)"
-            >
-              {{ room.name }}
-            </button>
-          </div>
-        </div>
         <div class="camera-switch">
           <span class="switch-label">{{ cameraPower ? 'On' : 'Off' }}</span>
           <div 
@@ -85,42 +67,11 @@ const props = defineProps({
   }
 })
 
-// Independent room selector label
-const roomLabel = computed(() => {
-  const map = {
-    'living': 'Living Room',
-    'dining': 'Dining Room',
-    'bedroom': 'Bed Room',
-    'bathroom': 'Bath Room',
-    'backyard': 'Backyard'
-  }
-  return map[selectedCameraRoom.value] || 'Living Room'
-})
+// Camera power state
+const cameraPower = ref(false)
 
-// Local selection, sync with prop activeRoom
-const selectedCameraRoom = ref('living')
-const cameraMenuOpen = ref(false)
-
-watch(() => props.activeRoom, (val) => {
-  if (val === 'all') return
-  selectedCameraRoom.value = val
-})
-
-const selectCameraRoom = (roomId) => {
-  selectedCameraRoom.value = roomId
-  cameraMenuOpen.value = false
-}
-
-// Demo camera sources
-const cameraSources = {
-  living: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-  dining: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
-  bedroom: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
-  bathroom: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
-  backyard: 'https://media.w3.org/2010/05/video/movie_300.mp4'
-}
-
-const cameraVideoSrc = computed(() => cameraSources[selectedCameraRoom.value] || cameraSources.living)
+// Demo camera source
+const cameraVideoSrc = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
 
 // Speech recognition
 const SpeechRecognition = (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -159,7 +110,6 @@ const stopVoice = () => {
 }
 
 // Camera power and fullscreen
-const cameraPower = ref(true)
 const toggleCamera = () => { cameraPower.value = !cameraPower.value }
 
 const cameraViewRef = ref(null)
