@@ -167,6 +167,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useGlobalStore } from '../stores/global'
+import { getDeviceComponent } from '../utils/deviceComponents'
 // 导入实际的widget组件
 import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
@@ -183,95 +185,47 @@ import SmartSocketCard from '../widgets/SmartSocketCard.vue'
 // 页面容器引用用于滚动
 const widgetsPage = ref(null)
 
-// 房间数据
-const rooms = ref([
-  { id: 'living-room', name: 'Living Room', color: 'var(--room-living)' },
-  { id: 'bedroom', name: 'Bedroom', color: 'var(--room-bedroom)' },
-  { id: 'kitchen', name: 'Kitchen', color: 'var(--room-kitchen)' },
-  { id: 'bathroom', name: 'Bathroom', color: 'var(--room-bathroom)' },
-  { id: 'backyard', name: 'Backyard', color: 'var(--room-backyard)' }
-])
+// 全局状态
+const globalStore = useGlobalStore()
 
-// 设备数据
-const devices = ref([
-  {
-    id: 'smart-light-1',
-    name: 'Smart Light',
-    status: 'online',
-    roomId: 'unassigned',
-    component: SmartLightCard
-  },
-  {
-    id: 'smart-tv-1',
-    name: 'Smart TV',
-    status: 'online',
-    roomId: 'living-room',
-    component: SmartTvCard
-  },
-  {
-    id: 'air-conditioner-1',
-    name: 'Air Conditioner',
-    status: 'offline',
-    roomId: 'bedroom',
-    component: AirCoolerCard
-  },
-  {
-    id: 'smart-speaker-1',
-    name: 'Smart Speaker',
-    status: 'online',
-    roomId: 'kitchen',
-    component: SpeakerCard
-  },
-  {
-    id: 'security-camera-1',
-    name: 'Security Camera',
-    status: 'online',
-    roomId: 'unassigned',
-    component: CameraCard
-  },
-  {
-    id: 'washing-machine-1',
-    name: 'Washing Machine',
-    status: 'offline',
-    roomId: 'bathroom',
-    component: WashingMachineCard
-  },
-  {
-    id: 'smart-fridge-1',
-    name: 'Smart Refrigerator',
-    status: 'online',
-    roomId: 'kitchen',
-    component: RefrigeratorCard
-  },
-  {
-    id: 'vacuum-cleaner-1',
-    name: 'Robot Vacuum',
-    status: 'online',
-    roomId: 'unassigned',
-    component: VacuumCard
-  },
-  {
-    id: 'air-purifier-1',
-    name: 'Air Purifier',
-    status: 'online',
-    roomId: 'living-room',
-    component: AirPurifierCard
-  },
-  {
-    id: 'fall-detection-1',
-    name: 'Fall Detection Sensor',
-    status: 'online',
-    roomId: 'bedroom',
-    component: FallDetectionCard
-  },
-  {
-    id: 'smart-socket-1',
-    name: 'Smart Socket',
-    status: 'online',
-    roomId: 'unassigned',
-    component: SmartSocketCard
-  }
-])
+// 房间数据 - 使用真实数据
+const rooms = computed(() => {
+  const allRooms = globalStore.rooms || []
+  return allRooms.map(room => ({
+    id: room.id,
+    name: room.name,
+    color: `var(--room-${room.id})`,
+    devices: room.devices || []
+  }))
+})
+
+// 设备数据 - 使用真实数据
+const devices = computed(() => {
+  const allDevices = globalStore.devices || []
+  return allDevices.map(device => {
+    // 根据设备SN获取对应的组件
+    const component = getDeviceComponent(device.cardName)
+    
+    // 确定设备所属房间
+    let roomId = 'unassigned'
+    const roomWithDevice = globalStore.rooms?.find(room => 
+      room.devices?.some(rd => rd.device_id === device.id)
+    )
+    if (roomWithDevice) {
+      roomId = roomWithDevice.id
+    }
+    
+    return {
+      id: device.id,
+      name: device.name,
+      status: device.status,
+      roomId: roomId,
+      component: component,
+      sn: device.sn,
+      cardName: device.cardName
+    }
+  })
+})
 
 // 选中的设备
 const selectedDevice = ref(null)
@@ -491,7 +445,7 @@ const cancelAddRoom = () => {
 
 // 生命周期钩子
 onMounted(() => {
-  // 组件挂载时的初始化逻辑
+  // 数据已经在 Index.vue 中加载，这里不需要重复加载
 })
 
 // 移除了图标组件定义，现在使用实际的widget组件
