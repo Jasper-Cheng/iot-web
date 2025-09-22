@@ -110,18 +110,66 @@ const mockDevices = [
 ]
 
 // 基础用户API
-export const getUsers = () => request.get('/users')
-export const addUser = (data) => request.post('/users', data)
-export const updateUser = (id, data) => request.put(`/users/${id}`, data)
-export const deleteUser = (id) => request.delete(`/users/${id}`)
-export const getUserProfile = (id) => request.get(`/users/${id}/profile`)
-export const updateUserProfile = (id, data) => request.put(`/users/${id}/profile`, data)
+export const getUsers = () => {
+	return request({
+		url: '/users',
+		method: 'get'
+	})
+}
+
+export const addUser = (data) => {
+	return request({
+		url: '/users',
+		method: 'post',
+		data: data
+	})
+}
+
+export const updateUser = (id, data) => {
+	return request({
+		url: `/users/${id}`,
+		method: 'put',
+		data: data
+	})
+}
+
+export const deleteUser = (id) => {
+	return request({
+		url: `/users/${id}`,
+		method: 'delete'
+	})
+}
+
+export const getUserProfile = (id) => {
+	return request({
+		url: `/users/${id}/profile`,
+		method: 'get'
+	})
+}
+
+export const updateUserProfile = (id, data) => {
+	return request({
+		url: `/users/${id}/profile`,
+		method: 'put',
+		data: data
+	})
+}
 
 // 成员相关API
-export const getMemberDetail = (memberId) => request.get(`/members/${memberId}`)
+export const getMemberDetail = (memberId) => {
+	return request({
+		url: `/members/${memberId}`,
+		method: 'get'
+	})
+}
 
 // 用户详情API
-export const getUserDetail = (userId) => request.get(`/users/${userId}`)
+export const getUserDetail = (userId) => {
+	return request({
+		url: `/users/${userId}`,
+		method: 'get'
+	})
+}
 
 // 家庭成员管理API
 export const getFamilyMembers = () => {

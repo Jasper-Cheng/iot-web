@@ -25,10 +25,35 @@ export const fetchDeviceStatuses = (params) => {
   })
 }
 
-export const addDevice = (data) => request.post('/devices/', data)
-export const updateDevice = (id, data) => request.put(`/devices/${id}`, data)
-export const deleteDevice = (id) => request.delete(`/devices/${id}`)
-export const getDeviceStatus = (id) => request.get(`/devices/${id}/status`)
+export const addDevice = (data) => {
+  return request({
+    url: '/devices/',
+    method: 'post',
+    data: data
+  })
+}
+
+export const updateDevice = (id, data) => {
+  return request({
+    url: `/devices/${id}`,
+    method: 'put',
+    data: data
+  })
+}
+
+export const deleteDevice = (id) => {
+  return request({
+    url: `/devices/${id}`,
+    method: 'delete'
+  })
+}
+
+export const getDeviceStatus = (id) => {
+  return request({
+    url: `/devices/${id}/status`,
+    method: 'get'
+  })
+}
 
 // 新增：更新设备状态
 export const updateDeviceStatus = (deviceId, statusData) => {
