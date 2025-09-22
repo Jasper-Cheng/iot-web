@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
 import { getFamilyMembers, getUserProfile } from '../api/users'
-import { getRooms } from '../api/rooms'
+import { getRooms, getRoomDevices } from '../api/rooms'
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
@@ -53,7 +53,29 @@ export const useGlobalStore = defineStore('global', {
 				const res = await getRooms({ user_id: userId })
 				
 				// API直接返回房间数组，request.js已经提取了response.data
-				this.rooms = Array.isArray(res) ? res : []
+				const rooms = Array.isArray(res) ? res : []
+				
+				// 为每个房间加载设备
+				const roomsWithDevices = await Promise.all(
+					rooms.map(async (room) => {
+						try {
+							const roomDevicesRes = await getRoomDevices(room.id)
+							const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
+							return {
+								...room,
+								devices: roomDevices
+							}
+						} catch (deviceErr) {
+							console.error(`房间 ${room.id} 设备加载失败:`, deviceErr)
+							return {
+								...room,
+								devices: []
+							}
+						}
+					})
+				)
+				
+				this.rooms = roomsWithDevices
 				console.log('房间列表加载成功:', this.rooms)
 			} catch (err) {
 				this.errors.rooms = err

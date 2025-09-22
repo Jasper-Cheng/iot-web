@@ -17,4 +17,12 @@ export const getRooms = (params) => {
 	  })
 }
 
+// 获取房间中的设备
+export const getRoomDevices = (roomId) => {
+	return request({
+		url: `/room-devices/by-room/${roomId}`,
+		method: 'get'
+	})
+}
+
 
