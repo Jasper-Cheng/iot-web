@@ -89,7 +89,6 @@ export const useGlobalStore = defineStore('global', {
 					}
 				})
 				
-				console.log('设备列表加载成功:', this.devices)
 			} catch (err) {
 				this.errors.devices = err
 				console.error('设备列表加载失败:', err)
@@ -126,8 +125,7 @@ export const useGlobalStore = defineStore('global', {
 					})
 				)
 				
-				this.rooms = roomsWithDevices
-				console.log('房间列表加载成功:', this.rooms)
+			this.rooms = roomsWithDevices
 			} catch (err) {
 				this.errors.rooms = err
 				console.error('房间列表加载失败:', err)

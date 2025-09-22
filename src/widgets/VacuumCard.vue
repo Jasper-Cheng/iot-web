@@ -96,6 +96,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+// 定义 props
+const props = defineProps({
+  device: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 // Record dialog state
 const showVacuumRecords = ref(false)
 

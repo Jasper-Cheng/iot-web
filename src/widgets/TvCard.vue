@@ -25,6 +25,14 @@
 <script setup>
 import { ref } from 'vue'
 
+// 定义 props
+const props = defineProps({
+  device: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 // TV状态
 const tvStatus = ref(false)
 

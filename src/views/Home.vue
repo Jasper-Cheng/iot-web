@@ -17,39 +17,19 @@
         </div>
 
         <div class="room-content">
-          <!-- 空调控制卡片 -->
-          <AirCoolerCard />
-
-          <!-- 智能设备列表 -->
-          <div class="devices-list">
-            <SmartLightCard />
-            <SmartTvCard />
-            <FallDetectionCard />
-            <SmartSocketCard />
-          </div>
-          
-          <!-- 摄像头模块 -->
-          <CameraCard :rooms="rooms" :activeRoom="activeRoom" />
-
-          <!-- 扫地机器人控制面板 -->
-          <VacuumCard />
-
-          <!-- 洗衣机控制面板 -->
-          <WashingMachineCard />
-          
-          <!-- 冰箱控制面板 -->
-          <RefrigeratorCard />
-           
-          <!-- 音响控制面板 -->
-          <SpeakerCard />
-           
-          <!-- 空气净化器模块 -->
-          <AirPurifierCard />
+          <!-- 动态渲染设备卡片 -->
+          <component 
+            v-for="device in filteredDevices" 
+            :key="device.id"
+            :is="getDeviceComponent(device.cardName)"
+            :device="device"
+          />
         </div>
       </div>
 
       <!-- 右侧内容区域 -->
       <div class="right-section">
+        <!-- 固定组件 -->
         <div class="cards-row">
           <WiFiCard />
           <TvCard />
@@ -71,17 +51,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useGlobalStore } from '../stores/global'
-import AirCoolerCard from '../widgets/AirCoolerCard.vue'
-import CameraCard from '../widgets/CameraCard.vue'
-import VacuumCard from '../widgets/VacuumCard.vue'
-import WashingMachineCard from '../widgets/WashingMachineCard.vue'
-import RefrigeratorCard from '../widgets/RefrigeratorCard.vue'
-import SpeakerCard from '../widgets/SpeakerCard.vue'
-import AirPurifierCard from '../widgets/AirPurifierCard.vue'
-import SmartLightCard from '../widgets/SmartLightCard.vue'
-import SmartTvCard from '../widgets/SmartTvCard.vue'
-import FallDetectionCard from '../widgets/FallDetectionCard.vue'
-import SmartSocketCard from '../widgets/SmartSocketCard.vue'
+import { getDeviceComponent } from '../utils/deviceComponents'
 import WiFiCard from '../widgets/WiFiCard.vue'
 import TvCard from '../widgets/TvCard.vue'
 import MusicCard from '../widgets/MusicCard.vue'
@@ -112,6 +82,29 @@ const rooms = computed(() => {
 
 // 当前选中的房间
 const activeRoom = ref('all')
+
+// 过滤后的设备列表
+const filteredDevices = computed(() => {
+  const allDevices = globalStore.devices || []
+  
+  if (activeRoom.value === 'all') {
+    // 显示所有设备
+    return allDevices.filter(device => device.cardName)
+  } else {
+    // 显示选中房间的设备
+    const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
+    
+    if (!selectedRoom) {
+      return []
+    }
+    
+    const roomDeviceIds = selectedRoom.devices?.map(rd => rd.device_id) || []
+    
+    return allDevices.filter(device => 
+      roomDeviceIds.includes(device.id) && device.cardName
+    )
+  }
+})
 
 // 房间设备统计数据
 const roomsWithDevices = computed(() => {

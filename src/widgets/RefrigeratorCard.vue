@@ -134,6 +134,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+// 定义 props
+const props = defineProps({
+  device: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 // =========================
 // Refrigerator state and modes
 // =========================

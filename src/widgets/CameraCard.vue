@@ -79,8 +79,10 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
-  rooms: { type: Array, required: true },
-  activeRoom: { type: String, required: true }
+  device: {
+    type: Object,
+    default: () => ({})
+  }
 })
 
 // Independent room selector label

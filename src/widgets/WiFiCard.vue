@@ -26,6 +26,14 @@
 <script setup>
 import { ref } from 'vue'
 
+// 定义 props
+const props = defineProps({
+  device: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 // WiFi状态
 const wifiStatus = ref(true)
 

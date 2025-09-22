@@ -192,6 +192,14 @@
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
 
+// 定义 props
+const props = defineProps({
+  device: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 const washingMachineModes = ref([
   { id: 'normal', name: 'Normal' },
   { id: 'quick', name: 'Quick' },
