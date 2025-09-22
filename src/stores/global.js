@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
 import { getFamilyMembers, getUserProfile } from '../api/users'
 import { getRooms, getRoomDevices } from '../api/rooms'
+import { getDeviceCardBySN } from '../utils/deviceMapping'
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
@@ -37,7 +38,19 @@ export const useGlobalStore = defineStore('global', {
 				const res = await fetchDeviceStatuses({ user_id: userId })
 				
 				// API直接返回设备数组，request.js已经提取了response.data
-				this.devices = Array.isArray(res) ? res : []
+				const devices = Array.isArray(res) ? res : []
+				
+				// 为每个设备添加映射信息
+				this.devices = devices.map(device => {
+					const cardName = getDeviceCardBySN(device.sn)
+					
+					return {
+						...device,
+						cardName,           // 对应的卡片组件名
+						modelCode: device.sn ? device.sn.split('-')[0] : null  // 模型code
+					}
+				})
+				
 				console.log('设备列表加载成功:', this.devices)
 			} catch (err) {
 				this.errors.devices = err
