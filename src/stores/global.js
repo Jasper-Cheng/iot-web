@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getDevices as fetchDeviceStatuses } from '../api/devices'
+import { fetchDeviceStatuses } from '../api/devices'
 import { getFamilyMembers, getUserProfile } from '../api/users'
 import { getRooms } from '../api/rooms'
 
@@ -30,14 +30,18 @@ export const useGlobalStore = defineStore('global', {
 		}
 	}),
 	actions: {
-		async loadDevices() {
+		async loadDevices(userId) {
 			this.loading.devices = true
 			this.errors.devices = null
 			try {
-				const res = await fetchDeviceStatuses()
-				this.devices = res?.data || []
+				const res = await fetchDeviceStatuses({ user_id: userId })
+				
+				// API直接返回设备数组，request.js已经提取了response.data
+				this.devices = Array.isArray(res) ? res : []
+				console.log('设备列表加载成功:', this.devices)
 			} catch (err) {
 				this.errors.devices = err
+				console.error('设备列表加载失败:', err)
 			} finally {
 				this.loading.devices = false
 			}
@@ -80,7 +84,7 @@ export const useGlobalStore = defineStore('global', {
 		},
 		async loadAll(userId = 1) {
 			await Promise.all([
-				this.loadDevices(),
+				this.loadDevices(userId),
 				this.loadRooms(),
 				this.loadMembers(),
 				this.loadProfile(userId)

@@ -15,19 +15,17 @@ const mockDevices = [
   }
 ]
 
-export const getDevices = (params) => {
-  // 模拟API延迟
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: mockDevices,
-        total: mockDevices.length
-      })
-    }, 500)
+export const fetchDeviceStatuses = (user_id) => {
+  return request({
+    url: '/devices/',
+    method: 'get',
+    params: {
+      user_id: user_id.user_id
+    }
   })
 }
 
-export const addDevice = (data) => request.post('/devices', data)
+export const addDevice = (data) => request.post('/devices/', data)
 export const updateDevice = (id, data) => request.put(`/devices/${id}`, data)
 export const deleteDevice = (id) => request.delete(`/devices/${id}`)
 export const getDeviceStatus = (id) => request.get(`/devices/${id}/status`)

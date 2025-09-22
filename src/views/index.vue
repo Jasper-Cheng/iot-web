@@ -214,7 +214,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
 import { initTheme, setTheme } from '../utils/theme.js'
@@ -377,6 +377,16 @@ const confirmDelete = async () => {
 onMounted(() => {
   const theme = initTheme()
   currentTheme.value = theme
+  
+  // 如果用户已认证，加载设备列表
+  if (globalStore.isAuthenticated && globalStore.user?.user_id) {
+    globalStore.loadDevices(globalStore.user.user_id)
+  }
+})
+
+// 组件销毁时移除事件监听
+onUnmounted(() => {
+  document.removeEventListener('click', closeUserMenu)
 })
 </script>
 

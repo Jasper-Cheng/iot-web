@@ -20,6 +20,7 @@ request.interceptors.request.use(config => {
   // 调试日志（仅在开发环境）
   if (import.meta.env.DEV) {
     console.log('[REQUEST]', config.method?.toUpperCase(), config.baseURL + config.url)
+    console.log('[REQUEST]', config.params)
   }
   
   return config
