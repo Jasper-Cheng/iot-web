@@ -46,14 +46,18 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.devices = false
 			}
 		},
-		async loadRooms() {
+		async loadRooms(userId) {
 			this.loading.rooms = true
 			this.errors.rooms = null
 			try {
-				const res = await getRooms()
-				this.rooms = res?.data || []
+				const res = await getRooms({ user_id: userId })
+				
+				// API直接返回房间数组，request.js已经提取了response.data
+				this.rooms = Array.isArray(res) ? res : []
+				console.log('房间列表加载成功:', this.rooms)
 			} catch (err) {
 				this.errors.rooms = err
+				console.error('房间列表加载失败:', err)
 			} finally {
 				this.loading.rooms = false
 			}
@@ -85,7 +89,7 @@ export const useGlobalStore = defineStore('global', {
 		async loadAll(userId = 1) {
 			await Promise.all([
 				this.loadDevices(userId),
-				this.loadRooms(),
+				this.loadRooms(userId),
 				this.loadMembers(),
 				this.loadProfile(userId)
 			])

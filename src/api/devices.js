@@ -15,12 +15,12 @@ const mockDevices = [
   }
 ]
 
-export const fetchDeviceStatuses = (user_id) => {
+export const fetchDeviceStatuses = (params) => {
   return request({
     url: '/devices/',
     method: 'get',
     params: {
-      user_id: user_id.user_id
+      user_id: params.user_id
     }
   })
 }

@@ -1,3 +1,5 @@
+import request from '../utils/request'
+
 // 模拟房间数据
 const mockRooms = [
 	{ id: 'living_room', name: '客厅' },
@@ -5,15 +7,14 @@ const mockRooms = [
 	{ id: 'kitchen', name: '厨房' }
 ]
 
-export const getRooms = () => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			resolve({
-				data: mockRooms,
-				total: mockRooms.length
-			})
-		}, 300)
-	})
+export const getRooms = (params) => {
+	return request({
+		url: '/rooms/',
+		method: 'get',
+		params: {
+		  user_id: params.user_id
+		}
+	  })
 }
 
 

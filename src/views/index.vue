@@ -378,9 +378,10 @@ onMounted(() => {
   const theme = initTheme()
   currentTheme.value = theme
   
-  // 如果用户已认证，加载设备列表
+  // 如果用户已认证，加载设备列表和房间列表
   if (globalStore.isAuthenticated && globalStore.user?.user_id) {
     globalStore.loadDevices(globalStore.user.user_id)
+    globalStore.loadRooms(globalStore.user.user_id)
   }
 })
 
