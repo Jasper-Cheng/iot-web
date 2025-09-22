@@ -48,7 +48,7 @@ const toggleDevice = () => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 2px 16px;
+  padding: 12px 16px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
