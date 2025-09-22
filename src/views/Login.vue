@@ -250,26 +250,32 @@ const handleLogin = async () => {
     globalStore.token = response.access_token
     localStorage.setItem('token', response.access_token)
     
-    // 根据角色调用不同的接口获取完整用户信息
     try {
-      let userData
-      if (response.role === 'owner') {
-        // 如果是owner，调用/users/{user_id}接口
-        const userResponse = await getUserDetail(response.id)
-        userData = userResponse
-      } else if (response.role === 'member') {
+      let userData = response
+      
+      if (response.role === 'member') {
         // 如果是member，调用/members/{member_id}接口
         const memberResponse = await getMemberDetail(response.id)
-        userData = memberResponse
-      } else {
-        // 其他角色，使用原始响应
-        userData = response
+        // 将user_id添加到登录response中
+        userData = {
+          ...response,
+          user_id: memberResponse.user_id
+        }
+      }else if(response.role === 'owner'){
+        // 如果是owner，调用/users/{user_id}接口
+        userData = {
+          ...response,
+          user_id: response.id
+        }
       }
       
-      // 将获取到的完整用户信息保存到全局状态
+      // 将更新后的response保存到全局状态
       globalStore.user = userData
       globalStore.isAuthenticated = true
       localStorage.setItem('user', JSON.stringify(userData))
+      
+      // 打印 userData
+      console.log('userData after login:', userData)
       
     } catch (userError) {
       console.error('获取用户详情失败:', userError)
@@ -277,6 +283,9 @@ const handleLogin = async () => {
       globalStore.user = response
       globalStore.isAuthenticated = true
       localStorage.setItem('user', JSON.stringify(response))
+      
+      // 打印 userData（错误情况）
+      console.log('userData after login (error):', response)
     }
     
     // 保存记住的凭据
