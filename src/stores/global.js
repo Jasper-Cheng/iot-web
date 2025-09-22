@@ -10,11 +10,49 @@ export const useGlobalStore = defineStore('global', {
 		isAuthenticated: false,
 		user: null,
 		token: null,
+		
 		// 设备数据
-		devices: [], // from devices API: detailed runtime status
+		// 设备列表数据结构：
+		// [
+		//   {
+		//     name: "设备1",
+		//     sn: "AC001-250922-000123",  // 设备序列号：模型code-生产日期-流水号
+		//     status: "unconfigured",     // 设备状态：unconfigured/online/offline
+		//     id: 11,                     // 设备ID
+		//     user_id: 16,                // 所属用户ID
+		//     model_id: 45,               // 模型ID
+		//     created_at: "2025-09-20T08:41:45", // 创建时间
+		//     cardName: "AirCoolerCard",  // 对应的设备卡片组件名
+		//     modelCode: "AC001"          // 模型code（从SN提取）
+		//   }
+		// ]
+		devices: [],
+		
+		// 成员数据
 		members: [],
+		
+		// 用户资料
 		profile: null,
-		rooms: [], // derived from device location for now
+		
+		// 房间数据
+		// 房间列表数据结构：
+		// [
+		//   {
+		//     name: "卫生间1",
+		//     id: 51,                     // 房间ID
+		//     user_id: 16,                // 所属用户ID
+		//     created_at: "2025-09-20T08:41:45", // 创建时间
+		//     devices: [                  // 房间中的设备列表
+		//       {
+		//         room_id: 51,
+		//         device_id: 12,          // 设备ID
+		//         sort_order: 2,          // 排序顺序
+		//         id: 2                   // 房间设备关联ID
+		//       }
+		//     ]
+		//   }
+		// ]
+		rooms: [],
 		loading: {
 			devices: false,
 			members: false,

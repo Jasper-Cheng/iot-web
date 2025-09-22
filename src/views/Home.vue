@@ -69,7 +69,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useGlobalStore } from '../stores/global'
 import AirCoolerCard from '../widgets/AirCoolerCard.vue'
 import CameraCard from '../widgets/CameraCard.vue'
 import VacuumCard from '../widgets/VacuumCard.vue'
@@ -90,56 +91,45 @@ import EnergyCard from '../widgets/EnergyCard.vue'
 import DeviceStatsCard from '../widgets/DeviceStatsCard.vue'
 import SmartControlPanel from '../widgets/SmartControlPanel.vue'
 
+// 全局状态
+const globalStore = useGlobalStore()
+
 // =========================
 // Room navigation data/state
 // - rooms: includes an 'all' option for the navigation only
 // - activeRoom: current nav selection (defaults to 'all')
 // =========================
-const rooms = ref([
-  { id: 'all', name: 'All' },
-  { id: 'living', name: 'Living Room' },
-  { id: 'dining', name: 'Dining Room' },
-  { id: 'bedroom', name: 'Bed Room' },
-  { id: 'bathroom', name: 'Bath Room' },
-  { id: 'backyard', name: 'Backyard' }
-])
+const rooms = computed(() => {
+  const allRooms = globalStore.rooms || []
+  return [
+    { id: 'all', name: 'All' },
+    ...allRooms.map(room => ({
+      id: room.id,
+      name: room.name
+    }))
+  ]
+})
 
 // 当前选中的房间
 const activeRoom = ref('all')
 
 // 房间设备统计数据
-const roomsWithDevices = ref([
-  { 
-    id: 'living', 
-    name: 'Living Room', 
-    devices: { total: 8, online: 7, offline: 1 },
-    color: 'var(--room-living)'
-  },
-  { 
-    id: 'bedroom', 
-    name: 'Bed Room', 
-    devices: { total: 6, online: 5, offline: 1 },
-    color: 'var(--room-bedroom)'
-  },
-  { 
-    id: 'dining', 
-    name: 'Dining Room', 
-    devices: { total: 4, online: 4, offline: 0 },
-    color: 'var(--room-kitchen)'
-  },
-  { 
-    id: 'bathroom', 
-    name: 'Bath Room', 
-    devices: { total: 3, online: 2, offline: 1 },
-    color: 'var(--room-bathroom)'
-  },
-  { 
-    id: 'backyard', 
-    name: 'Backyard', 
-    devices: { total: 2, online: 1, offline: 1 },
-    color: 'var(--room-backyard)'
-  }
-])
+const roomsWithDevices = computed(() => {
+  const allRooms = globalStore.rooms || []
+  return allRooms.map(room => {
+    const roomDevices = room.devices || []
+    const total = roomDevices.length
+    const online = roomDevices.filter(device => device.status === 'online').length
+    const offline = total - online
+    
+    return {
+      id: room.id,
+      name: room.name,
+      devices: { total, online, offline },
+      color: `var(--room-${room.id})`
+    }
+  })
+})
 
 // =========================
 // Navigation / Mode handlers
