@@ -65,6 +65,22 @@ export const DEVICE_SN_MAPPING = {
   'TvCard': null,               // 电视
 }
 
+// 设备缩略图映射表
+export const DEVICE_THUMBNAIL_MAPPING = {
+  'AirCoolerCard': '/thumbnails/devices/air_cooler.png',
+  'CameraCard': '/thumbnails/devices/camera.png',
+  'SmartLightCard': '/thumbnails/devices/smart_light.png',
+  'SmartTvCard': '/thumbnails/devices/smart_tv.png',
+  'FallDetectionCard': '/thumbnails/devices/fall_detection.png',
+  'WiFiCard': '/thumbnails/devices/smart_socket.png', // 使用智能插座图标
+  'VacuumCard': '/thumbnails/devices/smart_vacuum.png',
+  'WashingMachineCard': '/thumbnails/devices/washing_machine.png',
+  'RefrigeratorCard': '/thumbnails/devices/refrigerator.png',
+  'SpeakerCard': '/thumbnails/devices/smart_speaker.png',
+  'AirPurifierCard': '/thumbnails/devices/air_purifier.png',
+  'SmartSocketCard': '/thumbnails/devices/smart_socket.png',
+}
+
 // 根据SN获取设备卡片组件名
 export function getDeviceCardBySN(sn) {
   if (!sn || typeof sn !== 'string') {
@@ -94,4 +110,9 @@ export function getAllDeviceComponentNames() {
 // 检查组件是否存在
 export function isComponentAvailable(componentName) {
   return DEVICE_SN_MAPPING.hasOwnProperty(componentName)
+}
+
+// 根据卡片组件名获取缩略图
+export function getThumbnailByCardName(cardName) {
+  return DEVICE_THUMBNAIL_MAPPING[cardName] || '/thumbnails/devices/smart_light.png'
 }

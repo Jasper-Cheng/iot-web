@@ -34,7 +34,7 @@
             @click="selectDevice(device)"
           >
             <div class="device-preview">
-              <img :src="getDeviceThumbnail(device.name)" :alt="device.name" class="device-thumbnail" draggable="false" />
+              <img :src="getThumbnailByCardName(device.cardName)" :alt="device.name" class="device-thumbnail" draggable="false" />
             </div>
             <div class="device-info">
               <h4 class="device-name">{{ device.name }}</h4>
@@ -82,7 +82,7 @@
               @click="selectDevice(device)"
             >
               <div class="device-preview">
-                <img :src="getDeviceThumbnail(device.name)" :alt="device.name" class="device-thumbnail" draggable="false" />
+                <img :src="getThumbnailByCardName(device.cardName)" :alt="device.name" class="device-thumbnail" draggable="false" />
               </div>
               <div class="device-info">
                 <h4 class="device-name">{{ device.name }}</h4>
@@ -107,7 +107,7 @@
         <div class="modal-body">
           <!-- 设备大图 -->
           <div class="device-large-preview">
-            <img :src="getDeviceThumbnail(selectedDevice.name)" :alt="selectedDevice.name" class="device-large-thumbnail" />
+            <img :src="getThumbnailByCardName(selectedDevice.cardName)" :alt="selectedDevice.name" class="device-large-thumbnail" />
           </div>
         </div>
         <div class="modal-footer">
@@ -169,6 +169,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
+import { getThumbnailByCardName } from '../utils/deviceMapping'
 // 导入实际的widget组件
 import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
@@ -338,7 +339,7 @@ const handleDragStart = (event, device) => {
     preview.style.left = '-9999px'
 
     const img = document.createElement('img')
-    img.src = getDeviceThumbnail(device.name)
+    img.src = getThumbnailByCardName(device.cardName)
     img.alt = device.name
     img.style.width = '100%'
     img.style.height = '100%'
@@ -541,24 +542,6 @@ const removeDevice = (device) => {
   closeDeviceModal()
 }
 
-// 获取设备缩略图
-const getDeviceThumbnail = (deviceName) => {
-  const thumbnailMap = {
-    'Smart Light': '/thumbnails/devices/smart_light.png',
-    'Smart TV': '/thumbnails/devices/smart_tv.png',
-    'Air Conditioner': '/thumbnails/devices/air_cooler.png',
-    'Smart Speaker': '/thumbnails/devices/smart_speaker.png',
-    'Security Camera': '/thumbnails/devices/camera.png',
-    'Washing Machine': '/thumbnails/devices/washing_machine.png',
-    'Smart Refrigerator': '/thumbnails/devices/refrigerator.png',
-    'Robot Vacuum': '/thumbnails/devices/smart_vacuum.png',
-    'Air Purifier': '/thumbnails/devices/air_purifier.png',
-    'Fall Detection Sensor': '/thumbnails/devices/fall_detection.png',
-    'Smart Socket': '/thumbnails/devices/smart_socket.png'
-  }
-  
-  return thumbnailMap[deviceName] || '/thumbnails/devices/smart_light.png'
-}
 
 // 添加房间
 // 新增房间：使用弹窗输入房间名
