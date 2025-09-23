@@ -171,7 +171,7 @@ import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { getThumbnailByCardName } from '../utils/deviceMapping'
 import { unbindDeviceBySN } from '../api/devices'
-import { createRoom } from '../api/rooms'
+import { createRoom, deleteRoom } from '../api/rooms'
 // 导入实际的widget组件
 import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
@@ -306,20 +306,28 @@ const closeDeleteConfirm = () => {
 }
 
 // 删除房间（将房间内设备移回 All Devices）
-const removeRoom = () => {
+const removeRoom = async () => {
   const room = roomPendingDelete.value
   if (!room) return
 
-  // 将该房间的设备移动到 unassigned
-  devices.value = devices.value.map(d => (
-    d.roomId === room.id ? { ...d, roomId: 'unassigned' } : d
-  ))
+  try {
+    // 调用删除房间 API
+    await deleteRoom(room.id)
+    
+    // 将该房间的设备移动到 unassigned - 更新 globalStore.devices
+    globalStore.devices = globalStore.devices.map(d => (
+      d.roomId === room.id ? { ...d, roomId: 'unassigned' } : d
+    ))
 
-  // 从房间列表移除
-  const idx = rooms.value.findIndex(r => r.id === room.id)
-  if (idx > -1) rooms.value.splice(idx, 1)
+    // 从房间列表移除
+    const idx = rooms.value.findIndex(r => r.id === room.id)
+    if (idx > -1) rooms.value.splice(idx, 1)
 
-  closeDeleteConfirm()
+    closeDeleteConfirm()
+  } catch (error) {
+    console.error('删除房间失败:', error)
+    // 可以添加错误提示
+  }
 }
 
 // 拖拽开始

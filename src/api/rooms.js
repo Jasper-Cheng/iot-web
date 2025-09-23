@@ -43,4 +43,12 @@ export const createRoom = (data) => {
 	})
 }
 
+// 删除房间
+export const deleteRoom = (roomId) => {
+	return request({
+		url: `/rooms/${roomId}`,
+		method: 'delete'
+	})
+}
+
 
