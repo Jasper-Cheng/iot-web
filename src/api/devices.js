@@ -41,9 +41,9 @@ export const updateDevice = (id, data) => {
   })
 }
 
-export const deleteDevice = (id) => {
+export const unbindDeviceBySN = (sn) => {
   return request({
-    url: `/devices/${id}`,
+    url: `/devices/unbind-by-sn/${sn}`,
     method: 'delete'
   })
 }

@@ -170,6 +170,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { getThumbnailByCardName } from '../utils/deviceMapping'
+import { unbindDeviceBySN } from '../api/devices'
 // 导入实际的widget组件
 import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
@@ -541,12 +542,38 @@ const closeDeviceModal = () => {
 }
 
 // 移除设备
-const removeDevice = (device) => {
-  const index = devices.value.findIndex(d => d.id === device.id)
-  if (index > -1) {
-    devices.value.splice(index, 1)
+const removeDevice = async (device) => {
+  if (!device || !device.sn) return
+  
+  try {
+    // 调用解绑设备 API，传入 SN
+    await unbindDeviceBySN(device.sn)
+    
+    // 从 localDevices 中移除
+    const localIndex = localDevices.value.findIndex(d => d.id === device.id)
+    if (localIndex > -1) {
+      localDevices.value.splice(localIndex, 1)
+    }
+    
+    // 从 globalStore.rooms 中移除
+    if (device.roomId !== 'unassigned') {
+      const room = globalStore.rooms.find(r => r.id === device.roomId)
+      if (room && room.devices) {
+        room.devices = room.devices.filter(rd => rd.device_id !== device.id)
+      }
+    }
+    
+    // 从 globalStore.devices 中移除
+    const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
+    if (globalIndex > -1) {
+      globalStore.devices.splice(globalIndex, 1)
+    }
+    
+    closeDeviceModal()
+  } catch (error) {
+    console.error('解绑设备失败:', error)
+    // 可以添加错误提示
   }
-  closeDeviceModal()
 }
 
 
