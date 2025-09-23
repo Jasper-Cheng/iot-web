@@ -140,20 +140,6 @@ export const deleteUser = (id) => {
 	})
 }
 
-export const getUserProfile = (id) => {
-	return request({
-		url: `/users/${id}/profile`,
-		method: 'get'
-	})
-}
-
-export const updateUserProfile = (id, data) => {
-	return request({
-		url: `/users/${id}/profile`,
-		method: 'put',
-		data: data
-	})
-}
 
 // 成员相关API
 export const getMembers = (params) => {

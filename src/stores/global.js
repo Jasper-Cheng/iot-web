@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
-import { getUserProfile, getMembers, getUserDetail } from '../api/users'
+import { getMembers, getUserDetail } from '../api/users'
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 
@@ -91,8 +91,6 @@ export const useGlobalStore = defineStore('global', {
 		// ]
 		members: [],
 		
-		// 用户资料
-		profile: null,
 		
 		// 房间数据
 		// 房间列表数据结构：
@@ -116,14 +114,12 @@ export const useGlobalStore = defineStore('global', {
 		loading: {
 			devices: false,
 			members: false,
-			profile: false,
 			rooms: false,
 			auth: false
 		},
 		errors: {
 			devices: null,
 			members: null,
-			profile: null,
 			rooms: null,
 			auth: null
 		}
@@ -220,24 +216,11 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.members = false
 			}
 		},
-		async loadProfile(userId = 1) {
-			this.loading.profile = true
-			this.errors.profile = null
-			try {
-				const res = await getUserProfile(userId)
-				this.profile = res?.data || null
-			} catch (err) {
-				this.errors.profile = err
-			} finally {
-				this.loading.profile = false
-			}
-		},
 		async loadAll(userId = 1) {
 			await Promise.all([
 				this.loadDevices(userId),
 				this.loadRooms(userId),
-				this.loadMembers(userId),
-				this.loadProfile(userId)
+				this.loadMembers(userId)
 			])
 		},
 		
