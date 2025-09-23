@@ -44,6 +44,10 @@ const props = defineProps({
       'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10'
     ]
   },
+  currentUserAvatar: {
+    type: String,
+    default: ''
+  },
   scrollSensitivity: {
     type: Number,
     default: 1.5
@@ -63,7 +67,15 @@ const startX = ref(0)
 const scrollLeft = ref(0)
 
 // 头像选项
-const avatarOptions = ref(props.options)
+const avatarOptions = ref([...props.options])
+
+// 初始化头像选项，如果当前用户头像不在选项中，添加到中间位置
+const initializeAvatarOptions = () => {
+  if (props.currentUserAvatar && !avatarOptions.value.includes(props.currentUserAvatar)) {
+    const middleIndex = Math.floor(avatarOptions.value.length / 2)
+    avatarOptions.value.splice(middleIndex, 0, props.currentUserAvatar)
+  }
+}
 
 // 选择头像
 const selectAvatar = (avatar) => {
@@ -144,12 +156,30 @@ const scrollToSelectedAvatar = () => {
   }
 }
 
+// 设置默认选中头像
+const setDefaultAvatar = () => {
+  if (props.currentUserAvatar && avatarOptions.value.includes(props.currentUserAvatar)) {
+    // 如果当前用户头像存在且在选项中，则选中
+    selectedAvatar.value = props.currentUserAvatar
+    emit('update:modelValue', props.currentUserAvatar)
+  } else if (props.modelValue && avatarOptions.value.includes(props.modelValue)) {
+    // 如果 modelValue 存在且在选项中，则选中
+    selectedAvatar.value = props.modelValue
+  } else {
+    // 如果都不存在，则不选中任何头像
+    selectedAvatar.value = ''
+    emit('update:modelValue', '')
+  }
+}
+
 // 监听 props.modelValue 变化
 watch(() => props.modelValue, (newValue) => {
   selectedAvatar.value = newValue
-  nextTick(() => {
-    scrollToSelectedAvatar()
-  })
+  if (newValue) {
+    nextTick(() => {
+      scrollToSelectedAvatar()
+    })
+  }
 })
 
 // 监听 props.options 变化
@@ -162,10 +192,18 @@ onMounted(() => {
   // 添加全局鼠标事件监听器
   document.addEventListener('mouseup', handleGlobalMouseUp)
   
-  // 初始化滚动到选中头像
-  nextTick(() => {
-    scrollToSelectedAvatar()
-  })
+  // 初始化头像选项
+  initializeAvatarOptions()
+  
+  // 设置默认选中头像
+  setDefaultAvatar()
+  
+  // 只有在有选中头像时才滚动到居中位置
+  if (selectedAvatar.value) {
+    nextTick(() => {
+      scrollToSelectedAvatar()
+    })
+  }
 })
 
 onUnmounted(() => {

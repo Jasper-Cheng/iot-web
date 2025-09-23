@@ -144,8 +144,7 @@
           <div class="avatar-section">
             <AvatarSelector 
               v-model="newMember.avatar"
-              :options="avatarOptions"
-              :scroll-sensitivity="scrollSensitivity"
+              :current-user-avatar="globalStore.user?.account?.avatar || ''"
               @change="handleAvatarChange"
             />
           </div>
@@ -303,22 +302,6 @@ const newMember = ref({
 // 高级设置展开状态
 const showAdvancedSettings = ref(false)
 
-// 头像选项和滚动状态
-const avatarOptions = ref([
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar1',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar2',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar3',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar4',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar5',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar6',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar7',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar8',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar9',
-  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10'
-])
-
-// 滚动敏感度
-const scrollSensitivity = ref(1.5)
 
 // 计算属性
 const getRoleText = (role) => {
@@ -518,11 +501,6 @@ const openEditModal = (member) => {
     avatar: member.avatar || ''
   }
   
-  // 如果当前头像不在预设选项中，添加到中间位置并选中
-  if (member.avatar && !avatarOptions.value.includes(member.avatar)) {
-    const middleIndex = Math.floor(avatarOptions.value.length / 2)
-    avatarOptions.value.splice(middleIndex, 0, member.avatar)
-  }
   
   // 调试输出，确保表单数据正确
   console.log('表单回填数据:', newMember.value)
@@ -578,30 +556,9 @@ const closeModal = () => {
   editingMember.value = null
   resetNewMemberForm()
   
-  // 清理动态添加的头像选项，只保留预设的10个
-  if (avatarOptions.value.length > 10) {
-    // 找到第一个动态添加的头像（不在原始预设中的）
-    const originalAvatars = [
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar1',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar2',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar3',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar4',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar5',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar6',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar7',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar8',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar9',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10'
-    ]
-    
-    // 移除所有不在原始预设中的头像
-    avatarOptions.value = avatarOptions.value.filter(avatar => originalAvatars.includes(avatar))
-  }
 }
 
 const resetNewMemberForm = () => {
-  // 选择中间位置的头像作为默认头像
-  const middleIndex = Math.floor(avatarOptions.value.length / 2)
   newMember.value = {
     name: '',
     gender: '',
@@ -611,7 +568,7 @@ const resetNewMemberForm = () => {
     phone: '',
     email: '',
     role: 'member',
-    avatar: avatarOptions.value[middleIndex] || '' // 设置默认头像为中间位置的选项
+    avatar: '' // 头像由 AvatarSelector 组件管理
   }
   showAdvancedSettings.value = false
 }
