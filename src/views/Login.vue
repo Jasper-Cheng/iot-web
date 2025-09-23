@@ -26,12 +26,12 @@
       <!-- 登录表单 -->
       <form v-if="!isRegister" class="login-form" @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">用户名</label>
+          <label for="username">账户</label>
           <input 
             type="text" 
             id="username" 
             v-model="formData.username"
-            placeholder="请输入用户名"
+            placeholder="请输入账户"
             required
           />
         </div>
@@ -53,7 +53,7 @@
             <span class="checkmark"></span>
             记住我
           </label>
-          <a href="#" class="forgot-password">忘记密码?</a>
+          <a href="#" class="forgot-password" @click.prevent="handleForgotPassword">忘记密码?</a>
         </div>
 
         <button type="submit" class="login-btn" :disabled="isLoading">
@@ -82,10 +82,10 @@
             <label>电话 *</label>
             <input v-model="registerData.phone" type="tel" required placeholder="请输入电话号码">
           </div>
-          <div class="form-group">
-            <label>账号 *</label>
-            <input v-model="registerData.username" type="text" required placeholder="请输入账号">
-          </div>
+            <div class="form-group">
+              <label>账户 *</label>
+              <input v-model="registerData.username" type="text" required placeholder="请输入账户">
+            </div>
         </div>
         
         <div class="form-row">
@@ -105,14 +105,14 @@
             <label>姓名 *</label>
             <input v-model="registerData.name" type="text" required placeholder="请输入姓名">
           </div>
-          <div class="form-group">
-            <label>性别 *</label>
-            <select v-model="registerData.gender" required>
-              <option value="">请选择性别</option>
-              <option value="male">男</option>
-              <option value="female">女</option>
-            </select>
-          </div>
+           <div class="form-group">
+             <label>性别 *</label>
+             <select v-model="registerData.gender" required>
+               <option value="other">其他</option>
+               <option value="male">男</option>
+               <option value="female">女</option>
+             </select>
+           </div>
         </div>
         
         <div class="form-row">
@@ -211,7 +211,7 @@ const registerData = reactive({
   password: '',
   confirmPassword: '',
   role: 'owner', // 注册用户默认为拥有者
-  gender: ''
+  gender: 'other' // 默认性别为其他
 })
 
 
@@ -374,6 +374,10 @@ const handleRegister = async () => {
     // 注册成功，显示成功消息
     ElMessage.success('注册成功，请登录')
     
+    // 将注册的账号和密码填写到登录表单
+    formData.username = registerData.username
+    formData.password = registerData.password
+    
     // 切换到登录模式
     isRegister.value = false
     
@@ -432,6 +436,11 @@ const onRememberMeChange = () => {
     // 如果取消勾选，清除记住的凭据
     localStorage.removeItem('rememberedCredentials')
   }
+}
+
+// 处理忘记密码点击
+const handleForgotPassword = () => {
+  ElMessage.info('你没忘！')
 }
 
 // 组件挂载时恢复记住的凭据
