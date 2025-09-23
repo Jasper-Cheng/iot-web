@@ -158,7 +158,7 @@
             <div class="form-group">
               <label>性别 *</label>
               <select v-model="newMember.gender" required>
-                <option value="">请选择性别</option>
+                <option value="other">其他</option>
                 <option value="male">男</option>
                 <option value="female">女</option>
               </select>
@@ -173,14 +173,6 @@
           </div>
           
           <div v-if="!editingMember" class="form-row">
-            <div class="form-group">
-              <label>角色 *</label>
-              <select v-model="newMember.role" required>
-                <option value="">请选择角色</option>
-                <option value="member">成员</option>
-                <option value="owner">拥有者</option>
-              </select>
-            </div>
             <div class="form-group">
               <!-- 占位，保持布局 -->
             </div>
@@ -213,17 +205,23 @@
             
             <div class="form-row">
               <div class="form-group">
-                <label>密码 *</label>
-                <input v-model="newMember.password" type="password" required placeholder="请输入密码">
+                <label>密码</label>
+                <input v-model="newMember.password" type="password" placeholder="请输入密码">
               </div>
               <div class="form-group">
-                <label>确认密码 *</label>
-                <input v-model="newMember.confirmPassword" type="password" required placeholder="请再次输入密码">
+                <label>确认密码</label>
+                <input v-model="newMember.confirmPassword" type="password" placeholder="请再次输入密码">
               </div>
             </div>
           </div>
           
+         
+          
           <div class="form-actions">
+             <!-- 错误信息显示 -->
+          <div v-if="formError" class="error-message">
+            {{ formError }}
+          </div>
             <button type="button" @click="closeModal" class="cancel-btn">取消</button>
             <button type="submit" class="submit-btn">{{ editingMember ? '更新' : '添加成员' }}</button>
           </div>
@@ -268,12 +266,14 @@ import {
   updateMemberDevicePermission,
   addFamilyMember,
   updateFamilyMember,
-  deleteFamilyMember
+  deleteFamilyMember,
+  updateUser
 } from '../api/users.js'
 import { useGlobalStore } from '../stores/global'
 import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
 import { getAvatarUrl } from '../utils/theme'
 import AvatarSelector from '../widgets/AvatarSelector.vue'
+import { ElMessage } from 'element-plus'
 
 // 全局状态
 const globalStore = useGlobalStore()
@@ -290,18 +290,20 @@ const editingMember = ref(null)
 // 新成员表单数据
 const newMember = ref({
   name: '',
-  gender: '',
+  gender: 'other',
   username: '',
   password: '',
   confirmPassword: '',
   phone: '',
   email: '',
-  role: 'member',
   avatar: ''
 })
 
 // 高级设置展开状态
 const showAdvancedSettings = ref(false)
+
+// 表单错误信息
+const formError = ref('')
 
 
 // 计算属性
@@ -419,6 +421,17 @@ const deselectAllDevices = (memberId) => {
 
 const addNewMember = async () => {
   try {
+    // 清除之前的错误信息
+    formError.value = ''
+    
+    // 验证密码：如果填写了密码，则密码和确认密码必须一致
+    if (newMember.value.password && newMember.value.password.trim() !== ''||newMember.value.confirmPassword && newMember.value.confirmPassword.trim() !== '') {
+      if (newMember.value.password !== newMember.value.confirmPassword) {
+        formError.value = '密码和确认密码不一致'
+        return
+      }
+    }
+    
     const memberData = {
       name: newMember.value.name,
       gender: newMember.value.gender,
@@ -426,55 +439,170 @@ const addNewMember = async () => {
       password: newMember.value.password,
       phone: newMember.value.phone,
       email: newMember.value.email,
-      role: newMember.value.role,
       avatar: newMember.value.avatar,
       devicePermissions: {}
     }
     
+    // 打印添加成员表单数据
+    console.log('=== 添加成员表单数据 ===')
+    console.log('原始表单数据:', JSON.stringify(newMember.value, null, 2))
+    console.log('构建的成员数据 (JSON格式):', JSON.stringify(memberData, null, 2))
+    console.log('API接口: addFamilyMember')
+    console.log('========================')
+    
     const response = await addFamilyMember(memberData)
-    if (response.success) {
-      await loadData()
-      closeModal()
-      resetNewMemberForm()
-    } else {
-      // 显示错误提示
-      alert(response.message || '添加成员失败')
-    }
+    
+    // 打印接口返回值
+    console.log('=== addFamilyMember 接口返回值 ===')
+    console.log('完整响应:', JSON.stringify(response, null, 2))
+    console.log('响应状态:', response.success)
+    console.log('响应消息:', response.message || response.detail)
+    console.log('================================')
+    
+    await loadData()
+    ElMessage.success('添加成员成功')
+    closeModal()
+    resetNewMemberForm()
+    
   } catch (error) {
     console.error('添加成员失败:', error)
-    alert('添加成员失败，请重试')
+    formError.value = error.response?.data?.detail || '添加成员失败，请重试'
   }
 }
 
 const editMember = async () => {
   try {
+    // 清除之前的错误信息
+    formError.value = ''
+    
+    // 验证密码：如果填写了密码，则密码和确认密码必须一致
+    if (newMember.value.password && newMember.value.password.trim() !== ''||newMember.value.confirmPassword && newMember.value.confirmPassword.trim() !== '') {
+      if (newMember.value.password !== newMember.value.confirmPassword) {
+        formError.value = '密码和确认密码不一致'
+        return
+      }
+    }
+    
     // 构建更新数据，只包含有值的字段
-    const memberData = {
-      name: newMember.value.name,
-      gender: newMember.value.gender,
-      username: newMember.value.username,
-      phone: newMember.value.phone,
-      email: newMember.value.email,
-      role: editingMember.value.isOwner ? 'owner' : newMember.value.role, // 拥有者角色不可更改
-      avatar: newMember.value.avatar
-    }
+    const updateData = {}
     
-    // 只有当密码不为空时才更新密码
+    // 根据字段是否有值来决定是否传递
+    if (newMember.value.username && newMember.value.username.trim() !== '') {
+      updateData.account = newMember.value.username
+    }
+    if (newMember.value.name && newMember.value.name.trim() !== '') {
+      updateData.name = newMember.value.name
+    }
+    if (newMember.value.gender) {
+      updateData.gender = newMember.value.gender
+    }
+    if (newMember.value.phone && newMember.value.phone.trim() !== '') {
+      updateData.phone = newMember.value.phone
+    }
+    if (newMember.value.email && newMember.value.email.trim() !== '') {
+      updateData.email = newMember.value.email
+    }
+    if (newMember.value.avatar && newMember.value.avatar.trim() !== '') {
+      updateData.avatar = newMember.value.avatar
+    }
     if (newMember.value.password && newMember.value.password.trim() !== '') {
-      memberData.password = newMember.value.password
+      updateData.password = newMember.value.password
     }
     
-    const response = await updateFamilyMember(editingMember.value.id, memberData)
-    if (response.success) {
-      await loadData()
-      closeModal()
-      resetNewMemberForm()
+    // 打印更新表单数据
+    console.log('=== 更新表单数据 ===')
+    console.log('原始表单数据:', JSON.stringify(newMember.value, null, 2))
+    console.log('构建的更新数据 (JSON格式):', JSON.stringify(updateData, null, 2))
+    console.log('编辑的成员ID:', editingMember.value.id)
+    console.log('成员角色:', editingMember.value.role)
+    console.log('API接口:', editingMember.value.role === 'owner' ? 'updateUser' : 'updateFamilyMember')
+    console.log('========================')
+    
+    let response
+    // 根据角色调用不同的API
+    if (editingMember.value.role === 'owner') {
+      // 拥有者调用用户更新接口
+      response = await updateUser(editingMember.value.id, updateData)
+      
+      // 打印接口返回值
+      console.log('=== updateUser 接口返回值 ===')
+      console.log('完整响应:', JSON.stringify(response, null, 2))
+      console.log('响应状态:', response.success)
+      console.log('响应消息:', response.message || response.detail)
+      console.log('============================')
     } else {
-      alert(response.message || '更新成员失败')
+      // 成员调用成员更新接口
+      response = await updateFamilyMember(editingMember.value.id, updateData)
+      
+      // 打印接口返回值
+      console.log('=== updateFamilyMember 接口返回值 ===')
+      console.log('完整响应:', JSON.stringify(response, null, 2))
+      console.log('响应状态:', response.success)
+      console.log('响应消息:', response.message || response.detail)
+      console.log('==================================')
     }
+    
+    await loadData()
+    
+    // 如果更新的是当前用户，则更新globalStore中的user数据
+    console.log('检查是否更新当前用户:')
+    console.log('editingMember.role:', editingMember.value.role)
+    console.log('editingMember.id:', editingMember.value.id)
+    console.log('globalStore.user.id:', globalStore.user?.id)
+    console.log('是否为当前用户:', editingMember.value.role === 'owner' && globalStore.user?.id === editingMember.value.id)
+    
+    // 更新 globalStore.members 中的成员数据
+    const updatedMembers = globalStore.members.map(member => {
+      if (member.id === editingMember.value.id) {
+        const updatedMember = { ...member }
+        const updatedAccount = { ...member.account }
+        
+        // 只更新有值的字段
+        if (updateData.account) updatedAccount.account = updateData.account
+        if (updateData.name) updatedAccount.name = updateData.name
+        if (updateData.gender) updatedAccount.gender = updateData.gender
+        if (updateData.phone) updatedAccount.phone = updateData.phone
+        if (updateData.email) updatedAccount.email = updateData.email
+        if (updateData.avatar) updatedAccount.avatar = updateData.avatar
+        
+        updatedMember.account = updatedAccount
+        return updatedMember
+      }
+      return member
+    })
+    globalStore.members = updatedMembers
+    
+    // 如果是当前用户，同时更新 globalStore.user
+    if (globalStore.user?.id === editingMember.value.id) {
+      console.log('更新当前用户数据:', updateData)
+      if (globalStore.user?.account) {
+        const updatedUser = { ...globalStore.user }
+        const updatedAccount = { ...globalStore.user.account }
+        
+        // 只更新有值的字段
+        if (updateData.account) updatedAccount.account = updateData.account
+        if (updateData.name) updatedAccount.name = updateData.name
+        if (updateData.gender) updatedAccount.gender = updateData.gender
+        if (updateData.phone) updatedAccount.phone = updateData.phone
+        if (updateData.email) updatedAccount.email = updateData.email
+        if (updateData.avatar) updatedAccount.avatar = updateData.avatar
+        
+        // 替换整个user对象来触发响应式更新
+        updatedUser.account = updatedAccount
+        globalStore.user = updatedUser
+        
+        console.log('用户数据已更新:', globalStore.user)
+      }
+    }
+    
+    console.log('成员列表已更新:', globalStore.members)
+    
+    ElMessage.success('更新成功')
+    closeModal()
+    resetNewMemberForm()
   } catch (error) {
-    console.error('更新成员失败:', error)
-    alert('更新成员失败，请重试')
+    console.error('更新失败:', error)
+    formError.value = error.response?.data?.detail || '更新失败，请重试'
   }
 }
 
@@ -551,6 +679,7 @@ const handleModalOverlayClick = (e) => {
 const closeModal = () => {
   showAddMemberModal.value = false
   editingMember.value = null
+  formError.value = ''
   resetNewMemberForm()
   
 }
@@ -558,13 +687,12 @@ const closeModal = () => {
 const resetNewMemberForm = () => {
   newMember.value = {
     name: '',
-    gender: '',
+    gender: 'other',
     username: '',
     password: '',
     confirmPassword: '',
     phone: '',
     email: '',
-    role: 'member',
     avatar: '' // 头像由 AvatarSelector 组件管理
   }
   showAdvancedSettings.value = false
@@ -589,6 +717,7 @@ watch(() => globalStore.members, (newMembers) => {
     loadData()
   }
 }, { immediate: true })
+
 
 onMounted(() => {
   loadData()
@@ -1443,6 +1572,18 @@ input:checked + .toggle-slider:before {
   margin-bottom: 16px;
   padding: 4px 0 12px 0;
   border-bottom: 1px solid var(--color-border);
+}
+
+/* 错误信息样式 */
+.error-message {
+  background: var(--color-login-error-bg);
+  color: var(--color-login-error-text);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-login-error-border);
+  font-size: 14px;
+  align-self: center;
+  margin-right: auto;
 }
 
 
