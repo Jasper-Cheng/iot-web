@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
-import { getUserProfile, getMembers } from '../api/users'
+import { getUserProfile, getMembers, getUserDetail } from '../api/users'
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 
@@ -48,9 +48,28 @@ export const useGlobalStore = defineStore('global', {
 		// ]
 		devices: [],
 		
-		// 成员数据
+		// 成员数据（包含 Owner 和家庭成员）
 		// 成员列表数据结构：
 		// [
+		//   // Owner（当前用户）- 第一位
+		//   {
+		//     account_id: 0,                 // 账号ID
+		//     id: 0,                         // 用户ID
+		//     created_at: "2025-09-23T02:30:12.887Z", // 用户创建时间
+		//     account: {                     // 账号详细信息
+		//       account: "string",           // 账号名
+		//       name: "string",              // 显示名称
+		//       gender: "other",             // 性别：male/female/other
+		//       phone: "string",             // 手机号
+		//       email: "string",             // 邮箱
+		//       avatar: "string",            // 头像URL
+		//       role: "member",              // 角色：admin/member
+		//       id: 0,                       // 账号ID
+		//       created_at: "2025-09-23T02:30:12.887Z" // 账号创建时间
+		//     },
+		//     isOwner: true                  // 标识为拥有者
+		//   },
+		//   // 家庭成员 - 其他成员
 		//   {
 		//     user_id: 1,                    // 所属用户ID（家庭主账号ID）
 		//     account_id: 24,                // 成员账号ID
@@ -66,7 +85,8 @@ export const useGlobalStore = defineStore('global', {
 		//       role: "member",              // 角色：admin/member
 		//       id: 24,                      // 账号ID
 		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
-		//     }
+		//     },
+		//     isOwner: false                 // 标识为普通成员
 		//   }
 		// ]
 		members: [],
@@ -178,9 +198,21 @@ export const useGlobalStore = defineStore('global', {
 			this.loading.members = true
 			this.errors.members = null
 			try {
-				const res = await getMembers({ user_id: userId })
-				console.log('成员列表:', res)
-				this.members = res || []
+				// 并行加载成员列表和当前用户信息
+				const [membersRes, userRes] = await Promise.all([
+					getMembers({ user_id: userId }),
+					getUserDetail(userId)
+				])
+				
+				// 将当前用户信息作为 Owner 添加到成员列表开头
+				const members = membersRes || []
+				const owner = userRes ? {
+					...userRes,
+					isOwner: true
+				} : null
+				
+				// Owner 放在第一位，然后是其他成员
+				this.members = owner ? [owner, ...members] : members
 			} catch (err) {
 				this.errors.members = err
 				console.error('成员列表加载失败:', err)

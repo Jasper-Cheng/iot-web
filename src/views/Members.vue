@@ -264,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { 
   updateMemberDevicePermission,
   addFamilyMember,
@@ -312,7 +312,8 @@ const loadData = async () => {
   loading.value = true
   try {
     // 使用 globalStore 中的数据，映射真实的数据结构
-    familyMembers.value = (globalStore.members || []).map(member => ({
+    const members = globalStore.members || []
+    const mappedMembers = members.map(member => ({
       id: member.id,
       name: member.account?.name || '未知成员',
       email: member.account?.email || '',
@@ -326,10 +327,14 @@ const loadData = async () => {
       account_id: member.account_id,
       created_at: member.created_at,
       account: member.account,
-      // 判断是否为拥有者：如果 user_id 等于当前登录用户的 user_id，则为拥有者
-      isOwner: member.user_id === globalStore.user?.user_id
+      // 使用 isOwner 字段（由 globalStore 设置）
+      isOwner: member.isOwner || false
     }))
-    devices.value = globalStore.devices || []
+    
+    // 直接使用映射后的成员列表，Owner 已经在 globalStore 中排在第一位
+    familyMembers.value = mappedMembers
+    const globalDevices = globalStore.devices || []
+    devices.value = globalDevices
     
     // 默认展开所有成员的设备控制权限
     expandedMembers.value = familyMembers.value.map(member => member.id)
@@ -527,6 +532,13 @@ const resetNewMemberForm = () => {
 }
 
 // 生命周期
+// 监听 globalStore.members 变化，当数据加载完成时自动更新
+watch(() => globalStore.members, (newMembers) => {
+  if (newMembers && newMembers.length > 0) {
+    loadData()
+  }
+}, { immediate: true })
+
 onMounted(() => {
   loadData()
 })
