@@ -443,21 +443,9 @@ const addNewMember = async () => {
       devicePermissions: {}
     }
     
-    // 打印添加成员表单数据
-    console.log('=== 添加成员表单数据 ===')
-    console.log('原始表单数据:', JSON.stringify(newMember.value, null, 2))
-    console.log('构建的成员数据 (JSON格式):', JSON.stringify(memberData, null, 2))
-    console.log('API接口: addFamilyMember')
-    console.log('========================')
     
     const response = await addFamilyMember(memberData)
     
-    // 打印接口返回值
-    console.log('=== addFamilyMember 接口返回值 ===')
-    console.log('完整响应:', JSON.stringify(response, null, 2))
-    console.log('响应状态:', response.success)
-    console.log('响应消息:', response.message || response.detail)
-    console.log('================================')
     
     await loadData()
     ElMessage.success('添加成员成功')
@@ -509,14 +497,6 @@ const editMember = async () => {
       updateData.password = newMember.value.password
     }
     
-    // 打印更新表单数据
-    console.log('=== 更新表单数据 ===')
-    console.log('原始表单数据:', JSON.stringify(newMember.value, null, 2))
-    console.log('构建的更新数据 (JSON格式):', JSON.stringify(updateData, null, 2))
-    console.log('编辑的成员ID:', editingMember.value.id)
-    console.log('成员角色:', editingMember.value.role)
-    console.log('API接口:', editingMember.value.role === 'owner' ? 'updateUser' : 'updateFamilyMember')
-    console.log('========================')
     
     let response
     // 根据角色调用不同的API
@@ -524,32 +504,15 @@ const editMember = async () => {
       // 拥有者调用用户更新接口
       response = await updateUser(editingMember.value.id, updateData)
       
-      // 打印接口返回值
-      console.log('=== updateUser 接口返回值 ===')
-      console.log('完整响应:', JSON.stringify(response, null, 2))
-      console.log('响应状态:', response.success)
-      console.log('响应消息:', response.message || response.detail)
-      console.log('============================')
     } else {
       // 成员调用成员更新接口
       response = await updateFamilyMember(editingMember.value.id, updateData)
       
-      // 打印接口返回值
-      console.log('=== updateFamilyMember 接口返回值 ===')
-      console.log('完整响应:', JSON.stringify(response, null, 2))
-      console.log('响应状态:', response.success)
-      console.log('响应消息:', response.message || response.detail)
-      console.log('==================================')
     }
     
     await loadData()
     
     // 如果更新的是当前用户，则更新globalStore中的user数据
-    console.log('检查是否更新当前用户:')
-    console.log('editingMember.role:', editingMember.value.role)
-    console.log('editingMember.id:', editingMember.value.id)
-    console.log('globalStore.user.id:', globalStore.user?.id)
-    console.log('是否为当前用户:', editingMember.value.role === 'owner' && globalStore.user?.id === editingMember.value.id)
     
     // 更新 globalStore.members 中的成员数据
     const updatedMembers = globalStore.members.map(member => {
@@ -574,7 +537,6 @@ const editMember = async () => {
     
     // 如果是当前用户，同时更新 globalStore.user
     if (globalStore.user?.id === editingMember.value.id) {
-      console.log('更新当前用户数据:', updateData)
       if (globalStore.user?.account) {
         const updatedUser = { ...globalStore.user }
         const updatedAccount = { ...globalStore.user.account }
@@ -590,12 +552,8 @@ const editMember = async () => {
         // 替换整个user对象来触发响应式更新
         updatedUser.account = updatedAccount
         globalStore.user = updatedUser
-        
-        console.log('用户数据已更新:', globalStore.user)
       }
     }
-    
-    console.log('成员列表已更新:', globalStore.members)
     
     ElMessage.success('更新成功')
     closeModal()

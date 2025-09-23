@@ -286,8 +286,11 @@ const getGenderText = (gender) => {
 
 // 退出登录
 const logout = () => {
+  // 清除认证状态
   globalStore.clearAuth()
   showUserMenu.value = false
+  
+  // 跳转到登录页
   router.push('/login')
 }
 
