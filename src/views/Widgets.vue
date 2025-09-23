@@ -368,7 +368,6 @@ const handleDragEnd = async (event) => {
     const originalRoomId = dragOriginalRoom.value // 使用记录的原始房间ID
     const targetRoomId = dragTargetRoom.value // 使用目标房间ID
     
-    console.log('拖动结束:', { originalRoomId, targetRoomId, draggedDevice: draggedDevice.value })
     
     // 根据规则处理不同的拖动场景
     await handleDragScenarios(originalRoomId, targetRoomId)
@@ -463,32 +462,28 @@ const handleDragScenarios = async (originalRoomId, targetRoomId) => {
   try {
     // 1. 设备从A到all,更新A中的设备数量及排序，重新计算all中的设备
     if (originalRoomId !== 'unassigned' && targetRoomId === 'unassigned') {
-      console.log('场景1: 设备从房间到All Devices')
       await updateRoomDevicesSort(originalRoomId)
     }
     
     // 2. 设备从all到A，更新all中的设备数量及排序，重新计算all中的设备
     else if (originalRoomId === 'unassigned' && targetRoomId !== 'unassigned') {
-      console.log('场景2: 设备从All Devices到房间')
       await updateRoomDevicesSort(targetRoomId)
     }
     
     // 3. 设备从A到B，更新A、B中的设备数量及排序
     else if (originalRoomId !== 'unassigned' && targetRoomId !== 'unassigned' && originalRoomId !== targetRoomId) {
-      console.log('场景3: 设备从房间A到房间B')
       await updateRoomDevicesSort(originalRoomId)
       await updateRoomDevicesSort(targetRoomId)
     }
     
     // 4. 设备从A到A，更新A中设备的排序
     else if (originalRoomId !== 'unassigned' && originalRoomId === targetRoomId) {
-      console.log('场景4: 设备在同一房间内排序')
       await updateRoomDevicesSort(originalRoomId)
     }
     
     // 5. All Devices 内部排序不需要API调用
     else if (originalRoomId === 'unassigned' && targetRoomId === 'unassigned') {
-      console.log('场景5: All Devices 内部排序，无需API调用')
+      // All Devices 内部排序，无需API调用
     }
     
   } catch (error) {
@@ -500,14 +495,12 @@ const handleDragScenarios = async (originalRoomId, targetRoomId) => {
 const updateRoomDevicesSort = async (roomId) => {
   try {
     const roomDevices = getRoomDevices(roomId)
-    console.log(`准备更新房间 ${roomId} 的设备排序:`, roomDevices.map(d => ({ id: d.id, name: d.name, device_id: d.device_id })))
     
     // 即使房间没有设备，也需要调用 API 来清空房间的设备列表
     // 这样服务器端会正确更新房间的设备关联关系
     
     // 调用全局状态管理中的批量更新方法
     const response = await globalStore.updateRoomDevicesSort(roomId, roomDevices)
-    console.log(`房间 ${roomId} 设备排序更新完成，响应:`, response)
   } catch (error) {
     console.error('更新房间设备排序失败:', error)
   }

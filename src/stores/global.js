@@ -180,9 +180,7 @@ export const useGlobalStore = defineStore('global', {
 					}))
 				}
 				
-				console.log('发送到服务器的数据:', data)
 				const response = await batchUpdateRoomDevices(data)
-				console.log('服务器响应:', response)
 				
 				if (response.success && response.data) {
 					// 更新对应房间的设备排序
