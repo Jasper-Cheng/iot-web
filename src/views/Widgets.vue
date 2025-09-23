@@ -159,7 +159,7 @@
       </div>
       <div class="delete-modal-footer">
         <button class="action-btn" @click="cancelAddRoom">Cancel</button>
-        <button class="action-btn success" @click="confirmAddRoom">Add</button>
+        <button class="action-btn success" @click="confirmAddRoom" :disabled="!newRoomName.trim()">Add</button>
       </div>
     </div>
   </div>
@@ -171,6 +171,7 @@ import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { getThumbnailByCardName } from '../utils/deviceMapping'
 import { unbindDeviceBySN } from '../api/devices'
+import { createRoom } from '../api/rooms'
 // 导入实际的widget组件
 import SmartLightCard from '../widgets/SmartLightCard.vue'
 import SmartTvCard from '../widgets/SmartTvCard.vue'
@@ -587,19 +588,38 @@ const addRoom = () => {
   addRoomModalOpen.value = true
 }
 
-const confirmAddRoom = () => {
+const confirmAddRoom = async () => {
   const roomName = newRoomName.value.trim()
   if (!roomName) {
     addRoomModalOpen.value = false
     return
   }
-  const newRoom = {
-    id: roomName.toLowerCase().replace(/\s+/g, '-'),
-    name: roomName,
-    color: 'var(--room-default)'
+  
+  try {
+    // 调用创建房间 API
+    const response = await createRoom({
+      name: roomName,
+      user_id: globalStore.user.user_id
+    })
+    
+    // 创建新房间对象
+    const newRoom = {
+      id: response.id,
+      name: response.name,
+      devices: [],
+      color: 'var(--room-default)'
+    }
+    
+    // 添加到房间列表
+    rooms.value.push(newRoom)
+    
+    // 重置表单
+    newRoomName.value = ''
+    addRoomModalOpen.value = false
+  } catch (error) {
+    console.error('创建房间失败:', error)
+    // 可以添加错误提示
   }
-  rooms.value.push(newRoom)
-  addRoomModalOpen.value = false
 }
 
 const cancelAddRoom = () => {

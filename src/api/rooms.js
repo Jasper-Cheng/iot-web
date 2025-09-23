@@ -34,4 +34,13 @@ export const batchUpdateRoomDevices = (data) => {
 	})
 }
 
+// 创建房间
+export const createRoom = (data) => {
+	return request({
+		url: '/rooms/',
+		method: 'post',
+		data: data
+	})
+}
+
 
