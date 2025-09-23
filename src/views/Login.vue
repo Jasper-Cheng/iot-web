@@ -19,7 +19,7 @@
       <div class="form-options" style="justify-content: center;">
         <label class="checkbox-container" style="gap:8px;cursor:default;">
           <span class="checkmark" style="display:none"></span>
-          <span style="color: var(--color-login-text-primary); font-weight:600;">{{ isRegister ? '注册' : '登录' }}</span>
+          <span style="color: var(--color-login-text-primary); font-weight:600;font-size: 16px;">{{ isRegister ? '注册' : '登录' }}</span>
         </label>
       </div>
 
@@ -663,8 +663,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  margin-top: 16px;
+  margin-bottom: 10px;
 }
 
 .checkbox-container {
@@ -728,6 +727,7 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 20px;
+  margin-top: 16px;
 }
 
 .login-btn:hover {
@@ -818,12 +818,6 @@ onMounted(() => {
   margin-bottom: 10px;
   border-bottom: 1px solid var(--color-border, #e0e0e0);
 }
-
-/* 提交按钮容器 */
-.submit-button-container {
-  margin-top: 20px;
-}
-
 
 
 /* 响应式设计 */
