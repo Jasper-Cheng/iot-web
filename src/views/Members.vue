@@ -35,7 +35,7 @@
         <div class="member-header" @click="toggleMemberExpanded(member.id)">
           <div class="member-info">
             <div class="member-avatar">
-              <img :src="member.avatar" :alt="member.name">
+              <img :src="getAvatarUrl(member.avatar)" :alt="member.name">
               <div class="status-indicator" :class="member.status"></div>
             </div>
             <div class="member-details">
@@ -241,7 +241,7 @@
         <div class="delete-modal-body">
           <div class="member-delete-info">
             <div class="member-avatar">
-              <img :src="memberPendingDelete.avatar" :alt="memberPendingDelete.name">
+              <img :src="getAvatarUrl(memberPendingDelete.avatar)" :alt="memberPendingDelete.name">
             </div>
             <div class="member-details">
               <h4>{{ memberPendingDelete.name }}</h4>
@@ -272,6 +272,7 @@ import {
 } from '../api/users.js'
 import { useGlobalStore } from '../stores/global'
 import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
+import { getAvatarUrl } from '../utils/theme'
 import AvatarSelector from '../widgets/AvatarSelector.vue'
 
 // 全局状态
@@ -322,7 +323,7 @@ const loadData = async () => {
       id: member.id,
       name: member.account?.name || '未知成员',
       email: member.account?.email || '',
-      avatar: member.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${member.account?.name || 'default'}`,
+      avatar: getAvatarUrl(member.account?.avatar),
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
       status: 'active',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -426,7 +427,7 @@ const addNewMember = async () => {
       phone: newMember.value.phone,
       email: newMember.value.email,
       role: newMember.value.role,
-      avatar: newMember.value.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${newMember.value.name}`,
+      avatar: getAvatarUrl(newMember.value.avatar),
       devicePermissions: {}
     }
     
@@ -455,7 +456,7 @@ const editMember = async () => {
       phone: newMember.value.phone,
       email: newMember.value.email,
       role: editingMember.value.isOwner ? 'owner' : newMember.value.role, // 拥有者角色不可更改
-      avatar: newMember.value.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${newMember.value.name}`
+      avatar: getAvatarUrl(newMember.value.avatar)
     }
     
     // 只有当密码不为空时才更新密码

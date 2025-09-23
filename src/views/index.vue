@@ -118,7 +118,7 @@
           </button>
           <div class="user-profile" @click.stop="toggleUserMenu">
             <img 
-              :src="globalStore.user?.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account?.account || 'user'}`" 
+              :src="getAvatarUrl(globalStore.user?.account?.avatar)" 
               :alt="globalStore.user?.account?.name || 'User Avatar'" 
               class="profile-avatar"
             >
@@ -130,7 +130,7 @@
           <div v-if="showUserMenu" class="user-dropdown" @click.stop>
             <div class="user-info">
               <img 
-                :src="globalStore.user?.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${globalStore.user?.account?.account || 'user'}`" 
+                :src="getAvatarUrl(globalStore.user?.account?.avatar)" 
                 :alt="globalStore.user?.account?.name || 'User Avatar'" 
                 class="dropdown-avatar"
               >
@@ -217,7 +217,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
-import { initTheme, setTheme } from '../utils/theme.js'
+import { initTheme, setTheme, getAvatarUrl } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
 import { deleteUser } from '../api/users'
 import { ElMessage } from 'element-plus'
