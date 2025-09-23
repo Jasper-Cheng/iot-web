@@ -262,7 +262,7 @@ const handleLogin = async () => {
           user_id: memberResponse.user_id
         }
       }else if(response.role === 'owner'){
-        // 如果是owner，调用/users/{user_id}接口
+        // 如果是owner，不同再调用接口
         userData = {
           ...response,
           user_id: response.id

@@ -156,6 +156,16 @@ export const updateUserProfile = (id, data) => {
 }
 
 // 成员相关API
+export const getMembers = (params) => {
+	return request({
+		url: '/members/',
+		method: 'get',
+		params: {
+			user_id: params.user_id
+		}
+	})
+}
+
 export const getMemberDetail = (memberId) => {
 	return request({
 		url: `/members/${memberId}`,
@@ -171,28 +181,6 @@ export const getUserDetail = (userId) => {
 	})
 }
 
-// 家庭成员管理API
-export const getFamilyMembers = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: mockFamilyMembers,
-        total: mockFamilyMembers.length
-      })
-    }, 300)
-  })
-}
-
-export const getDevices = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: mockDevices,
-        total: mockDevices.length
-      })
-    }, 200)
-  })
-}
 
 export const updateMemberDevicePermission = (memberId, deviceId, hasPermission) => {
   return new Promise((resolve) => {

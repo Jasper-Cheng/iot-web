@@ -52,7 +52,7 @@
               </svg>
             </button>
             <button 
-              v-if="member.role !== 'admin'" 
+              v-if="!member.isOwner" 
               class="action-btn danger" 
               @click.stop="openDeleteConfirm(member)" 
               title="删除"
@@ -62,7 +62,7 @@
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
             </button>
-            <div v-else class="admin-badge" title="管理员不可删除">
+            <div v-else class="admin-badge" title="拥有者不可删除">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
@@ -79,7 +79,7 @@
         <div v-if="expandedMembers.includes(member.id)" class="device-permissions">
           <div class="permissions-header">
             <h4>设备控制权限</h4>
-            <div v-if="member.role !== 'admin'" class="permission-actions">
+            <div v-if="!member.isOwner" class="permission-actions">
               <button class="action-btn small" @click="selectAllDevices(member.id)">
                 全选
               </button>
@@ -93,7 +93,7 @@
                 <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
                 <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
               </svg>
-              <span>管理员拥有所有设备权限</span>
+              <span>拥有者拥有所有设备权限</span>
             </div>
           </div>
           
@@ -128,16 +128,16 @@
                 <span class="device-name">{{ device.name }}</span>
               </div>
               <div class="permission-toggle">
-                <label class="toggle-switch" :class="{ disabled: member.role === 'admin' }">
+                <label class="toggle-switch" :class="{ disabled: member.isOwner }">
                   <input 
                     type="checkbox" 
-                    :checked="member.devicePermissions[device.id] || false"
-                    :disabled="member.role === 'admin'"
+                    :checked="(member.devicePermissions && member.devicePermissions[device.id]) || false"
+                    :disabled="member.isOwner"
                     @change="updateDevicePermission(member.id, device.id, $event.target.checked)"
                   >
                   <span class="toggle-slider"></span>
                 </label>
-                <div v-if="member.role === 'admin'" class="admin-lock" title="管理员权限不可修改">
+                <div v-if="member.isOwner" class="admin-lock" title="拥有者权限不可修改">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
                     <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -266,13 +266,15 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { 
-  getFamilyMembers, 
-  getDevices, 
   updateMemberDevicePermission,
   addFamilyMember,
   updateFamilyMember,
   deleteFamilyMember
 } from '../api/users.js'
+import { useGlobalStore } from '../stores/global'
+
+// 全局状态
+const globalStore = useGlobalStore()
 
 // 响应式数据
 const familyMembers = ref([])
@@ -309,15 +311,28 @@ const getRoleText = (role) => {
 const loadData = async () => {
   loading.value = true
   try {
-    const [membersResponse, devicesResponse] = await Promise.all([
-      getFamilyMembers(),
-      getDevices()
-    ])
-    familyMembers.value = membersResponse.data
-    devices.value = devicesResponse.data
+    // 使用 globalStore 中的数据，映射真实的数据结构
+    familyMembers.value = (globalStore.members || []).map(member => ({
+      id: member.id,
+      name: member.account?.name || '未知成员',
+      email: member.account?.email || '',
+      avatar: member.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${member.account?.name || 'default'}`,
+      role: member.account?.role || 'member',
+      status: 'active',
+      joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      devicePermissions: member.devicePermissions || {},
+      // 保留原始数据字段
+      user_id: member.user_id,
+      account_id: member.account_id,
+      created_at: member.created_at,
+      account: member.account,
+      // 判断是否为拥有者：如果 user_id 等于当前登录用户的 user_id，则为拥有者
+      isOwner: member.user_id === globalStore.user?.user_id
+    }))
+    devices.value = globalStore.devices || []
     
     // 默认展开所有成员的设备控制权限
-    expandedMembers.value = membersResponse.data.map(member => member.id)
+    expandedMembers.value = familyMembers.value.map(member => member.id)
   } catch (error) {
     console.error('加载数据失败:', error)
   } finally {
@@ -335,10 +350,10 @@ const toggleMemberExpanded = (memberId) => {
 }
 
 const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
-  // 检查是否为管理员
+  // 检查是否为拥有者
   const member = familyMembers.value.find(m => m.id === memberId)
-  if (member && member.role === 'admin') {
-    alert('管理员权限不可修改')
+  if (member && member.isOwner) {
+    alert('拥有者权限不可修改')
     return
   }
   
@@ -358,9 +373,9 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
 const selectAllDevices = (memberId) => {
   const member = familyMembers.value.find(m => m.id === memberId)
   if (member) {
-    // 检查是否为管理员
-    if (member.role === 'admin') {
-      alert('管理员权限不可修改')
+    // 检查是否为拥有者
+    if (member.isOwner) {
+      alert('拥有者权限不可修改')
       return
     }
     
@@ -374,9 +389,9 @@ const selectAllDevices = (memberId) => {
 const deselectAllDevices = (memberId) => {
   const member = familyMembers.value.find(m => m.id === memberId)
   if (member) {
-    // 检查是否为管理员
-    if (member.role === 'admin') {
-      alert('管理员权限不可修改')
+    // 检查是否为拥有者
+    if (member.isOwner) {
+      alert('拥有者权限不可修改')
       return
     }
     
@@ -460,9 +475,9 @@ const openEditModal = (member) => {
 
 // 打开删除确认弹窗
 const openDeleteConfirm = (member) => {
-  // 检查是否为管理员
-  if (member.role === 'admin') {
-    alert('管理员不能被删除')
+  // 检查是否为拥有者
+  if (member.isOwner) {
+    alert('拥有者不能被删除')
     return
   }
   memberPendingDelete.value = member

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
-import { getFamilyMembers, getUserProfile } from '../api/users'
+import { getUserProfile, getMembers } from '../api/users'
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 
@@ -8,6 +8,26 @@ export const useGlobalStore = defineStore('global', {
 	state: () => ({
 		// 用户认证状态
 		isAuthenticated: false,
+		// 当前登录用户数据
+		// 用户数据结构（登录API响应）：
+		// {
+		//   access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // JWT访问令牌
+		//   token_type: "bearer",           // 令牌类型
+		//   role: "member",                 // 用户角色：admin/member
+		//   account: {                      // 账号详细信息
+		//     account: "member10",          // 账号名
+		//     name: "成员10",               // 显示名称
+		//     gender: "other",              // 性别：male/female/other
+		//     phone: "1390000009",          // 手机号
+		//     email: "member10@example.com", // 邮箱
+		//     avatar: null,                 // 头像URL
+		//     role: "member",               // 角色：admin/member
+		//     id: 28,                       // 账号ID
+		//     created_at: "2025-09-22T05:10:39" // 账号创建时间
+		//   },
+		//   id: 10,                         // 统一的用户ID（admin/owner/member的真正ID）
+		//   user_id: 1                      // 所属用户ID（家庭主账号ID）
+		// }
 		user: null,
 		token: null,
 		
@@ -29,6 +49,26 @@ export const useGlobalStore = defineStore('global', {
 		devices: [],
 		
 		// 成员数据
+		// 成员列表数据结构：
+		// [
+		//   {
+		//     user_id: 1,                    // 所属用户ID（家庭主账号ID）
+		//     account_id: 24,                // 成员账号ID
+		//     id: 6,                         // 成员ID（家庭成员关联ID）
+		//     created_at: "2025-09-22T05:10:39", // 成员创建时间
+		//     account: {                     // 成员账号信息
+		//       account: "member6",          // 账号名
+		//       name: "成员6",               // 显示名称
+		//       gender: "other",             // 性别：male/female/other
+		//       phone: "13900000005",        // 手机号
+		//       email: "member6@example.com", // 邮箱
+		//       avatar: null,                // 头像URL
+		//       role: "member",              // 角色：admin/member
+		//       id: 24,                      // 账号ID
+		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
+		//     }
+		//   }
+		// ]
 		members: [],
 		
 		// 用户资料
@@ -112,8 +152,6 @@ export const useGlobalStore = defineStore('global', {
 							const roomDevicesRes = await getRoomDevices(room.id)
 							const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
 							
-							console.log(`房间 ${room.id} 原始设备数据:`, roomDevices)
-							
 							return {
 								...room,
 								devices: roomDevices
@@ -136,14 +174,16 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.rooms = false
 			}
 		},
-		async loadMembers() {
+		async loadMembers(userId) {
 			this.loading.members = true
 			this.errors.members = null
 			try {
-				const res = await getFamilyMembers()
-				this.members = res?.data || []
+				const res = await getMembers({ user_id: userId })
+				console.log('成员列表:', res)
+				this.members = res || []
 			} catch (err) {
 				this.errors.members = err
+				console.error('成员列表加载失败:', err)
 			} finally {
 				this.loading.members = false
 			}
@@ -164,7 +204,7 @@ export const useGlobalStore = defineStore('global', {
 			await Promise.all([
 				this.loadDevices(userId),
 				this.loadRooms(userId),
-				this.loadMembers(),
+				this.loadMembers(userId),
 				this.loadProfile(userId)
 			])
 		},
