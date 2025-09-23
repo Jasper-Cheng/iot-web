@@ -486,8 +486,6 @@ const openAddMemberModal = () => {
 const openEditModal = (member) => {
   editingMember.value = member
   
-  // 调试输出，确保数据正确
-  console.log('编辑成员数据:', member)
   
   newMember.value = {
     name: member.name || '',
@@ -502,8 +500,6 @@ const openEditModal = (member) => {
   }
   
   
-  // 调试输出，确保表单数据正确
-  console.log('表单回填数据:', newMember.value)
   
   showAdvancedSettings.value = false // 编辑时默认收起高级设置
   showAddMemberModal.value = true
