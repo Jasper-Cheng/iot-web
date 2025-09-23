@@ -104,26 +104,8 @@
               class="device-control-item"
             >
               <div class="device-info">
-                <div class="device-icon" :class="device.type">
-                  <svg v-if="device.icon === 'fan'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 4 6v3h6v-3c2-1 4-3 4-6a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="2" fill="none"/>
-                  </svg>
-                  <svg v-else-if="device.icon === 'light'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 4 6v3h6v-3c2-1 4-3 4-6a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="2" fill="none"/>
-                  </svg>
-                  <svg v-else-if="device.icon === 'tv'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2"/>
-                    <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  <svg v-else-if="device.icon === 'speaker'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" fill="none"/>
-                  </svg>
-                  <svg v-else-if="device.icon === 'vacuum'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" stroke-width="2" fill="none"/>
-                  </svg>
+                <div class="device-icon">
+                  <div v-html="getIconByCardName(device.cardName)"></div>
                 </div>
                 <span class="device-name">{{ device.name }}</span>
               </div>
@@ -272,6 +254,7 @@ import {
   deleteFamilyMember
 } from '../api/users.js'
 import { useGlobalStore } from '../stores/global'
+import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
 
 // 全局状态
 const globalStore = useGlobalStore()
@@ -1067,12 +1050,23 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background-color: var(--color-button-dark);
+  position: relative;
+  padding: 2px;
 }
 
 .device-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   color: var(--color-text-secondary);
+  display: block;
+}
+
+.device-icon > div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .device-name {
