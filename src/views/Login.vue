@@ -16,7 +16,7 @@
       </div>
 
       <!-- 登录/注册切换 -->
-      <div class="form-options" style="margin-top: -10px; margin-bottom: 10px; justify-content: center;">
+      <div class="form-options" style="justify-content: center;">
         <label class="checkbox-container" style="gap:8px;cursor:default;">
           <span class="checkmark" style="display:none"></span>
           <span style="color: var(--color-login-text-primary); font-weight:600;">{{ isRegister ? '注册' : '登录' }}</span>
@@ -69,55 +69,56 @@
 
       <!-- 注册表单 -->
       <form v-else class="login-form" @submit.prevent="handleRegister">
-        <div class="form-grid">
-          <div class="form-group avatar-group">
-            <label for="reg_avatar_file">头像</label>
-            <input ref="avatarInput" type="file" id="reg_avatar_file" accept="image/*" @change="onAvatarChange" style="display:none" />
-            <button type="button" class="avatar-uploader" @click="triggerAvatarSelect">
-              <img v-if="registerData.avatar" :src="registerData.avatar" alt="avatar" />
-              <span v-else class="plus">+</span>
-            </button>
-          </div>
-          <div class="form-group">
-            <label for="reg_username">用户名 <span class="required">*</span></label>
-            <input type="text" id="reg_username" v-model="registerData.username" placeholder="请输入用户名" required />
-          </div>
-          <div class="form-group">
-            <label for="reg_name">姓名</label>
-            <input type="text" id="reg_name" v-model="registerData.name" placeholder="请输入姓名" />
-          </div>
-          
-          <div class="form-group">
-            <label for="reg_phone">手机号 <span class="required">*</span></label>
-            <input type="tel" id="reg_phone" v-model="registerData.phone" placeholder="请输入手机号" required />
-          </div>
-          <div class="form-group">
-            <label for="reg_email">邮箱</label>
-            <input type="email" id="reg_email" v-model="registerData.email" placeholder="请输入邮箱" />
-          </div>
-          <div class="form-group">
-            <label for="reg_role">角色</label>
-            <select id="reg_role" class="compact" v-model="registerData.role">
-              <option value="owner">拥有者</option>
-              <option value="member">成员</option>
-            </select>
-          </div>
+        <!-- 头像选择区域 -->
+        <div class="avatar-section">
+          <AvatarSelector 
+            v-model="registerData.avatar"
+            @change="handleAvatarChange"
+          />
+        </div>
 
+        <div class="form-row">
           <div class="form-group">
-            <label for="reg_gender">性别</label>
-            <select id="reg_gender" class="compact" v-model="registerData.gender">
+            <label>电话 *</label>
+            <input v-model="registerData.phone" type="tel" required placeholder="请输入电话号码">
+          </div>
+          <div class="form-group">
+            <label>账号 *</label>
+            <input v-model="registerData.username" type="text" required placeholder="请输入账号">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>密码 *</label>
+            <input v-model="registerData.password" type="password" required placeholder="请输入密码">
+          </div>
+          <div class="form-group">
+            <label>确认密码 *</label>
+            <input v-model="registerData.confirmPassword" type="password" required placeholder="请再次输入密码">
+          </div>
+        </div>
+        
+        <!-- 基本信息 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>姓名 *</label>
+            <input v-model="registerData.name" type="text" required placeholder="请输入姓名">
+          </div>
+          <div class="form-group">
+            <label>性别 *</label>
+            <select v-model="registerData.gender" required>
+              <option value="">请选择性别</option>
               <option value="male">男</option>
               <option value="female">女</option>
-              <option value="other">其他</option>
             </select>
           </div>
+        </div>
+        
+        <div class="form-row">
           <div class="form-group">
-            <label for="reg_password">密码 <span class="required">*</span></label>
-            <input type="password" id="reg_password" v-model="registerData.password" placeholder="请输入密码" required />
-          </div>
-          <div class="form-group">
-            <label for="reg_confirm">确认密码 <span class="required">*</span></label>
-            <input type="password" id="reg_confirm" v-model="registerData.confirmPassword" placeholder="请再次输入密码" required />
+            <label>邮件</label>
+            <input v-model="registerData.email" type="email" placeholder="请输入邮箱地址">
           </div>
         </div>
 
@@ -125,10 +126,12 @@
           {{ errorMessage }}
         </div>
 
-        <button type="submit" class="login-btn" :disabled="isLoading">
-          <span v-if="isLoading" class="loading-spinner"></span>
-          {{ isLoading ? '注册中...' : '注册' }}
-        </button>
+        <div class="submit-button-container">
+          <button type="submit" class="login-btn" :disabled="isLoading">
+            <span v-if="isLoading" class="loading-spinner"></span>
+            {{ isLoading ? '注册中...' : '注册' }}
+          </button>
+        </div>
       </form>
 
       <!-- 底部链接：切换登录/注册 -->
@@ -148,6 +151,7 @@ import { useGlobalStore } from '../stores/global'
 import { login, register } from '../api/auth'
 import { getMemberDetail, getUserDetail } from '../api/users'
 import { ElMessage } from 'element-plus'
+import AvatarSelector from '../widgets/AvatarSelector.vue'
 
 const router = useRouter()
 const globalStore = useGlobalStore()
@@ -206,9 +210,10 @@ const registerData = reactive({
   email: '',
   password: '',
   confirmPassword: '',
-  role: 'owner',
-  gender: 'other'
+  role: 'owner', // 注册用户默认为拥有者
+  gender: ''
 })
+
 
 // 加载状态
 const isLoading = ref(false)
@@ -414,23 +419,12 @@ const handleRegister = async () => {
   }
 }
 
-// 头像文件选择
-const onAvatarChange = async (e) => {
-  const file = e.target.files && e.target.files[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = () => {
-    registerData.avatar = String(reader.result || '')
-  }
-  reader.readAsDataURL(file)
+
+// 处理头像变化
+const handleAvatarChange = (avatar) => {
+  registerData.avatar = avatar
 }
 
-// 触发文件选择
-const avatarInput = ref(null)
-const triggerAvatarSelect = () => {
-  const el = avatarInput.value
-  if (el) el.click()
-}
 
 // 处理"记住我"复选框变化
 const onRememberMeChange = () => {
@@ -466,11 +460,19 @@ onMounted(() => {
   backdrop-filter: blur(20px);
   border: 1px solid var(--color-login-border);
   border-radius: 20px;
-  padding: 40px;
+  padding: 16px 40px;
   width: 520px;
   max-width: 90vw;
   position: relative;
   box-shadow: 0 25px 50px var(--color-login-shadow);
+  max-height: 95vh;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.login-modal::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .close-btn {
@@ -533,7 +535,7 @@ onMounted(() => {
 }
 
 .login-form {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .form-grid {
@@ -548,7 +550,7 @@ onMounted(() => {
 
 .form-group select {
   width: 100%;
-  padding: 16px;
+  padding: 12px;
   background: var(--color-login-input-bg);
   border: 2px solid var(--color-login-border);
   border-radius: 12px;
@@ -661,7 +663,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+  margin-top: 16px;
 }
 
 .checkbox-container {
@@ -789,10 +792,48 @@ onMounted(() => {
   color: var(--color-login-gradient-end);
 }
 
+/* 表单布局样式 */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+/* 登录表单特定样式 */
+.login-form .form-group {
+  margin-bottom: 10px;
+}
+
+.login-form .form-group:last-of-type {
+  margin-bottom: 0;
+}
+
+/* 头像区域样式 */
+.avatar-section {
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+}
+
+/* 提交按钮容器 */
+.submit-button-container {
+  margin-top: 20px;
+}
+
+
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -805,10 +846,7 @@ onMounted(() => {
   .platform-title {
     font-size: 24px;
   }
-  
-  .form-group input {
-    padding: 14px;
-  }
+
   
   .form-grid {
     grid-template-columns: 1fr;
