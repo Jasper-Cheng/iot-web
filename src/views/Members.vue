@@ -323,7 +323,7 @@ const loadData = async () => {
       id: member.id,
       name: member.account?.name || '未知成员',
       email: member.account?.email || '',
-      avatar: getAvatarUrl(member.account?.avatar),
+      avatar: member.account?.avatar || '',
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
       status: 'active',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -427,7 +427,7 @@ const addNewMember = async () => {
       phone: newMember.value.phone,
       email: newMember.value.email,
       role: newMember.value.role,
-      avatar: getAvatarUrl(newMember.value.avatar),
+      avatar: newMember.value.avatar,
       devicePermissions: {}
     }
     
@@ -456,7 +456,7 @@ const editMember = async () => {
       phone: newMember.value.phone,
       email: newMember.value.email,
       role: editingMember.value.isOwner ? 'owner' : newMember.value.role, // 拥有者角色不可更改
-      avatar: getAvatarUrl(newMember.value.avatar)
+      avatar: newMember.value.avatar
     }
     
     // 只有当密码不为空时才更新密码
