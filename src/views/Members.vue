@@ -183,21 +183,20 @@
                <select 
                  v-model="newMember.role" 
                  required
-                 :disabled="editingMember && editingMember.role === 'admin'"
-                 :class="{ disabled: editingMember && editingMember.role === 'admin' }"
+                 :disabled="editingMember && editingMember.isOwner"
+                 :class="{ disabled: editingMember && editingMember.isOwner }"
                >
                  <option value="">请选择角色</option>
-                 <option value="admin">管理员</option>
                  <option value="member">成员</option>
-                 <option value="guest">访客</option>
+                 <option value="owner">拥有者</option>
                </select>
-               <div v-if="editingMember && editingMember.role === 'admin'" class="admin-role-note">
+               <div v-if="editingMember && editingMember.isOwner" class="admin-role-note">
                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                    <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
                    <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
                  </svg>
-                 <span>管理员角色不可更改</span>
+                 <span>拥有者角色不可更改</span>
                </div>
              </div>
             <div class="form-group">
@@ -283,9 +282,8 @@ const newMember = ref({
 // 计算属性
 const getRoleText = (role) => {
   const roleMap = {
-    admin: '管理员',
     member: '成员',
-    guest: '访客'
+    owner: '拥有者'
   }
   return roleMap[role] || role
 }
@@ -301,7 +299,7 @@ const loadData = async () => {
       name: member.account?.name || '未知成员',
       email: member.account?.email || '',
       avatar: member.account?.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${member.account?.name || 'default'}`,
-      role: member.account?.role || 'member',
+      role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
       status: 'active',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       devicePermissions: member.devicePermissions || {},
@@ -428,7 +426,7 @@ const editMember = async () => {
       password: newMember.value.password,
       phone: newMember.value.phone,
       email: newMember.value.email,
-      role: editingMember.value.role === 'admin' ? 'admin' : newMember.value.role, // 管理员角色不可更改
+      role: editingMember.value.isOwner ? 'owner' : newMember.value.role, // 拥有者角色不可更改
       avatar: newMember.value.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${newMember.value.name}`
     }
     
@@ -648,6 +646,7 @@ onMounted(() => {
   max-width: calc(33.333% - 14px);
 }
 
+
 .member-node.collapsed {
   height: auto;
   min-width: calc(16.666% - 10px);
@@ -758,12 +757,14 @@ onMounted(() => {
   background-color: var(--color-member-offline);
 }
 
+
 .member-details h3 {
   font-size: 18px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 4px 0;
 }
+
 
 .member-details p {
   font-size: 14px;
@@ -805,19 +806,14 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.role-badge.admin {
-  background-color: var(--color-member-warning-bg);
-  color: var(--color-member-warning-text);
-}
-
 .role-badge.member {
   background-color: var(--color-member-info-bg);
   color: var(--color-member-info-text);
 }
 
-.role-badge.guest {
-  background-color: var(--color-member-default-bg);
-  color: var(--color-member-default-text);
+.role-badge.owner  {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .member-actions {
