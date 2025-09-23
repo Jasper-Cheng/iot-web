@@ -316,8 +316,8 @@ const loadData = async () => {
     familyMembers.value = membersResponse.data
     devices.value = devicesResponse.data
     
-    // 默认折叠所有成员的设备控制权限
-    expandedMembers.value = []
+    // 默认展开所有成员的设备控制权限
+    expandedMembers.value = membersResponse.data.map(member => member.id)
   } catch (error) {
     console.error('加载数据失败:', error)
   } finally {
