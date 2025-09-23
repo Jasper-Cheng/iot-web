@@ -319,9 +319,9 @@ const removeRoom = async () => {
       d.roomId === room.id ? { ...d, roomId: 'unassigned' } : d
     ))
 
-    // 从房间列表移除
-    const idx = rooms.value.findIndex(r => r.id === room.id)
-    if (idx > -1) rooms.value.splice(idx, 1)
+    // 从 globalStore.rooms 中移除房间
+    const idx = globalStore.rooms.findIndex(r => r.id === room.id)
+    if (idx > -1) globalStore.rooms.splice(idx, 1)
 
     closeDeleteConfirm()
   } catch (error) {
@@ -618,8 +618,8 @@ const confirmAddRoom = async () => {
       color: 'var(--room-default)'
     }
     
-    // 添加到房间列表
-    rooms.value.push(newRoom)
+    // 添加到 globalStore.rooms 中
+    globalStore.rooms.push(newRoom)
     
     // 重置表单
     newRoomName.value = ''
