@@ -56,15 +56,15 @@
           <a href="#" class="forgot-password">忘记密码?</a>
         </div>
 
-        <!-- 错误信息显示 -->
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-
         <button type="submit" class="login-btn" :disabled="isLoading">
           <span v-if="isLoading" class="loading-spinner"></span>
           {{ isLoading ? '登录中...' : '登录' }}
         </button>
+
+        <!-- 错误信息显示 -->
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
       </form>
 
       <!-- 注册表单 -->
@@ -122,15 +122,15 @@
           </div>
         </div>
 
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-
         <div class="submit-button-container">
           <button type="submit" class="login-btn" :disabled="isLoading">
             <span v-if="isLoading" class="loading-spinner"></span>
             {{ isLoading ? '注册中...' : '注册' }}
           </button>
+        </div>
+
+        <div v-if="errorMessage" class="error-message">
+          {{ errorMessage }}
         </div>
       </form>
 
@@ -500,7 +500,7 @@ onMounted(() => {
 
 .logo-section {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .logo-icon {
@@ -749,10 +749,9 @@ onMounted(() => {
 .error-message {
   background: var(--color-login-error-bg);
   color: var(--color-login-error-text);
-  padding: 12px 16px;
+  padding: 4px 8px;
   border-radius: 8px;
   border: 1px solid var(--color-login-error-border);
-  margin-bottom: 16px;
   font-size: 14px;
   text-align: center;
 }
