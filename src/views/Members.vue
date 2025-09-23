@@ -4,7 +4,7 @@
       <div class="header-info">
         <button 
         class="add-member-btn" 
-        @click="showAddMemberModal = true"
+        @click="openAddMemberModal"
         :disabled="familyMembers.length >= 6"
         :class="{ disabled: familyMembers.length >= 6 }"
       >
@@ -133,13 +133,24 @@
     </div>
 
     <!-- 添加成员模态框 -->
-    <div v-if="showAddMemberModal" class="modal-overlay" @click="closeModal">
+    <div v-if="showAddMemberModal" class="modal-overlay" @click="handleModalOverlayClick">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>{{ editingMember ? '编辑成员' : '添加成员' }}</h2>
+          <h2>{{ editingMember ? '编辑信息' : '添加成员' }}</h2>
           <button class="close-btn" @click="closeModal">×</button>
         </div>
         <form @submit.prevent="editingMember ? editMember() : addNewMember()" class="member-form">
+          <!-- 头像选择区域 -->
+          <div class="avatar-section">
+            <AvatarSelector 
+              v-model="newMember.avatar"
+              :options="avatarOptions"
+              :scroll-sensitivity="scrollSensitivity"
+              @change="handleAvatarChange"
+            />
+          </div>
+          
+          <!-- 基本信息 -->
           <div class="form-row">
             <div class="form-group">
               <label>姓名 *</label>
@@ -157,51 +168,59 @@
           
           <div class="form-row">
             <div class="form-group">
-              <label>账号 *</label>
-              <input v-model="newMember.username" type="text" required placeholder="请输入账号">
-            </div>
-            <div class="form-group">
-              <label>密码 *</label>
-              <input v-model="newMember.password" type="password" required placeholder="请输入密码">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>电话 *</label>
-              <input v-model="newMember.phone" type="tel" required placeholder="请输入电话号码">
-            </div>
-            <div class="form-group">
               <label>邮件</label>
               <input v-model="newMember.email" type="email" placeholder="请输入邮箱地址">
             </div>
           </div>
           
-          <div class="form-row">
-             <div class="form-group">
-               <label>角色 *</label>
-               <select 
-                 v-model="newMember.role" 
-                 required
-                 :disabled="editingMember && editingMember.isOwner"
-                 :class="{ disabled: editingMember && editingMember.isOwner }"
-               >
-                 <option value="">请选择角色</option>
-                 <option value="member">成员</option>
-                 <option value="owner">拥有者</option>
-               </select>
-               <div v-if="editingMember && editingMember.isOwner" class="admin-role-note">
-                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                   <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                   <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
-                   <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
-                 </svg>
-                 <span>拥有者角色不可更改</span>
-               </div>
-             </div>
+          <div v-if="!editingMember" class="form-row">
             <div class="form-group">
-              <label>头像</label>
-              <input v-model="newMember.avatar" type="url" placeholder="请输入头像URL">
+              <label>角色 *</label>
+              <select v-model="newMember.role" required>
+                <option value="">请选择角色</option>
+                <option value="member">成员</option>
+                <option value="owner">拥有者</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <!-- 占位，保持布局 -->
+            </div>
+          </div>
+          
+          <!-- 高级设置分割线（可点击） -->
+          <div class="advanced-settings-divider" @click="toggleAdvancedSettings">
+            <div class="divider-line"></div>
+            <span class="divider-text">
+              {{ showAdvancedSettings ? '收起高级设置' : '展开高级设置' }}
+            </span>
+            <svg class="toggle-icon" :class="{ expanded: showAdvancedSettings }" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <div class="divider-line"></div>
+          </div>
+          
+          <!-- 高级设置折叠区域 -->
+          <div class="advanced-settings" :class="{ collapsed: !showAdvancedSettings }">
+            <div class="form-row">
+              <div class="form-group">
+                <label>电话 *</label>
+                <input v-model="newMember.phone" type="tel" required placeholder="请输入电话号码">
+              </div>
+              <div class="form-group">
+                <label>账号 *</label>
+                <input v-model="newMember.username" type="text" required placeholder="请输入账号">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>密码 *</label>
+                <input v-model="newMember.password" type="password" required placeholder="请输入密码">
+              </div>
+              <div class="form-group">
+                <label>确认密码 *</label>
+                <input v-model="newMember.confirmPassword" type="password" required placeholder="请再次输入密码">
+              </div>
             </div>
           </div>
           
@@ -245,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { 
   updateMemberDevicePermission,
   addFamilyMember,
@@ -254,6 +273,7 @@ import {
 } from '../api/users.js'
 import { useGlobalStore } from '../stores/global'
 import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
+import AvatarSelector from '../widgets/AvatarSelector.vue'
 
 // 全局状态
 const globalStore = useGlobalStore()
@@ -273,11 +293,32 @@ const newMember = ref({
   gender: '',
   username: '',
   password: '',
+  confirmPassword: '',
   phone: '',
   email: '',
   role: 'member',
   avatar: ''
 })
+
+// 高级设置展开状态
+const showAdvancedSettings = ref(false)
+
+// 头像选项和滚动状态
+const avatarOptions = ref([
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar1',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar2',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar3',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar4',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar5',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar6',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar7',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar8',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar9',
+  'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10'
+])
+
+// 滚动敏感度
+const scrollSensitivity = ref(1.5)
 
 // 计算属性
 const getRoleText = (role) => {
@@ -303,6 +344,10 @@ const loadData = async () => {
       status: 'active',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       devicePermissions: member.devicePermissions || {},
+      // 添加编辑时需要的字段
+      username: member.account?.account || '',
+      phone: member.account?.phone || '',
+      gender: member.account?.gender || '',
       // 保留原始数据字段
       user_id: member.user_id,
       account_id: member.account_id,
@@ -419,15 +464,20 @@ const addNewMember = async () => {
 
 const editMember = async () => {
   try {
+    // 构建更新数据，只包含有值的字段
     const memberData = {
       name: newMember.value.name,
       gender: newMember.value.gender,
       username: newMember.value.username,
-      password: newMember.value.password,
       phone: newMember.value.phone,
       email: newMember.value.email,
       role: editingMember.value.isOwner ? 'owner' : newMember.value.role, // 拥有者角色不可更改
       avatar: newMember.value.avatar || `https://api.dicebear.com/7.x/adventurer/png?size=80&seed=${newMember.value.name}`
+    }
+    
+    // 只有当密码不为空时才更新密码
+    if (newMember.value.password && newMember.value.password.trim() !== '') {
+      memberData.password = newMember.value.password
     }
     
     const response = await updateFamilyMember(editingMember.value.id, memberData)
@@ -444,18 +494,40 @@ const editMember = async () => {
   }
 }
 
+// 打开添加成员模态框
+const openAddMemberModal = () => {
+  showAddMemberModal.value = true
+  showAdvancedSettings.value = false
+}
+
 const openEditModal = (member) => {
   editingMember.value = member
+  
+  // 调试输出，确保数据正确
+  console.log('编辑成员数据:', member)
+  
   newMember.value = {
-    name: member.name,
+    name: member.name || '',
     gender: member.gender || '',
     username: member.username || '',
     password: '', // 编辑时不显示密码
+    confirmPassword: '', // 编辑时不显示确认密码
     phone: member.phone || '',
     email: member.email || '',
-    role: member.role,
+    role: member.role || 'member',
     avatar: member.avatar || ''
   }
+  
+  // 如果当前头像不在预设选项中，添加到中间位置并选中
+  if (member.avatar && !avatarOptions.value.includes(member.avatar)) {
+    const middleIndex = Math.floor(avatarOptions.value.length / 2)
+    avatarOptions.value.splice(middleIndex, 0, member.avatar)
+  }
+  
+  // 调试输出，确保表单数据正确
+  console.log('表单回填数据:', newMember.value)
+  
+  showAdvancedSettings.value = false // 编辑时默认收起高级设置
   showAddMemberModal.value = true
 }
 
@@ -493,24 +565,68 @@ const confirmDeleteMember = async () => {
   }
 }
 
+// 处理模态框背景点击
+const handleModalOverlayClick = (e) => {
+  // 检查点击的是否是模态框背景（而不是内容区域）
+  if (e.target === e.currentTarget) {
+    closeModal()
+  }
+}
+
 const closeModal = () => {
   showAddMemberModal.value = false
   editingMember.value = null
   resetNewMemberForm()
+  
+  // 清理动态添加的头像选项，只保留预设的10个
+  if (avatarOptions.value.length > 10) {
+    // 找到第一个动态添加的头像（不在原始预设中的）
+    const originalAvatars = [
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar1',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar2',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar3',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar4',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar5',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar6',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar7',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar8',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar9',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10'
+    ]
+    
+    // 移除所有不在原始预设中的头像
+    avatarOptions.value = avatarOptions.value.filter(avatar => originalAvatars.includes(avatar))
+  }
 }
 
 const resetNewMemberForm = () => {
+  // 选择中间位置的头像作为默认头像
+  const middleIndex = Math.floor(avatarOptions.value.length / 2)
   newMember.value = {
     name: '',
     gender: '',
     username: '',
     password: '',
+    confirmPassword: '',
     phone: '',
     email: '',
     role: 'member',
-    avatar: ''
+    avatar: avatarOptions.value[middleIndex] || '' // 设置默认头像为中间位置的选项
   }
+  showAdvancedSettings.value = false
 }
+
+// 切换高级设置展开状态
+const toggleAdvancedSettings = () => {
+  showAdvancedSettings.value = !showAdvancedSettings.value
+}
+
+// 处理头像变化
+const handleAvatarChange = (avatar) => {
+  newMember.value.avatar = avatar
+}
+
+
 
 // 生命周期
 // 监听 globalStore.members 变化，当数据加载完成时自动更新
@@ -522,6 +638,10 @@ watch(() => globalStore.members, (newMembers) => {
 
 onMounted(() => {
   loadData()
+})
+
+onUnmounted(() => {
+  // 清理工作
 })
 </script>
 
@@ -1138,10 +1258,23 @@ input:checked + .toggle-slider:before {
   border-radius: 16px;
   padding: 20px;
   width: 500px;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 30px var(--shadow-soft);
   border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 隐藏滚动条但保持滚动功能 */
+.modal-content::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.modal-content {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .modal-header {
@@ -1183,13 +1316,16 @@ input:checked + .toggle-slider:before {
 
 .member-form {
   padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-group {
@@ -1201,13 +1337,13 @@ input:checked + .toggle-slider:before {
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg-secondary);
@@ -1249,7 +1385,8 @@ input:checked + .toggle-slider:before {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 16px;
+  flex-shrink: 0;
 }
 
 .cancel-btn {
@@ -1281,6 +1418,79 @@ input:checked + .toggle-slider:before {
   background: var(--color-primary-hover);
   transform: translateY(-1px);
 }
+
+/* 高级设置分割线（可点击） */
+.advanced-settings-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0 16px 0;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.advanced-settings-divider:hover {
+  background: var(--color-hover);
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  transition: background-color 0.3s ease;
+}
+
+.advanced-settings-divider:hover .divider-line {
+  background: var(--color-primary);
+}
+
+.divider-text {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.advanced-settings-divider:hover .divider-text {
+  color: var(--color-primary);
+}
+
+/* 高级设置折叠区域 */
+.advanced-settings {
+  overflow: hidden;
+  transition: all 0.3s ease;
+  max-height: 200px;
+  opacity: 1;
+}
+
+.advanced-settings.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* 头像选择器样式 */
+.avatar-section {
+  margin-bottom: 16px;
+  padding: 4px 0 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
 
 /* 删除成员确认弹窗样式 */
 .device-modal {
