@@ -287,6 +287,13 @@ const getRoomDevices = (roomId) => {
   }
 }
 
+// 获取房间名称
+const getRoomName = (roomId) => {
+  if (roomId === 'unassigned') return 'Unassigned'
+  const room = rooms.value.find(r => r.id === roomId)
+  return room ? room.name : 'Unknown'
+}
+
 // 删除房间确认弹窗状态
 const roomPendingDelete = ref(null)
 const openDeleteConfirm = (room) => {
