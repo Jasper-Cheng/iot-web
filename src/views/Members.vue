@@ -5,18 +5,18 @@
         <button 
         class="add-member-btn" 
         @click="openAddMemberModal"
-        :disabled="familyMembers.length >= 6"
-        :class="{ disabled: familyMembers.length >= 6 }"
+        :disabled="isMemberLimitReached"
+        :class="{ disabled: isMemberLimitReached }"
       >
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        {{ familyMembers.length >= 6 ? '已达上限' : '添加成员' }}
+        {{ isMemberLimitReached ? '已达上限' : '添加成员' }}
       </button>
         <div class="member-count">
           <span class="count-text">当前成员: {{ familyMembers.length }}/6</span>
           <div class="count-bar">
-            <div class="count-progress" :style="{ width: (familyMembers.length / 6) * 100 + '%' }"></div>
+            <div class="count-progress" :style="{ width: memberCountProgress + '%' }"></div>
           </div>
         </div>
       </div>
@@ -261,7 +261,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { 
   updateMemberDevicePermission,
   addFamilyMember,
@@ -313,6 +313,67 @@ const getRoleText = (role) => {
     owner: '拥有者'
   }
   return roleMap[role] || role
+}
+
+// 计算属性：成员数量进度
+const memberCountProgress = computed(() => (familyMembers.value.length / 6) * 100)
+
+// 计算属性：是否达到成员上限
+const isMemberLimitReached = computed(() => familyMembers.value.length >= 6)
+
+// 计算属性：当前编辑的成员是否为拥有者
+const isEditingOwner = computed(() => editingMember.value?.role === 'owner')
+
+// 工具函数
+const validatePassword = (password, confirmPassword) => {
+  if (password && password.trim() !== '' || confirmPassword && confirmPassword.trim() !== '') {
+    return password === confirmPassword
+  }
+  return true
+}
+
+const handleError = (error, defaultMessage) => {
+  console.error(defaultMessage, error)
+  formError.value = error.response?.data?.detail || defaultMessage
+}
+
+const buildUpdateData = (formData) => {
+  const updateData = {}
+  const fields = ['username', 'name', 'gender', 'phone', 'email', 'avatar', 'password']
+  
+  fields.forEach(field => {
+    const value = formData[field]
+    if (value && value.toString().trim() !== '') {
+      if (field === 'username') {
+        updateData.account = value
+      } else {
+        updateData[field] = value
+      }
+    }
+  })
+  
+  return updateData
+}
+
+const updateMemberInStore = (memberId, updateData) => {
+  return globalStore.members.map(member => {
+    if (member.id === memberId) {
+      const updatedMember = { ...member }
+      const updatedAccount = { ...member.account }
+      
+      // 只更新有值的字段
+      if (updateData.account) updatedAccount.account = updateData.account
+      if (updateData.name) updatedAccount.name = updateData.name
+      if (updateData.gender) updatedAccount.gender = updateData.gender
+      if (updateData.phone) updatedAccount.phone = updateData.phone
+      if (updateData.email) updatedAccount.email = updateData.email
+      if (updateData.avatar) updatedAccount.avatar = updateData.avatar
+      
+      updatedMember.account = updatedAccount
+      return updatedMember
+    }
+    return member
+  })
 }
 
 // 方法
@@ -424,12 +485,10 @@ const addNewMember = async () => {
     // 清除之前的错误信息
     formError.value = ''
     
-    // 验证密码：如果填写了密码，则密码和确认密码必须一致
-    if (newMember.value.password && newMember.value.password.trim() !== ''||newMember.value.confirmPassword && newMember.value.confirmPassword.trim() !== '') {
-      if (newMember.value.password !== newMember.value.confirmPassword) {
-        formError.value = '密码和确认密码不一致'
-        return
-      }
+    // 验证密码
+    if (!validatePassword(newMember.value.password, newMember.value.confirmPassword)) {
+      formError.value = '密码和确认密码不一致'
+      return
     }
     
     const memberData = {
@@ -443,18 +502,14 @@ const addNewMember = async () => {
       devicePermissions: {}
     }
     
-    
-    const response = await addFamilyMember(memberData)
-    
-    
+    await addFamilyMember(memberData)
     await loadData()
     ElMessage.success('添加成员成功')
     closeModal()
     resetNewMemberForm()
     
   } catch (error) {
-    console.error('添加成员失败:', error)
-    formError.value = error.response?.data?.detail || '添加成员失败，请重试'
+    handleError(error, '添加成员失败，请重试')
   }
 }
 
@@ -463,77 +518,26 @@ const editMember = async () => {
     // 清除之前的错误信息
     formError.value = ''
     
-    // 验证密码：如果填写了密码，则密码和确认密码必须一致
-    if (newMember.value.password && newMember.value.password.trim() !== ''||newMember.value.confirmPassword && newMember.value.confirmPassword.trim() !== '') {
-      if (newMember.value.password !== newMember.value.confirmPassword) {
-        formError.value = '密码和确认密码不一致'
-        return
-      }
+    // 验证密码
+    if (!validatePassword(newMember.value.password, newMember.value.confirmPassword)) {
+      formError.value = '密码和确认密码不一致'
+      return
     }
     
-    // 构建更新数据，只包含有值的字段
-    const updateData = {}
+    // 构建更新数据
+    const updateData = buildUpdateData(newMember.value)
     
-    // 根据字段是否有值来决定是否传递
-    if (newMember.value.username && newMember.value.username.trim() !== '') {
-      updateData.account = newMember.value.username
-    }
-    if (newMember.value.name && newMember.value.name.trim() !== '') {
-      updateData.name = newMember.value.name
-    }
-    if (newMember.value.gender) {
-      updateData.gender = newMember.value.gender
-    }
-    if (newMember.value.phone && newMember.value.phone.trim() !== '') {
-      updateData.phone = newMember.value.phone
-    }
-    if (newMember.value.email && newMember.value.email.trim() !== '') {
-      updateData.email = newMember.value.email
-    }
-    if (newMember.value.avatar && newMember.value.avatar.trim() !== '') {
-      updateData.avatar = newMember.value.avatar
-    }
-    if (newMember.value.password && newMember.value.password.trim() !== '') {
-      updateData.password = newMember.value.password
-    }
-    
-    
-    let response
     // 根据角色调用不同的API
-    if (editingMember.value.role === 'owner') {
-      // 拥有者调用用户更新接口
-      response = await updateUser(editingMember.value.id, updateData)
-      
+    if (isEditingOwner.value) {
+      await updateUser(editingMember.value.id, updateData)
     } else {
-      // 成员调用成员更新接口
-      response = await updateFamilyMember(editingMember.value.id, updateData)
-      
+      await updateFamilyMember(editingMember.value.id, updateData)
     }
     
     await loadData()
     
-    // 如果更新的是当前用户，则更新globalStore中的user数据
-    
     // 更新 globalStore.members 中的成员数据
-    const updatedMembers = globalStore.members.map(member => {
-      if (member.id === editingMember.value.id) {
-        const updatedMember = { ...member }
-        const updatedAccount = { ...member.account }
-        
-        // 只更新有值的字段
-        if (updateData.account) updatedAccount.account = updateData.account
-        if (updateData.name) updatedAccount.name = updateData.name
-        if (updateData.gender) updatedAccount.gender = updateData.gender
-        if (updateData.phone) updatedAccount.phone = updateData.phone
-        if (updateData.email) updatedAccount.email = updateData.email
-        if (updateData.avatar) updatedAccount.avatar = updateData.avatar
-        
-        updatedMember.account = updatedAccount
-        return updatedMember
-      }
-      return member
-    })
-    globalStore.members = updatedMembers
+    globalStore.members = updateMemberInStore(editingMember.value.id, updateData)
     
     // 如果是当前用户，使用统一的更新方法
     if (globalStore.user?.id === editingMember.value.id) {
@@ -544,8 +548,7 @@ const editMember = async () => {
     closeModal()
     resetNewMemberForm()
   } catch (error) {
-    console.error('更新失败:', error)
-    formError.value = error.response?.data?.detail || '更新失败，请重试'
+    handleError(error, '更新失败，请重试')
   }
 }
 
@@ -581,7 +584,7 @@ const openEditModal = (member) => {
 const openDeleteConfirm = (member) => {
   // 检查是否为拥有者
   if (member.isOwner) {
-    alert('拥有者不能被删除')
+    ElMessage.warning('拥有者不能被删除')
     return
   }
   memberPendingDelete.value = member
@@ -602,12 +605,13 @@ const confirmDeleteMember = async () => {
     if (response.success) {
       await loadData()
       closeDeleteConfirm()
+      ElMessage.success('删除成员成功')
     } else {
-      alert(response.message || '删除成员失败')
+      ElMessage.error(response.message || '删除成员失败')
     }
   } catch (error) {
     console.error('删除成员失败:', error)
-    alert('删除成员失败，请重试')
+    ElMessage.error('删除成员失败，请重试')
   }
 }
 
