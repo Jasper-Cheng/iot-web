@@ -40,7 +40,7 @@
             </div>
             <div class="member-details">
               <h3>{{ member.name }}</h3>
-              <p>{{ member.email }}</p>
+              <p :title="member.email">{{ member.email }}</p>
               <span class="role-badge" :class="member.role">{{ getRoleText(member.role) }}</span>
             </div>
           </div>
@@ -243,7 +243,7 @@
             </div>
             <div class="member-details">
               <h4>{{ memberPendingDelete.name }}</h4>
-              <p>{{ memberPendingDelete.email }}</p>
+              <p :title="memberPendingDelete.email">{{ memberPendingDelete.email }}</p>
               <span class="role-badge" :class="memberPendingDelete.role">{{ getRoleText(memberPendingDelete.role) }}</span>
             </div>
           </div>
@@ -887,6 +887,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   flex: 1;
+  min-width: 0; /* 允许内容收缩 */
+}
+
+.member-details {
+  flex: 1;
+  min-width: 0; /* 允许内容收缩 */
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .member-node.collapsed .member-info {
@@ -944,6 +951,10 @@ onUnmounted(() => {
   font-size: 14px;
   color: var(--color-text-secondary);
   margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px; /* 限制最大宽度 */
 }
 
 .member-node.collapsed .member-details {
@@ -993,7 +1004,9 @@ onUnmounted(() => {
 .member-actions {
   display: flex;
   align-items: center;
+  margin-left: 8px;
   gap: 8px;
+  flex-shrink: 0; /* 防止按钮区域被挤压 */
 }
 
 .member-node.collapsed .member-actions {
@@ -1001,6 +1014,7 @@ onUnmounted(() => {
   gap: 6px;
   align-items: center;
   flex-shrink: 0;
+  min-width: 80px; /* 折叠状态下确保按钮区域有足够空间 */
 }
 
 .action-btn {
