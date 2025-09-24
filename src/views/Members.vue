@@ -1187,35 +1187,35 @@ onUnmounted(() => {
 .action-btn.small:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #f5f5f5;
-  color: #999;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
 }
 
 .action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #f5f5f5;
-  color: #999;
-  border-color: #e0e0e0;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
 }
 
 .action-btn:disabled:hover {
-  background-color: #f5f5f5;
-  color: #999;
-  border-color: #e0e0e0;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
   transform: none;
 }
 
 .action-btn.danger:disabled {
-  background-color: #f5f5f5;
-  color: #999;
-  border-color: #e0e0e0;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
 }
 
 .action-btn.danger:disabled:hover {
-  background-color: #f5f5f5;
-  color: #999;
-  border-color: #e0e0e0;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
 }
 
 .action-btn svg {

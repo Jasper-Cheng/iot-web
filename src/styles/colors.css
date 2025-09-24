@@ -102,6 +102,11 @@
   --color-member-shadow-medium: rgba(0, 0, 0, 0.25);  /* 中等阴影 */
   --color-member-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
   
+  /* 禁用状态颜色 */
+  --color-disabled-bg: #f5f5f5;              /* 禁用背景 */
+  --color-disabled-text: #999;               /* 禁用文字 */
+  --color-disabled-border: #e0e0e0;          /* 禁用边框 */
+  
   /* Login页面专用颜色 */
   --color-login-overlay: rgba(9, 9, 11, 0.8);         /* 登录遮罩背景 */
   --color-login-modal-bg: rgba(39, 39, 42, 0.95);     /* 登录模态框背景 */
@@ -245,6 +250,11 @@
   --color-member-shadow-light: rgba(0, 0, 0, 0.1);
   --color-member-shadow-medium: rgba(0, 0, 0, 0.25);
   --color-member-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* 禁用状态颜色 */
+  --color-disabled-bg: #f5f5f5;              /* 禁用背景 */
+  --color-disabled-text: #999;               /* 禁用文字 */
+  --color-disabled-border: #e0e0e0;          /* 禁用边框 */
   
   /* Login页面专用颜色 */
   --color-login-overlay: rgba(248, 249, 250, 0.8);
