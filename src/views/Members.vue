@@ -35,7 +35,7 @@
         <div class="member-header" @click="toggleMemberExpanded(member.id)">
           <div class="member-info">
             <div class="member-avatar">
-              <img :src="getAvatarUrl(member.avatar)" :alt="member.name">
+              <img :src="member.avatar || DEFAULT_NO_AVATAR_URL" :alt="member.name" @error="$event.target.src = DEFAULT_NO_AVATAR_URL">
               <div class="status-indicator" :class="member.status"></div>
             </div>
             <div class="member-details">
@@ -221,7 +221,7 @@
         <div class="delete-modal-body">
           <div class="member-delete-info">
             <div class="member-avatar">
-              <img :src="getAvatarUrl(memberPendingDelete.avatar)" :alt="memberPendingDelete.name">
+              <img :src="memberPendingDelete.avatar || DEFAULT_NO_AVATAR_URL" :alt="memberPendingDelete.name" @error="$event.target.src = DEFAULT_NO_AVATAR_URL">
             </div>
             <div class="member-details">
               <h4>{{ memberPendingDelete.name }}</h4>
@@ -254,7 +254,7 @@ import {
 } from '../api/users.js'
 import { useGlobalStore } from '../stores/global'
 import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
-import { getAvatarUrl } from '../utils/theme'
+import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { ElMessage } from 'element-plus'
 

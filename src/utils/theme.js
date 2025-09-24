@@ -180,14 +180,5 @@ export function getAllThemes() {
   return Object.values(themes).map(theme => getThemeInfo(theme))
 }
 
-// 默认无头像链接 - 使用一个明显表示"无头像"的图标
-export const DEFAULT_NO_AVATAR_URL = 'https://api.dicebear.com/7.x/initials/png?size=80&seed=no-avatar&backgroundColor=cccccc&textColor=666666'
-
-// 获取头像URL，如果为空或null则返回默认无头像
-export function getAvatarUrl(avatar) {
-  if (!avatar || avatar === '' || avatar === null || avatar === undefined) {
-    return DEFAULT_NO_AVATAR_URL
-  }
-  return avatar
-}
-
+// 默认无头像链接 - 使用本地文件
+export const DEFAULT_NO_AVATAR_URL = '/avatars/no-avatar.png'

@@ -118,8 +118,9 @@
           </button>
           <div class="user-profile" @click.stop="toggleUserMenu">
             <img 
-              :src="getAvatarUrl(globalStore.user?.account?.avatar)" 
+              :src="globalStore.user?.account?.avatar || DEFAULT_NO_AVATAR_URL" 
               :alt="globalStore.user?.account?.name || 'User Avatar'" 
+              @error="$event.target.src = DEFAULT_NO_AVATAR_URL"
               class="profile-avatar"
             >
             <span class="user-name">{{ globalStore.user?.account?.name || globalStore.user?.account?.account || '用户' }}</span>
@@ -130,8 +131,9 @@
           <div v-if="showUserMenu" class="user-dropdown" @click.stop>
             <div class="user-info">
               <img 
-                :src="getAvatarUrl(globalStore.user?.account?.avatar)" 
+                :src="globalStore.user?.account?.avatar || DEFAULT_NO_AVATAR_URL" 
                 :alt="globalStore.user?.account?.name || 'User Avatar'" 
+                @error="$event.target.src = DEFAULT_NO_AVATAR_URL"
                 class="dropdown-avatar"
               >
               <div class="user-details">
@@ -217,7 +219,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
-import { initTheme, setTheme, getAvatarUrl } from '../utils/theme.js'
+import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
 import { deleteUser } from '../api/users'
 import { ElMessage } from 'element-plus'
