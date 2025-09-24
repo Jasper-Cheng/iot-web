@@ -525,7 +525,8 @@ const addNewMember = async () => {
     }
     
     await addFamilyMember(memberData)
-    await loadData()
+    // 重新从服务器加载成员数据，watch会自动调用loadData()
+    await globalStore.loadMembers(globalStore.user?.user_id)
     ElMessage.success('添加成员成功')
     closeModal()
     resetNewMemberForm()
@@ -558,10 +559,8 @@ const editMember = async () => {
       await updateFamilyMember(editingMember.value.id, updateData)
     }
     
-    await loadData()
-    
-    // 更新 globalStore.members 中的成员数据
-    globalStore.members = updateMemberInStore(editingMember.value.id, updateData)
+    // 重新从服务器加载成员数据，watch会自动调用loadData()
+    await globalStore.loadMembers(globalStore.user?.user_id)
     
     // 如果是当前用户，使用统一的更新方法
     if (globalStore.user?.id === editingMember.value.id) {
@@ -625,14 +624,15 @@ const confirmDeleteMember = async () => {
   if (!member) return
   
   try {
+    console.log('开始删除成员:', member.id)
     const response = await deleteFamilyMember(member.id)
-    if (response.success) {
-      await loadData()
-      closeDeleteConfirm()
-      ElMessage.success('删除成员成功')
-    } else {
-      ElMessage.error(response.message || '删除成员失败')
-    }
+    console.log('删除API响应:', response)
+    
+    // 删除成功（API没有抛出异常就认为成功）
+    // 重新从服务器加载成员数据，watch会自动调用loadData()
+    await globalStore.loadMembers(globalStore.user?.user_id)
+    closeDeleteConfirm()
+    ElMessage.success('删除成员成功')
   } catch (error) {
     console.error('删除成员失败:', error)
     ElMessage.error('删除成员失败，请重试')
@@ -684,7 +684,7 @@ const handleAvatarChange = (avatar) => {
 // 生命周期
 // 监听 globalStore.members 变化，当数据加载完成时自动更新
 watch(() => globalStore.members, (newMembers) => {
-  if (newMembers && newMembers.length > 0) {
+  if (newMembers) {
     loadData()
   }
 }, { immediate: true })
