@@ -227,7 +227,6 @@ export const useGlobalStore = defineStore('global', {
 							const permissions = await getMemberDevicePermissions(member.id || member.user_id)
 							// 提取device_id组成数组
 							const deviceIds = permissions ? permissions.map(p => p.device_id) : []
-							console.log('deviceIds', deviceIds)
 							return {
 								...member,
 								deviceIds: deviceIds // 设备ID数组，用于快速判断权限
@@ -275,7 +274,6 @@ export const useGlobalStore = defineStore('global', {
 					// 更新对应房间的设备排序
 					const room = this.rooms.find(r => r.id === roomId)
 					if (room) {
-						console.log(`更新房间 ${roomId} 的设备列表:`, response.data)
 						room.devices = response.data
 					}
 				}

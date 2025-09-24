@@ -479,13 +479,7 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
     }
     
     // 调用批量更新接口
-    const response = await batchUpdateMemberDevicePermissions(memberId, member.deviceIds)
-    if (response.success) {
-      console.log('权限更新成功:', response.data)
-    } else {
-      // 如果更新失败，回滚本地数据
-      console.error('权限更新失败，回滚本地数据')
-    }
+    await batchUpdateMemberDevicePermissions(memberId, member.deviceIds)
   } catch (error) {
     console.error('更新权限失败:', error)
     ElMessage.error('更新权限失败，请重试')
@@ -512,7 +506,6 @@ const selectAllDevices = async (memberId) => {
       const response = await batchUpdateMemberDevicePermissions(memberId, allDeviceIds)
       if (response.success) {
         ElMessage.success('全选设备权限成功')
-        console.log('全选权限更新成功:', response.data)
       } else {
         ElMessage.error('全选设备权限失败')
       }
@@ -540,7 +533,6 @@ const deselectAllDevices = async (memberId) => {
       const response = await batchUpdateMemberDevicePermissions(memberId, [])
       if (response.success) {
         ElMessage.success('取消所有设备权限成功')
-        console.log('取消所有权限更新成功:', response.data)
       } else {
         ElMessage.error('取消所有设备权限失败')
       }

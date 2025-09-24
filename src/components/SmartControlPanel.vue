@@ -87,17 +87,14 @@ const executeAction = async (action) => {
     
     switch (action) {
       case 'away':
-        console.log('执行离家断电操作完成')
         // 关闭所有设备
         // 可以添加具体的断电逻辑
         break
       case 'home':
-        console.log('执行回家通电操作完成')
         // 开启常用设备
         // 可以添加具体的通电逻辑
         break
       case 'allOn':
-        console.log('执行全部打开操作完成')
         // 开启所有设备
         // 可以添加具体的全开逻辑
         break

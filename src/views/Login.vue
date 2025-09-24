@@ -279,8 +279,7 @@ const handleLogin = async () => {
       globalStore.isAuthenticated = true
       localStorage.setItem('user', JSON.stringify(userData))
       
-      // 打印 userData
-      console.log('userData after login:', userData)
+      // 登录成功，设置用户数据
       
     } catch (userError) {
       console.error('获取用户详情失败:', userError)
@@ -289,8 +288,7 @@ const handleLogin = async () => {
       globalStore.isAuthenticated = true
       localStorage.setItem('user', JSON.stringify(response))
       
-      // 打印 userData（错误情况）
-      console.log('userData after login (error):', response)
+      // 获取用户详情失败，使用原始响应数据
     }
     
     // 保存记住的凭据
