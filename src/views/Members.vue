@@ -144,7 +144,7 @@
           <div class="avatar-section">
             <AvatarSelector 
               v-model="newMember.avatar"
-              :current-user-avatar="globalStore.user?.account?.avatar || ''"
+              :current-user-avatar="editingMember ? (editingMember.account?.avatar || '') : ''"
               @change="handleAvatarChange"
             />
           </div>
@@ -170,48 +170,30 @@
               <label>邮件</label>
               <input v-model="newMember.email" type="email" placeholder="请输入邮箱地址">
             </div>
-          </div>
-          
-          <div v-if="!editingMember" class="form-row">
             <div class="form-group">
               <!-- 占位，保持布局 -->
             </div>
           </div>
           
-          <!-- 高级设置分割线（可点击） -->
-          <div class="advanced-settings-divider" @click="toggleAdvancedSettings">
-            <div class="divider-line"></div>
-            <span class="divider-text">
-              {{ showAdvancedSettings ? '收起高级设置' : '展开高级设置' }}
-            </span>
-            <svg class="toggle-icon" :class="{ expanded: showAdvancedSettings }" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            <div class="divider-line"></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>电话 *</label>
+              <input v-model="newMember.phone" type="tel" required placeholder="请输入电话号码">
+            </div>
+            <div class="form-group">
+              <label>账号 *</label>
+              <input v-model="newMember.username" type="text" required placeholder="请输入账号">
+            </div>
           </div>
           
-          <!-- 高级设置折叠区域 -->
-          <div class="advanced-settings" :class="{ collapsed: !showAdvancedSettings }">
-            <div class="form-row">
-              <div class="form-group">
-                <label>电话 *</label>
-                <input v-model="newMember.phone" type="tel" required placeholder="请输入电话号码">
-              </div>
-              <div class="form-group">
-                <label>账号 *</label>
-                <input v-model="newMember.username" type="text" required placeholder="请输入账号">
-              </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ editingMember ? '密码' : '密码 *' }} <span class="field-hint">{{ editingMember ? '(至少6位)' : '(至少6位，必填)' }}</span></label>
+              <input v-model="newMember.password" type="password" :placeholder="editingMember ? '不填写则默认不修改' : '请输入密码(至少6位)'" :required="!editingMember">
             </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label>密码 <span class="field-hint">(至少6位)</span></label>
-                <input v-model="newMember.password" type="password" placeholder="请输入密码(至少6位)">
-              </div>
-              <div class="form-group">
-                <label>确认密码</label>
-                <input v-model="newMember.confirmPassword" type="password" placeholder="请再次输入密码">
-              </div>
+            <div class="form-group">
+              <label>{{ editingMember ? '确认密码' : '确认密码 *' }}</label>
+              <input v-model="newMember.confirmPassword" type="password" :placeholder="editingMember ? '不填写则默认不修改' : '请再次输入密码'" :required="!editingMember">
             </div>
           </div>
           
@@ -299,8 +281,6 @@ const newMember = ref({
   avatar: ''
 })
 
-// 高级设置展开状态
-const showAdvancedSettings = ref(false)
 
 // 表单错误信息
 const formError = ref('')
@@ -325,10 +305,21 @@ const isMemberLimitReached = computed(() => familyMembers.value.length >= 6)
 const isEditingOwner = computed(() => editingMember.value?.role === 'owner')
 
 // 工具函数
-const validatePassword = (password, confirmPassword) => {
-  // 如果两个密码字段都为空，则不需要验证
-  if ((!password || password.trim() === '') && (!confirmPassword || confirmPassword.trim() === '')) {
+const validatePassword = (password, confirmPassword, isEditing = false) => {
+  // 编辑模式下，如果两个密码字段都为空，则不需要验证
+  if (isEditing && (!password || password.trim() === '') && (!confirmPassword || confirmPassword.trim() === '')) {
     return { valid: true }
+  }
+  
+  // 添加模式下，密码为必填
+  if (!isEditing && (!password || password.trim() === '')) {
+    return { valid: false, message: '请输入密码' }
+  }
+  
+  // 编辑模式下，如果只填写了密码或确认密码中的一个，需要都填写
+  if (isEditing && ((password && password.trim() !== '' && (!confirmPassword || confirmPassword.trim() === '')) || 
+                   (!password || password.trim() === '') && confirmPassword && confirmPassword.trim() !== '')) {
+    return { valid: false, message: '请同时填写密码和确认密码，或都不填写' }
   }
   
   // 如果填写了密码，检查长度
@@ -358,9 +349,17 @@ const handleError = (error, defaultMessage) => {
   formError.value = error.response?.data?.detail || defaultMessage
 }
 
-const buildUpdateData = (formData) => {
+const buildUpdateData = (formData, isEditing = false) => {
   const updateData = {}
-  const fields = ['username', 'name', 'gender', 'phone', 'email', 'avatar', 'password']
+  const fields = ['username', 'name', 'gender', 'phone', 'email', 'avatar']
+  
+  // 编辑模式下，如果密码不为空才添加密码字段
+  if (isEditing && formData.password && formData.password.trim() !== '') {
+    fields.push('password')
+  } else if (!isEditing) {
+    // 添加模式下，密码必填
+    fields.push('password')
+  }
   
   fields.forEach(field => {
     const value = formData[field]
@@ -506,8 +505,8 @@ const addNewMember = async () => {
     // 清除之前的错误信息
     formError.value = ''
     
-    // 验证密码
-    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword)
+    // 验证密码（添加模式，密码必填）
+    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword, false)
     if (!passwordValidation.valid) {
       formError.value = passwordValidation.message
       return
@@ -541,15 +540,15 @@ const editMember = async () => {
     // 清除之前的错误信息
     formError.value = ''
     
-    // 验证密码
-    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword)
+    // 验证密码（编辑模式，密码可选）
+    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword, true)
     if (!passwordValidation.valid) {
       formError.value = passwordValidation.message
       return
     }
     
-    // 构建更新数据
-    const updateData = buildUpdateData(newMember.value)
+    // 构建更新数据（编辑模式）
+    const updateData = buildUpdateData(newMember.value, true)
     console.log('updateData', updateData)
     
     // 根据角色调用不同的API
@@ -578,7 +577,6 @@ const editMember = async () => {
 // 打开添加成员模态框
 const openAddMemberModal = () => {
   showAddMemberModal.value = true
-  showAdvancedSettings.value = false
 }
 
 const openEditModal = (member) => {
@@ -599,7 +597,6 @@ const openEditModal = (member) => {
   
   
   
-  showAdvancedSettings.value = false // 编辑时默认收起高级设置
   showAddMemberModal.value = true
 }
 
@@ -666,13 +663,8 @@ const resetNewMemberForm = () => {
     email: '',
     avatar: '' // 头像由 AvatarSelector 组件管理
   }
-  showAdvancedSettings.value = false
 }
 
-// 切换高级设置展开状态
-const toggleAdvancedSettings = () => {
-  showAdvancedSettings.value = !showAdvancedSettings.value
-}
 
 // 处理头像变化
 const handleAvatarChange = (avatar) => {
@@ -1487,70 +1479,6 @@ input:checked + .toggle-slider:before {
   transform: translateY(-1px);
 }
 
-/* 高级设置分割线（可点击） */
-.advanced-settings-divider {
-  display: flex;
-  align-items: center;
-  margin: 24px 0 16px 0;
-  gap: 12px;
-  cursor: pointer;
-  padding: 8px 0;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.advanced-settings-divider:hover {
-  background: var(--color-hover);
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
-  transition: background-color 0.3s ease;
-}
-
-.advanced-settings-divider:hover .divider-line {
-  background: var(--color-primary);
-}
-
-.divider-text {
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  transition: color 0.3s ease;
-}
-
-.advanced-settings-divider:hover .divider-text {
-  color: var(--color-primary);
-}
-
-/* 高级设置折叠区域 */
-.advanced-settings {
-  overflow: hidden;
-  transition: all 0.3s ease;
-  max-height: 200px;
-  opacity: 1;
-}
-
-.advanced-settings.collapsed {
-  max-height: 0;
-  opacity: 0;
-  margin: 0;
-}
-
-.toggle-icon {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.3s ease;
-}
-
-.toggle-icon.expanded {
-  transform: rotate(180deg);
-}
 
 /* 头像选择器样式 */
 .avatar-section {
@@ -1578,6 +1506,7 @@ input:checked + .toggle-slider:before {
   font-weight: normal;
   font-style: italic;
 }
+
 
 
 /* 删除成员确认弹窗样式 */
