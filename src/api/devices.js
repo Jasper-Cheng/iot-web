@@ -50,7 +50,7 @@ export const unbindDeviceBySN = (sn) => {
 
 export const bindDeviceBySN = (sn, userId) => {
   return request({
-    url: '/devices/bind-by-sn',
+    url: '/devices/bind-by-sn/',
     method: 'post',
     data: { sn: sn, user_id: userId }
   })

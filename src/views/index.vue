@@ -85,6 +85,7 @@
             :class="{ disabled: globalStore.user?.account?.role === 'member' }"
             :disabled="globalStore.user?.account?.role === 'member'"
             :title="globalStore.user?.account?.role === 'member' ? '只有拥有者可以添加设备' : '添加设备'"
+            @click="openAddDeviceModal"
           >
             <span class="plus-icon">+</span>
             Add Device
@@ -188,6 +189,33 @@
     </main>
   </div>
 
+  <!-- 添加设备弹窗 -->
+  <div v-if="showAddDeviceModal" class="device-modal" @click="closeAddDeviceModal">
+    <div class="delete-modal-content" @click.stop>
+      <div class="delete-modal-header">
+        <h3>添加设备</h3>
+        <button class="delete-close-btn" @click="closeAddDeviceModal">X</button>
+      </div>
+      <div class="delete-modal-body">
+        <input 
+          class="input" 
+          v-model="deviceForm.sn" 
+          placeholder="请输入设备序列号 (SN)"
+          @keyup.enter="submitAddDevice"
+          :disabled="isAddingDevice"
+        />
+      </div>
+      <div class="delete-modal-footer">
+        <button class="cancel-btn" @click="closeAddDeviceModal" :disabled="isAddingDevice">
+          取消
+        </button>
+        <button class="action-btn success" @click="submitAddDevice" :disabled="isAddingDevice || !deviceForm.sn.trim()">
+          {{ isAddingDevice ? '添加中...' : '添加' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 注销确认弹窗 -->
   <div v-if="showDeleteConfirmModal" class="confirm-overlay" @click="closeDeleteConfirm">
     <div class="confirm-modal" @click.stop>
@@ -239,6 +267,7 @@ import Login from './Login.vue'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
 import { deleteUser, deleteFamilyMember } from '../api/users'
+import { bindDeviceBySN } from '../api/devices'
 import { ElMessage } from 'element-plus'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
@@ -255,6 +284,17 @@ const showUserMenu = ref(false)
 
 // 控制注销确认弹窗显示
 const showDeleteConfirmModal = ref(false)
+
+// 控制添加设备弹窗显示
+const showAddDeviceModal = ref(false)
+
+// 添加设备表单数据
+const deviceForm = ref({
+  sn: ''
+})
+
+// 添加设备加载状态
+const isAddingDevice = ref(false)
 
 // 当前主题
 const currentTheme = ref('dark')
@@ -342,6 +382,64 @@ const showDeleteConfirm = () => {
 // 处理注销按钮点击
 const handleDeleteClick = () => {
   showDeleteConfirm()
+}
+
+// 打开添加设备弹窗
+const openAddDeviceModal = () => {
+  // 检查权限
+  if (globalStore.user?.account?.role === 'member') {
+    ElMessage.warning('只有拥有者可以添加设备')
+    return
+  }
+  showAddDeviceModal.value = true
+  deviceForm.value.sn = ''
+}
+
+// 关闭添加设备弹窗
+const closeAddDeviceModal = () => {
+  showAddDeviceModal.value = false
+  deviceForm.value.sn = ''
+  isAddingDevice.value = false
+}
+
+// 提交添加设备表单
+const submitAddDevice = async () => {
+  if (!deviceForm.value.sn.trim()) {
+    ElMessage.warning('请输入设备序列号')
+    return
+  }
+
+  isAddingDevice.value = true
+  
+  try {
+    const response = await bindDeviceBySN(deviceForm.value.sn.trim(), globalStore.user?.id)
+    
+    if (response) {
+      ElMessage.success('设备添加成功')
+      closeAddDeviceModal()
+      
+      // 刷新设备列表
+      await globalStore.loadDevices(globalStore.user?.id)
+      await globalStore.loadRooms(globalStore.user?.id)
+      await globalStore.loadMembers(globalStore.user?.id)
+    }
+  } catch (error) {
+    console.error('添加设备失败:', error)
+    
+    if (error.response && error.response.data) {
+      if (error.response.data.detail) {
+        ElMessage.error(error.response.data.detail)
+      } else if (error.response.data.message) {
+        ElMessage.error(error.response.data.message)
+      } else {
+        ElMessage.error('添加设备失败，请重试')
+      }
+    } else {
+      ElMessage.error('添加设备失败，请重试')
+    }
+  } finally {
+    isAddingDevice.value = false
+  }
 }
 
 // 关闭注销确认弹窗
@@ -1047,6 +1145,147 @@ body, html {
   background: var(--color-danger);
   color: var(--color-white);
   border-color: var(--color-danger);
+}
+
+/* 添加设备弹窗样式 - 统一为Widgets样式 */
+.device-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-widgets-modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.delete-modal-content {
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 12px 32px var(--color-widgets-modal-shadow);
+}
+
+.delete-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.delete-modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.delete-close-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.delete-close-btn:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+}
+
+.delete-modal-body {
+  margin: 8px 0 16px;
+}
+
+.delete-modal-body .input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.delete-modal-body .input:focus {
+  border-color: var(--color-primary);
+}
+
+.delete-modal-body .input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+}
+
+.delete-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.action-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border-color: var(--color-primary);
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn.success {
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border-color: var(--color-primary);
+}
+
+.action-btn.success:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 </style>
