@@ -205,8 +205,8 @@
             
             <div class="form-row">
               <div class="form-group">
-                <label>密码</label>
-                <input v-model="newMember.password" type="password" placeholder="请输入密码">
+                <label>密码 <span class="field-hint">(至少6位)</span></label>
+                <input v-model="newMember.password" type="password" placeholder="请输入密码(至少6位)">
               </div>
               <div class="form-group">
                 <label>确认密码</label>
@@ -326,10 +326,31 @@ const isEditingOwner = computed(() => editingMember.value?.role === 'owner')
 
 // 工具函数
 const validatePassword = (password, confirmPassword) => {
-  if (password && password.trim() !== '' || confirmPassword && confirmPassword.trim() !== '') {
-    return password === confirmPassword
+  // 如果两个密码字段都为空，则不需要验证
+  if ((!password || password.trim() === '') && (!confirmPassword || confirmPassword.trim() === '')) {
+    return { valid: true }
   }
-  return true
+  
+  // 如果填写了密码，检查长度
+  if (password && password.trim() !== '') {
+    if (password.length < 6) {
+      return { valid: false, message: '密码长度不能少于6位' }
+    }
+  }
+  
+  // 如果填写了确认密码，检查长度
+  if (confirmPassword && confirmPassword.trim() !== '') {
+    if (confirmPassword.length < 6) {
+      return { valid: false, message: '确认密码长度不能少于6位' }
+    }
+  }
+  
+  // 如果两个密码都填写了，检查是否一致
+  if (password && confirmPassword && password !== confirmPassword) {
+    return { valid: false, message: '密码和确认密码不一致' }
+  }
+  
+  return { valid: true }
 }
 
 const handleError = (error, defaultMessage) => {
@@ -486,8 +507,9 @@ const addNewMember = async () => {
     formError.value = ''
     
     // 验证密码
-    if (!validatePassword(newMember.value.password, newMember.value.confirmPassword)) {
-      formError.value = '密码和确认密码不一致'
+    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword)
+    if (!passwordValidation.valid) {
+      formError.value = passwordValidation.message
       return
     }
     
@@ -519,13 +541,15 @@ const editMember = async () => {
     formError.value = ''
     
     // 验证密码
-    if (!validatePassword(newMember.value.password, newMember.value.confirmPassword)) {
-      formError.value = '密码和确认密码不一致'
+    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword)
+    if (!passwordValidation.valid) {
+      formError.value = passwordValidation.message
       return
     }
     
     // 构建更新数据
     const updateData = buildUpdateData(newMember.value)
+    console.log('updateData', updateData)
     
     // 根据角色调用不同的API
     if (isEditingOwner.value) {
@@ -1531,6 +1555,14 @@ input:checked + .toggle-slider:before {
   font-size: 14px;
   align-self: center;
   margin-right: auto;
+}
+
+/* 字段提示样式 */
+.field-hint {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: normal;
+  font-style: italic;
 }
 
 
