@@ -225,23 +225,6 @@ export const DEVICE_ICON_MAPPING = {
       <circle cx="18" cy="16" r="3" stroke="#666" stroke-width="1" fill="none"/>
     </svg>
   `,
-  'EnergyCard': `
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke="#666" stroke-width="1" fill="none"/>
-    </svg>
-  `,
-  'DeviceStatsCard': `
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <line x1="18" y1="20" x2="18" y2="10" stroke="#666" stroke-width="1"/>
-      <line x1="12" y1="20" x2="12" y2="4" stroke="#666" stroke-width="1"/>
-      <line x1="6" y1="20" x2="6" y2="14" stroke="#666" stroke-width="1"/>
-    </svg>
-  `,
-  'ColorControlCard': `
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" stroke="#666" stroke-width="1" fill="none"/>
-    </svg>
-  `,
   'SmartControlPanel': `
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="#666" stroke-width="1" fill="none"/>

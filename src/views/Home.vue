@@ -40,9 +40,9 @@
         </div>
         <!-- 智能控制面板 -->
         <SmartControlPanel />
-        <ColorControlCard />
-        <EnergyCard />
-        <DeviceStatsCard :rooms="roomsWithDevices" />
+        <ColorControlPanel />
+        <EnergyPanel />
+        <DeviceStatsPanel :rooms="roomsWithDevices" />
       </div>
     </div>
   </div>
@@ -56,9 +56,9 @@ import WiFiCard from '../cards/WiFiCard.vue'
 import TvCard from '../cards/TvCard.vue'
 import MusicCard from '../cards/MusicCard.vue'
 import SocketsCard from '../cards/SocketsCard.vue'
-import ColorControlCard from '../cards/ColorControlCard.vue'
-import EnergyCard from '../cards/EnergyCard.vue'
-import DeviceStatsCard from '../cards/DeviceStatsCard.vue'
+import ColorControlPanel from '../components/ColorControlPanel.vue'
+import EnergyPanel from '../components/EnergyPanel.vue'
+import DeviceStatsPanel from '../components/DeviceStatsPanel.vue'
 import SmartControlPanel from '../components/SmartControlPanel.vue'
 
 // 全局状态
