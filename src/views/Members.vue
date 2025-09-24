@@ -5,8 +5,9 @@
         <button 
         class="add-member-btn" 
         @click="openAddMemberModal"
-        :disabled="isMemberLimitReached"
-        :class="{ disabled: isMemberLimitReached }"
+        :disabled="!canAddMember || isMemberLimitReached"
+        :class="{ disabled: !canAddMember || isMemberLimitReached }"
+        :title="!canAddMember ? '只有拥有者可以添加成员' : (isMemberLimitReached ? '已达成员上限' : '添加成员')"
       >
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -45,24 +46,32 @@
             </div>
           </div>
           <div class="member-actions">
-            <button class="action-btn" @click.stop="openEditModal(member)" title="编辑">
+            <button 
+              class="action-btn" 
+              :class="{ disabled: !canEditMember(member) }"
+              @click.stop="openEditModal(member)" 
+              :disabled="!canEditMember(member)"
+              :title="!canEditMember(member) ? '您没有权限编辑此成员' : '编辑'"
+            >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
             </button>
             <button 
-              v-if="!member.isOwner" 
+              v-if="!member.isOwner"
               class="action-btn danger" 
+              :class="{ disabled: !canDeleteMember(member) }"
               @click.stop="openDeleteConfirm(member)" 
-              title="删除"
+              :disabled="!canDeleteMember(member)"
+              :title="!canDeleteMember(member) ? '您没有权限删除此成员' : '删除'"
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
             </button>
-            <div v-else class="admin-badge" title="拥有者不可删除">
+            <div v-if="member.isOwner" class="admin-badge" title="拥有者不可删除">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
@@ -82,15 +91,17 @@
             <div v-if="!member.isOwner" class="permission-actions">
               <button 
                 class="action-btn small" 
-                :disabled="!devices || devices.length === 0"
+                :disabled="!canManageDevicePermissions(member) || !devices || devices.length === 0"
                 @click="selectAllDevices(member.id)"
+                :title="!canManageDevicePermissions(member) ? '您没有权限管理此成员的设备权限' : '全选设备权限'"
               >
                 全选
               </button>
               <button 
                 class="action-btn small" 
-                :disabled="!devices || devices.length === 0"
+                :disabled="!canManageDevicePermissions(member) || !devices || devices.length === 0"
                 @click="deselectAllDevices(member.id)"
+                :title="!canManageDevicePermissions(member) ? '您没有权限管理此成员的设备权限' : '取消所有设备权限'"
               >
                 全不选
               </button>
@@ -118,16 +129,22 @@
                 <span class="device-name">{{ device.name }}</span>
               </div>
               <div class="permission-toggle">
-                <label class="toggle-switch" :class="{ disabled: member.isOwner }">
+                <label class="toggle-switch" :class="{ disabled: member.isOwner || !canManageDevicePermissions(member) }">
                   <input 
                     type="checkbox" 
                     :checked="member.isOwner || (member.deviceIds && member.deviceIds.includes(device.id))"
-                    :disabled="member.isOwner"
+                    :disabled="member.isOwner || !canManageDevicePermissions(member)"
                     @change="updateDevicePermission(member.id, device.id, $event.target.checked)"
                   >
                   <span class="toggle-slider"></span>
                 </label>
                 <div v-if="member.isOwner" class="admin-lock" title="拥有者权限不可修改">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
+                  </svg>
+                </div>
+                <div v-else-if="!canManageDevicePermissions(member)" class="permission-lock" title="您没有权限管理此成员的设备权限">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
                     <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -313,6 +330,57 @@ const isMemberLimitReached = computed(() => familyMembers.value.length >= 6)
 // 计算属性：当前编辑的成员是否为拥有者
 const isEditingOwner = computed(() => editingMember.value?.role === 'owner')
 
+// 权限检查方法
+const isOwner = computed(() => {
+  return globalStore.user?.role === 'owner' || globalStore.user?.account?.role === 'owner'
+})
+
+const isMember = computed(() => {
+  return globalStore.user?.role === 'member' || globalStore.user?.account?.role === 'member'
+})
+
+// 检查是否可以编辑指定成员
+const canEditMember = (member) => {
+  // Owner可以编辑所有成员
+  if (isOwner.value) {
+    return true
+  }
+  // Member只能编辑自己
+  if (isMember.value) {
+    return member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
+  }
+  return false
+}
+
+// 检查是否可以删除指定成员
+const canDeleteMember = (member) => {
+  // Owner不能删除自己，可以删除其他成员
+  if (isOwner.value) {
+    return !member.isOwner
+  }
+  // Member不能删除任何成员
+  return false
+}
+
+// 检查是否可以添加成员
+const canAddMember = computed(() => {
+  // 只有Owner可以添加成员
+  return isOwner.value
+})
+
+// 检查是否可以管理设备权限
+const canManageDevicePermissions = (member) => {
+  // Owner可以管理所有成员的设备权限
+  if (isOwner.value) {
+    return true
+  }
+  // Member可以管理自己的设备权限
+  if (isMember.value) {
+    return member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
+  }
+  return false
+}
+
 // 工具函数
 const validatePassword = (password, confirmPassword, isEditing = false) => {
   // 编辑模式下，如果两个密码字段都为空，则不需要验证
@@ -461,7 +529,7 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
   // 检查是否为拥有者
   const member = familyMembers.value.find(m => m.id === memberId)
   if (member && member.isOwner) {
-    alert('拥有者权限不可修改')
+    ElMessage.warning('拥有者权限不可修改')
     return
   }
   
@@ -499,7 +567,7 @@ const selectAllDevices = async (memberId) => {
   if (member) {
     // 检查是否为拥有者
     if (member.isOwner) {
-      alert('拥有者权限不可修改')
+      ElMessage.warning('拥有者权限不可修改')
       return
     }
     
@@ -535,7 +603,7 @@ const deselectAllDevices = async (memberId) => {
   if (member) {
     // 检查是否为拥有者
     if (member.isOwner) {
-      alert('拥有者权限不可修改')
+      ElMessage.warning('拥有者权限不可修改')
       return
     }
     
@@ -664,11 +732,6 @@ const openEditModal = (member) => {
 
 // 打开删除确认弹窗
 const openDeleteConfirm = (member) => {
-  // 检查是否为拥有者
-  if (member.isOwner) {
-    ElMessage.warning('拥有者不能被删除')
-    return
-  }
   memberPendingDelete.value = member
 }
 
@@ -1112,6 +1175,33 @@ onUnmounted(() => {
   color: #999;
 }
 
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+  color: #999;
+  border-color: #e0e0e0;
+}
+
+.action-btn:disabled:hover {
+  background-color: #f5f5f5;
+  color: #999;
+  border-color: #e0e0e0;
+  transform: none;
+}
+
+.action-btn.danger:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  border-color: #e0e0e0;
+}
+
+.action-btn.danger:disabled:hover {
+  background-color: #f5f5f5;
+  color: #999;
+  border-color: #e0e0e0;
+}
+
 .action-btn svg {
   width: 16px;
   height: 16px;
@@ -1201,6 +1291,21 @@ onUnmounted(() => {
   height: 14px;
 }
 
+.permission-lock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-secondary);
+  cursor: help;
+}
+
+.permission-lock svg {
+  width: 14px;
+  height: 14px;
+}
+
 .expand-icon {
   width: 24px;
   height: 24px;
@@ -1235,6 +1340,11 @@ onUnmounted(() => {
   border-top: 1px solid var(--color-border);
   background-color: var(--color-bg-card);
   padding: 20px 24px;
+}
+
+.device-permissions.disabled {
+  opacity: 0.6;
+  background-color: var(--color-bg-secondary);
 }
 
 .permissions-header {

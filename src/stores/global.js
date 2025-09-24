@@ -13,7 +13,7 @@ export const useGlobalStore = defineStore('global', {
 		// {
 		//   access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // JWT访问令牌
 		//   token_type: "bearer",           // 令牌类型
-		//   role: "member",                 // 用户角色：admin/member
+		//   role: "member",                 // 用户角色：owner/member
 		//   account: {                      // 账号详细信息
 		//     account: "member10",          // 账号名
 		//     name: "成员10",               // 显示名称
