@@ -69,7 +69,7 @@ export const updateMemberDevicePermission = (memberId, deviceId, hasPermission) 
 
 export const addFamilyMember = (memberData) => {
   return request({
-    url: '/members',
+    url: '/members/',
     method: 'post',
     data: memberData
   })

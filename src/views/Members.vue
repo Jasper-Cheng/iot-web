@@ -513,14 +513,14 @@ const addNewMember = async () => {
     }
     
     const memberData = {
-      name: newMember.value.name,
-      gender: newMember.value.gender,
-      username: newMember.value.username,
+      user_id: globalStore.user?.user_id, // 当前用户的ID
+      account: newMember.value.username, // 使用account字段而不是username
       password: newMember.value.password,
       phone: newMember.value.phone,
+      name: newMember.value.name,
+      gender: newMember.value.gender,
       email: newMember.value.email,
-      avatar: newMember.value.avatar,
-      devicePermissions: {}
+      avatar: newMember.value.avatar
     }
     
     await addFamilyMember(memberData)
