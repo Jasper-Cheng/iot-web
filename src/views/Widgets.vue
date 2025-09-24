@@ -341,8 +341,8 @@ const handleDragStart = (event, device) => {
   // 设置自定义拖拽预览为"当前设备"的缩略图
   try {
     const preview = document.createElement('div')
-    preview.style.width = '180px'
-    preview.style.height = '120px'
+    preview.style.width = '80px'
+    preview.style.height = '140px'
     preview.style.border = '1px solid var(--color-widgets-preview-border)'
     preview.style.borderRadius = '10px'
     preview.style.boxShadow = '0 6px 16px var(--color-widgets-preview-shadow)'
