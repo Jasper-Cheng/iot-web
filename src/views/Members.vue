@@ -113,7 +113,7 @@
                 <label class="toggle-switch" :class="{ disabled: member.isOwner }">
                   <input 
                     type="checkbox" 
-                    :checked="member.isOwner || (member.devicePermissions && member.devicePermissions.some(p => p.device_id === device.id))"
+                    :checked="member.isOwner || (member.deviceIds && member.deviceIds.includes(device.id))"
                     :disabled="member.isOwner"
                     @change="updateDevicePermission(member.id, device.id, $event.target.checked)"
                   >
@@ -249,7 +249,8 @@ import {
   addFamilyMember,
   updateFamilyMember,
   deleteFamilyMember,
-  updateUser
+  updateUser,
+  batchUpdateMemberDevicePermissions
 } from '../api/users.js'
 import { useGlobalStore } from '../stores/global'
 import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
@@ -409,8 +410,9 @@ const loadData = async () => {
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
       status: 'active',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      devicePermissions: member.devicePermissions || {},
       // 添加设备权限字段
-      devicePermissions: member.devicePermissions || [],
+      deviceIds: member.deviceIds || [],
       // 添加编辑时需要的字段
       username: member.account?.account || '',
       phone: member.account?.phone || '',
@@ -456,40 +458,41 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
   }
   
   try {
-    const response = await updateMemberDevicePermission(memberId, deviceId, hasPermission)
-    if (response.success) {
-      // 更新本地数据 - 更新 devicePermissions 数组
-      if (member) {
-        if (!member.devicePermissions) {
-          member.devicePermissions = []
+    // 先更新本地数据
+    if (member) {
+      if (!member.deviceIds) {
+        member.deviceIds = []
+      }
+      
+      if (hasPermission) {
+        // 添加设备权限
+        if (!member.deviceIds.includes(deviceId)) {
+          member.deviceIds.push(deviceId)
         }
-        
-        if (hasPermission) {
-          // 添加设备权限
-          const existingPermission = member.devicePermissions.find(p => p.device_id === deviceId)
-          if (!existingPermission) {
-            // 这里需要从API响应中获取权限ID，暂时使用临时ID
-            member.devicePermissions.push({
-              member_id: memberId,
-              device_id: deviceId,
-              id: Date.now() // 临时ID，实际应该从API响应获取
-            })
-          }
-        } else {
-          // 移除设备权限
-          const index = member.devicePermissions.findIndex(p => p.device_id === deviceId)
-          if (index > -1) {
-            member.devicePermissions.splice(index, 1)
-          }
+      } else {
+        // 移除设备权限
+        const index = member.deviceIds.indexOf(deviceId)
+        if (index > -1) {
+          member.deviceIds.splice(index, 1)
         }
       }
+    }
+    
+    // 调用批量更新接口
+    const response = await batchUpdateMemberDevicePermissions(memberId, member.deviceIds)
+    if (response.success) {
+      console.log('权限更新成功:', response.data)
+    } else {
+      // 如果更新失败，回滚本地数据
+      console.error('权限更新失败，回滚本地数据')
     }
   } catch (error) {
     console.error('更新权限失败:', error)
+    ElMessage.error('更新权限失败，请重试')
   }
 }
 
-const selectAllDevices = (memberId) => {
+const selectAllDevices = async (memberId) => {
   const member = familyMembers.value.find(m => m.id === memberId)
   if (member) {
     // 检查是否为拥有者
@@ -498,27 +501,29 @@ const selectAllDevices = (memberId) => {
       return
     }
     
-    // 初始化 devicePermissions 数组
-    if (!member.devicePermissions) {
-      member.devicePermissions = []
-    }
-    
-    devices.value.forEach(device => {
-      // 添加到 devicePermissions 数组
-      const existingPermission = member.devicePermissions.find(p => p.device_id === device.id)
-      if (!existingPermission) {
-        member.devicePermissions.push({
-          member_id: memberId,
-          device_id: device.id,
-          id: Date.now() + Math.random() // 临时ID
-        })
+    try {
+      // 获取所有设备ID
+      const allDeviceIds = devices.value.map(device => device.id)
+      
+      // 更新本地数据
+      member.deviceIds = [...allDeviceIds]
+      
+      // 调用批量更新接口
+      const response = await batchUpdateMemberDevicePermissions(memberId, allDeviceIds)
+      if (response.success) {
+        ElMessage.success('全选设备权限成功')
+        console.log('全选权限更新成功:', response.data)
+      } else {
+        ElMessage.error('全选设备权限失败')
       }
-      updateDevicePermission(memberId, device.id, true)
-    })
+    } catch (error) {
+      console.error('全选设备权限失败:', error)
+      ElMessage.error('全选设备权限失败，请重试')
+    }
   }
 }
 
-const deselectAllDevices = (memberId) => {
+const deselectAllDevices = async (memberId) => {
   const member = familyMembers.value.find(m => m.id === memberId)
   if (member) {
     // 检查是否为拥有者
@@ -527,12 +532,22 @@ const deselectAllDevices = (memberId) => {
       return
     }
     
-    // 清空 devicePermissions 数组
-    member.devicePermissions = []
-    
-    devices.value.forEach(device => {
-      updateDevicePermission(memberId, device.id, false)
-    })
+    try {
+      // 清空本地数据
+      member.deviceIds = []
+      
+      // 调用批量更新接口（传入空数组）
+      const response = await batchUpdateMemberDevicePermissions(memberId, [])
+      if (response.success) {
+        ElMessage.success('取消所有设备权限成功')
+        console.log('取消所有权限更新成功:', response.data)
+      } else {
+        ElMessage.error('取消所有设备权限失败')
+      }
+    } catch (error) {
+      console.error('取消所有设备权限失败:', error)
+      ElMessage.error('取消所有设备权限失败，请重试')
+    }
   }
 }
 

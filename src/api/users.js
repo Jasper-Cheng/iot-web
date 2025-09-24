@@ -100,3 +100,14 @@ export const getMemberDevicePermissions = (memberId) => {
     }
   })
 }
+
+// 批量更新成员设备权限
+export const batchUpdateMemberDevicePermissions = (memberId, deviceIds) => {
+  return request({
+    url: `/member-device-permissions/member/${memberId}/batch-update`,
+    method: 'put',
+    data: {
+      device_ids: deviceIds
+    }
+  })
+}

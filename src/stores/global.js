@@ -67,7 +67,7 @@ export const useGlobalStore = defineStore('global', {
 		//       id: 0,                       // 账号ID
 		//       created_at: "2025-09-23T02:30:12.887Z" // 账号创建时间
 		//     },
-		//     isOwner: true                  // 标识为拥有者（owner拥有所有设备权限，无需devicePermissions字段）
+		//     isOwner: true                  // 标识为拥有者（owner拥有所有设备权限，无需deviceIds字段）
 		//   },
 		//   // 家庭成员 - 其他成员
 		//   {
@@ -87,18 +87,7 @@ export const useGlobalStore = defineStore('global', {
 		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
 		//     },
 		//     isOwner: false,                // 标识为普通成员
-		//     devicePermissions: [            // 设备权限详情
-		//       {
-		//         member_id: 6,               // 成员ID
-		//         device_id: 58,              // 设备ID
-		//         id: 17                      // 权限记录ID
-		//       },
-		//       {
-		//         member_id: 6,
-		//         device_id: 59,
-		//         id: 16
-		//       }
-		//     ]
+		//     deviceIds: [58, 59]            // 设备ID数组，用于快速判断权限
 		//   }
 		// ]
 		members: [],
@@ -236,15 +225,18 @@ export const useGlobalStore = defineStore('global', {
 						try {
 							// 获取成员的设备权限
 							const permissions = await getMemberDevicePermissions(member.id || member.user_id)
+							// 提取device_id组成数组
+							const deviceIds = permissions ? permissions.map(p => p.device_id) : []
+							console.log('deviceIds', deviceIds)
 							return {
 								...member,
-								devicePermissions: permissions || [] // 完整的权限对象数组
+								deviceIds: deviceIds // 设备ID数组，用于快速判断权限
 							}
 						} catch (error) {
 							console.warn(`获取成员 ${member.id || member.user_id} 的设备权限失败:`, error)
 							return {
 								...member,
-								devicePermissions: [] // 权限加载失败时设为空数组
+								deviceIds: [] // 权限加载失败时设为空数组
 							}
 						}
 					})
