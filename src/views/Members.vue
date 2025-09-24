@@ -535,24 +535,9 @@ const editMember = async () => {
     })
     globalStore.members = updatedMembers
     
-    // 如果是当前用户，同时更新 globalStore.user
+    // 如果是当前用户，使用统一的更新方法
     if (globalStore.user?.id === editingMember.value.id) {
-      if (globalStore.user?.account) {
-        const updatedUser = { ...globalStore.user }
-        const updatedAccount = { ...globalStore.user.account }
-        
-        // 只更新有值的字段
-        if (updateData.account) updatedAccount.account = updateData.account
-        if (updateData.name) updatedAccount.name = updateData.name
-        if (updateData.gender) updatedAccount.gender = updateData.gender
-        if (updateData.phone) updatedAccount.phone = updateData.phone
-        if (updateData.email) updatedAccount.email = updateData.email
-        if (updateData.avatar) updatedAccount.avatar = updateData.avatar
-        
-        // 替换整个user对象来触发响应式更新
-        updatedUser.account = updatedAccount
-        globalStore.user = updatedUser
-      }
+      globalStore.updateUserInfo(updateData)
     }
     
     ElMessage.success('更新成功')

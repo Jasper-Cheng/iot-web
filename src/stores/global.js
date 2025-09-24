@@ -259,16 +259,14 @@ export const useGlobalStore = defineStore('global', {
 			this.user = response.account || response
 			this.token = response.access_token
 			// 保存到localStorage
-			localStorage.setItem('token', response.access_token)
-			localStorage.setItem('user', JSON.stringify(response.account || response))
+			this.saveToLocalStorage()
 		},
 		clearAuth() {
 			this.isAuthenticated = false
 			this.user = null
 			this.token = null
 			// 清除localStorage
-			localStorage.removeItem('token')
-			localStorage.removeItem('user')
+			this.clearLocalStorage()
 		},
 		// 从localStorage恢复认证状态
 		restoreAuth() {
@@ -289,6 +287,53 @@ export const useGlobalStore = defineStore('global', {
 				}
 			}
 			return false
+		},
+		
+		// 保存当前状态到localStorage
+		saveToLocalStorage() {
+			try {
+				if (this.token) {
+					localStorage.setItem('token', this.token)
+				}
+				if (this.user) {
+					localStorage.setItem('user', JSON.stringify(this.user))
+				}
+			} catch (error) {
+				console.error('Failed to save to localStorage:', error)
+			}
+		},
+		
+		// 清除localStorage
+		clearLocalStorage() {
+			try {
+				localStorage.removeItem('token')
+				localStorage.removeItem('user')
+			} catch (error) {
+				console.error('Failed to clear localStorage:', error)
+			}
+		},
+		
+		// 更新用户信息（统一方法）
+		updateUserInfo(updateData) {
+			if (this.user?.account) {
+				const updatedUser = { ...this.user }
+				const updatedAccount = { ...this.user.account }
+				
+				// 只更新有值的字段
+				if (updateData.account) updatedAccount.account = updateData.account
+				if (updateData.name) updatedAccount.name = updateData.name
+				if (updateData.gender) updatedAccount.gender = updateData.gender
+				if (updateData.phone) updatedAccount.phone = updateData.phone
+				if (updateData.email) updatedAccount.email = updateData.email
+				if (updateData.avatar) updatedAccount.avatar = updateData.avatar
+				
+				// 更新状态
+				updatedUser.account = updatedAccount
+				this.user = updatedUser
+				
+				// 同步到localStorage
+				this.saveToLocalStorage()
+			}
 		}
 	}
 })
