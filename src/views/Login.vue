@@ -151,7 +151,7 @@ import { useGlobalStore } from '../stores/global'
 import { login, register } from '../api/auth'
 import { getMemberDetail, getUserDetail } from '../api/users'
 import { ElMessage } from 'element-plus'
-import AvatarSelector from '../widgets/AvatarSelector.vue'
+import AvatarSelector from '../components/AvatarSelector.vue'
 
 const router = useRouter()
 const globalStore = useGlobalStore()

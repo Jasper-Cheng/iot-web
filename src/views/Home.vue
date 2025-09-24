@@ -52,14 +52,14 @@
 import { ref, computed } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
-import WiFiCard from '../widgets/WiFiCard.vue'
-import TvCard from '../widgets/TvCard.vue'
-import MusicCard from '../widgets/MusicCard.vue'
-import SocketsCard from '../widgets/SocketsCard.vue'
-import ColorControlCard from '../widgets/ColorControlCard.vue'
-import EnergyCard from '../widgets/EnergyCard.vue'
-import DeviceStatsCard from '../widgets/DeviceStatsCard.vue'
-import SmartControlPanel from '../widgets/SmartControlPanel.vue'
+import WiFiCard from '../cards/WiFiCard.vue'
+import TvCard from '../cards/TvCard.vue'
+import MusicCard from '../cards/MusicCard.vue'
+import SocketsCard from '../cards/SocketsCard.vue'
+import ColorControlCard from '../cards/ColorControlCard.vue'
+import EnergyCard from '../cards/EnergyCard.vue'
+import DeviceStatsCard from '../cards/DeviceStatsCard.vue'
+import SmartControlPanel from '../components/SmartControlPanel.vue'
 
 // 全局状态
 const globalStore = useGlobalStore()

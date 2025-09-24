@@ -255,7 +255,7 @@ import {
 import { useGlobalStore } from '../stores/global'
 import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMapping'
 import { getAvatarUrl } from '../utils/theme'
-import AvatarSelector from '../widgets/AvatarSelector.vue'
+import AvatarSelector from '../components/AvatarSelector.vue'
 import { ElMessage } from 'element-plus'
 
 // 全局状态
