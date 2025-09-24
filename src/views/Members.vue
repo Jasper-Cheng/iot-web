@@ -80,10 +80,18 @@
           <div class="permissions-header">
             <h4>设备控制权限</h4>
             <div v-if="!member.isOwner" class="permission-actions">
-              <button class="action-btn small" @click="selectAllDevices(member.id)">
+              <button 
+                class="action-btn small" 
+                :disabled="!devices || devices.length === 0"
+                @click="selectAllDevices(member.id)"
+              >
                 全选
               </button>
-              <button class="action-btn small" @click="deselectAllDevices(member.id)">
+              <button 
+                class="action-btn small" 
+                :disabled="!devices || devices.length === 0"
+                @click="deselectAllDevices(member.id)"
+              >
                 全不选
               </button>
             </div>
@@ -495,6 +503,12 @@ const selectAllDevices = async (memberId) => {
       return
     }
     
+    // 检查是否有设备
+    if (!devices.value || devices.value.length === 0) {
+      ElMessage.warning('暂无设备可操作')
+      return
+    }
+    
     try {
       // 获取所有设备ID
       const allDeviceIds = devices.value.map(device => device.id)
@@ -522,6 +536,12 @@ const deselectAllDevices = async (memberId) => {
     // 检查是否为拥有者
     if (member.isOwner) {
       alert('拥有者权限不可修改')
+      return
+    }
+    
+    // 检查是否有设备
+    if (!devices.value || devices.value.length === 0) {
+      ElMessage.warning('暂无设备可操作')
       return
     }
     
@@ -1083,6 +1103,13 @@ onUnmounted(() => {
   height: 28px;
   padding: 0 12px;
   font-size: 12px;
+}
+
+.action-btn.small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+  color: #999;
 }
 
 .action-btn svg {
