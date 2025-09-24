@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { fetchDeviceStatuses } from '../api/devices'
-import { getMembers, getUserDetail } from '../api/users'
+import { getMembers, getUserDetail, getMemberDevicePermissions } from '../api/users'
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 
@@ -67,7 +67,7 @@ export const useGlobalStore = defineStore('global', {
 		//       id: 0,                       // 账号ID
 		//       created_at: "2025-09-23T02:30:12.887Z" // 账号创建时间
 		//     },
-		//     isOwner: true                  // 标识为拥有者
+		//     isOwner: true                  // 标识为拥有者（owner拥有所有设备权限，无需devicePermissions字段）
 		//   },
 		//   // 家庭成员 - 其他成员
 		//   {
@@ -86,7 +86,19 @@ export const useGlobalStore = defineStore('global', {
 		//       id: 24,                      // 账号ID
 		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
 		//     },
-		//     isOwner: false                 // 标识为普通成员
+		//     isOwner: false,                // 标识为普通成员
+		//     devicePermissions: [            // 设备权限详情
+		//       {
+		//         member_id: 6,               // 成员ID
+		//         device_id: 58,              // 设备ID
+		//         id: 17                      // 权限记录ID
+		//       },
+		//       {
+		//         member_id: 6,
+		//         device_id: 59,
+		//         id: 16
+		//       }
+		//     ]
 		//   }
 		// ]
 		members: [],
@@ -207,8 +219,38 @@ export const useGlobalStore = defineStore('global', {
 					isOwner: true
 				} : null
 				
-				// Owner 放在第一位，然后是其他成员
-				this.members = owner ? [owner, ...members] : members
+				// 合并所有成员（Owner + 其他成员）
+				const allMembers = owner ? [owner, ...members] : members
+				
+				// 为每个成员加载设备权限（owner默认拥有所有权限）
+				const membersWithPermissions = await Promise.all(
+					allMembers.map(async (member, index) => {
+						// 第一位是owner，默认拥有所有权限
+						if (index === 0 && member.isOwner) {
+							return {
+								...member
+								// owner拥有所有设备权限，不需要deviceIds字段
+							}
+						}
+						
+						try {
+							// 获取成员的设备权限
+							const permissions = await getMemberDevicePermissions(member.id || member.user_id)
+							return {
+								...member,
+								devicePermissions: permissions || [] // 完整的权限对象数组
+							}
+						} catch (error) {
+							console.warn(`获取成员 ${member.id || member.user_id} 的设备权限失败:`, error)
+							return {
+								...member,
+								devicePermissions: [] // 权限加载失败时设为空数组
+							}
+						}
+					})
+				)
+				
+				this.members = membersWithPermissions
 			} catch (err) {
 				this.errors.members = err
 				console.error('成员列表加载失败:', err)

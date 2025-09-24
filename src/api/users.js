@@ -89,3 +89,14 @@ export const deleteFamilyMember = (id) => {
     method: 'delete'
   })
 }
+
+// 获取成员设备控制权限
+export const getMemberDevicePermissions = (memberId) => {
+  return request({
+    url: '/member-device-permissions/',
+    method: 'get',
+    params: {
+      member_id: memberId
+    }
+  })
+}

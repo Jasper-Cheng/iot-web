@@ -113,7 +113,7 @@
                 <label class="toggle-switch" :class="{ disabled: member.isOwner }">
                   <input 
                     type="checkbox" 
-                    :checked="(member.devicePermissions && member.devicePermissions[device.id]) || false"
+                    :checked="member.isOwner || (member.devicePermissions && member.devicePermissions.some(p => p.device_id === device.id))"
                     :disabled="member.isOwner"
                     @change="updateDevicePermission(member.id, device.id, $event.target.checked)"
                   >
@@ -345,7 +345,6 @@ const validatePassword = (password, confirmPassword, isEditing = false) => {
 }
 
 const handleError = (error, defaultMessage) => {
-  console.error(defaultMessage, error)
   formError.value = error.response?.data?.detail || defaultMessage
 }
 
@@ -410,7 +409,8 @@ const loadData = async () => {
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
       status: 'active',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      devicePermissions: member.devicePermissions || {},
+      // 添加设备权限字段
+      devicePermissions: member.devicePermissions || [],
       // 添加编辑时需要的字段
       username: member.account?.account || '',
       phone: member.account?.phone || '',
@@ -458,9 +458,30 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
   try {
     const response = await updateMemberDevicePermission(memberId, deviceId, hasPermission)
     if (response.success) {
-      // 更新本地数据
+      // 更新本地数据 - 更新 devicePermissions 数组
       if (member) {
-        member.devicePermissions[deviceId] = hasPermission
+        if (!member.devicePermissions) {
+          member.devicePermissions = []
+        }
+        
+        if (hasPermission) {
+          // 添加设备权限
+          const existingPermission = member.devicePermissions.find(p => p.device_id === deviceId)
+          if (!existingPermission) {
+            // 这里需要从API响应中获取权限ID，暂时使用临时ID
+            member.devicePermissions.push({
+              member_id: memberId,
+              device_id: deviceId,
+              id: Date.now() // 临时ID，实际应该从API响应获取
+            })
+          }
+        } else {
+          // 移除设备权限
+          const index = member.devicePermissions.findIndex(p => p.device_id === deviceId)
+          if (index > -1) {
+            member.devicePermissions.splice(index, 1)
+          }
+        }
       }
     }
   } catch (error) {
@@ -477,8 +498,21 @@ const selectAllDevices = (memberId) => {
       return
     }
     
+    // 初始化 devicePermissions 数组
+    if (!member.devicePermissions) {
+      member.devicePermissions = []
+    }
+    
     devices.value.forEach(device => {
-      member.devicePermissions[device.id] = true
+      // 添加到 devicePermissions 数组
+      const existingPermission = member.devicePermissions.find(p => p.device_id === device.id)
+      if (!existingPermission) {
+        member.devicePermissions.push({
+          member_id: memberId,
+          device_id: device.id,
+          id: Date.now() + Math.random() // 临时ID
+        })
+      }
       updateDevicePermission(memberId, device.id, true)
     })
   }
@@ -493,8 +527,10 @@ const deselectAllDevices = (memberId) => {
       return
     }
     
+    // 清空 devicePermissions 数组
+    member.devicePermissions = []
+    
     devices.value.forEach(device => {
-      member.devicePermissions[device.id] = false
       updateDevicePermission(memberId, device.id, false)
     })
   }
@@ -549,7 +585,6 @@ const editMember = async () => {
     
     // 构建更新数据（编辑模式）
     const updateData = buildUpdateData(newMember.value, true)
-    console.log('updateData', updateData)
     
     // 根据角色调用不同的API
     if (isEditingOwner.value) {
@@ -621,9 +656,7 @@ const confirmDeleteMember = async () => {
   if (!member) return
   
   try {
-    console.log('开始删除成员:', member.id)
     const response = await deleteFamilyMember(member.id)
-    console.log('删除API响应:', response)
     
     // 删除成功（API没有抛出异常就认为成功）
     // 重新从服务器加载成员数据，watch会自动调用loadData()
