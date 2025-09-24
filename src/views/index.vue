@@ -80,7 +80,12 @@
           <p class="status">Every system and gadget is operating as planned.</p>
         </div>
         <div class="header-right">
-          <button class="add-device-btn">
+          <button 
+            class="add-device-btn" 
+            :class="{ disabled: globalStore.user?.account?.role === 'member' }"
+            :disabled="globalStore.user?.account?.role === 'member'"
+            :title="globalStore.user?.account?.role === 'member' ? '只有拥有者可以添加设备' : '添加设备'"
+          >
             <span class="plus-icon">+</span>
             Add Device
           </button>
@@ -160,7 +165,6 @@
                 <a 
                   href="#" 
                   class="dropdown-item delete-account" 
-                  :class="{ disabled: globalStore.user?.account?.role === 'member' }"
                   @click.prevent="handleDeleteClick"
                 >
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -195,21 +199,34 @@
             <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
           </svg>
         </div>
-        <h3>确认注销账户</h3>
+        <h3>{{ globalStore.user?.account?.role === 'member' ? '确认退出家庭' : '确认注销账户' }}</h3>
       </div>
       <div class="confirm-content">
-        <p>此操作将<strong>永久删除</strong>您的账户以及所有相关数据，包括：</p>
-        <ul>
-          <li>所有设备数据</li>
-          <li>所有成员信息</li>
-          <li>所有历史记录</li>
-          <li>所有设置和配置</li>
-        </ul>
-        <p class="warning-text">此操作<strong>无法撤销</strong>，请谨慎操作！</p>
+        <template v-if="globalStore.user?.account?.role === 'member'">
+          <p>此操作将<strong>永久删除</strong>您的成员账户，包括：</p>
+          <ul>
+            <li>您的个人设备权限</li>
+            <li>您的个人设置和配置</li>
+            <li>您的历史操作记录</li>
+          </ul>
+          <p class="warning-text">退出家庭后，您将<strong>无法访问</strong>任何家庭设备，请谨慎操作！</p>
+        </template>
+        <template v-else>
+          <p>此操作将<strong>永久删除</strong>您的账户以及所有相关数据，包括：</p>
+          <ul>
+            <li>所有设备数据</li>
+            <li>所有成员信息</li>
+            <li>所有历史记录</li>
+            <li>所有设置和配置</li>
+          </ul>
+          <p class="warning-text">此操作<strong>无法撤销</strong>，请谨慎操作！</p>
+        </template>
       </div>
       <div class="confirm-actions">
         <button class="btn-cancel" @click="closeDeleteConfirm">取消</button>
-        <button class="btn-delete" @click="confirmDelete">确认注销</button>
+        <button class="btn-delete" @click="confirmDelete">
+          {{ globalStore.user?.account?.role === 'member' ? '确认退出' : '确认注销' }}
+        </button>
       </div>
     </div>
   </div>
@@ -221,7 +238,7 @@ import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
-import { deleteUser } from '../api/users'
+import { deleteUser, deleteFamilyMember } from '../api/users'
 import { ElMessage } from 'element-plus'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
@@ -324,10 +341,6 @@ const showDeleteConfirm = () => {
 
 // 处理注销按钮点击
 const handleDeleteClick = () => {
-  if (globalStore.user?.account?.role === 'member') {
-    ElMessage.warning('成员账户不能注销，请联系管理员')
-    return
-  }
   showDeleteConfirm()
 }
 
@@ -339,15 +352,16 @@ const closeDeleteConfirm = () => {
 // 确认注销账户
 const confirmDelete = async () => {
   try {
-    // 检查用户角色，member不可以注销
+    let response
+    
+    // 根据用户角色调用不同的API
     if (globalStore.user?.account?.role === 'member') {
-      ElMessage.error('成员账户不能注销，请联系管理员')
-      showDeleteConfirmModal.value = false
-      return
+      // 成员调用删除家庭成员API
+      response = await deleteFamilyMember(globalStore.user?.id)
+    } else {
+      // 拥有者调用删除用户API
+      response = await deleteUser(globalStore.user?.user_id)
     }
-
-    // 调用删除用户API，使用user_id
-    const response = await deleteUser(globalStore.user?.user_id)
     
     if (response.message) {
       ElMessage.success(response.message)
@@ -592,6 +606,22 @@ body, html {
 .add-device-btn:hover {
   background-color: var(--color-primary-hover);
   transform: translateY(-2px);
+}
+
+.add-device-btn:disabled,
+.add-device-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
+}
+
+.add-device-btn:disabled:hover,
+.add-device-btn.disabled:hover {
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  transform: none;
 }
 
 .plus-icon {
