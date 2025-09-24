@@ -41,7 +41,17 @@ const props = defineProps({
       'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar7',
       'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar8',
       'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar9',
-      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10'
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar10',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar11',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar12',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar13',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar14',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar15',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar16',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar17',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar18',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar19',
+      'https://api.dicebear.com/7.x/adventurer/png?size=80&seed=avatar20'
     ]
   },
   currentUserAvatar: {
