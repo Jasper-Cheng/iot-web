@@ -133,7 +133,13 @@
                 {{ getRoomName(selectedDevice.roomId) }}
               </span>
             </div>
-            <button class="action-btn danger" @click="removeDevice(selectedDevice)">
+            <button 
+              class="action-btn danger" 
+              :class="{ disabled: !canControlDevice(selectedDevice.id) }"
+              :disabled="!canControlDevice(selectedDevice.id)"
+              :title="!canControlDevice(selectedDevice.id) ? '您没有权限删除此设备' : '删除设备'"
+              @click="removeDevice(selectedDevice)"
+            >
               Remove Device
             </button>
           </div>
@@ -211,6 +217,24 @@ const isOwner = computed(() => {
 const isMember = computed(() => {
   return globalStore.user?.role === 'member' || globalStore.user?.account?.role === 'member'
 })
+
+// 检查当前用户是否有权限控制指定设备
+const canControlDevice = (deviceId) => {
+  // Owner可以控制所有设备
+  if (isOwner.value) {
+    return true
+  }
+  
+  // Member只能控制自己有权限的设备
+  if (isMember.value) {
+    const currentUser = globalStore.members?.find(member => 
+      member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
+    )
+    return currentUser?.deviceIds?.includes(deviceId) || false
+  }
+  
+  return false
+}
 
 // 房间数据 - 使用真实数据
 const rooms = computed(() => {
@@ -1131,10 +1155,26 @@ onMounted(() => {
   border-color: color-mix(in oklab, var(--color-danger) 30%, transparent);
 }
 
-.action-btn.danger:hover {
+.action-btn.danger:hover:not(:disabled) {
   background: var(--color-danger);
   color: var(--color-white);
   border-color: var(--color-danger);
+}
+
+.action-btn.danger:disabled,
+.action-btn.danger.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
+}
+
+.action-btn.danger:disabled:hover,
+.action-btn.danger.disabled:hover {
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
 }
 
 /* 成功按钮（Add） */
