@@ -18,12 +18,17 @@
 
         <div class="room-content">
           <!-- 动态渲染设备卡片 -->
-          <component 
+          <div 
             v-for="device in filteredDevices" 
             :key="device.id"
-            :is="getDeviceComponent(device.cardName)"
-            :device="device"
-          />
+            :class="['device-wrapper', { disabled: !canControlDevice(device.id) }]"
+            :title="!canControlDevice(device.id) ? '您没有权限控制此设备' : ''"
+          >
+            <component 
+              :is="getDeviceComponent(device.cardName)"
+              :device="device"
+            />
+          </div>
         </div>
       </div>
 
@@ -63,6 +68,33 @@ import SmartControlPanel from '../components/SmartControlPanel.vue'
 
 // 全局状态
 const globalStore = useGlobalStore()
+
+// 权限检查方法
+const isOwner = computed(() => {
+  return globalStore.user?.role === 'owner' || globalStore.user?.account?.role === 'owner'
+})
+
+const isMember = computed(() => {
+  return globalStore.user?.role === 'member' || globalStore.user?.account?.role === 'member'
+})
+
+// 检查当前用户是否有权限控制指定设备
+const canControlDevice = (deviceId) => {
+  // Owner可以控制所有设备
+  if (isOwner.value) {
+    return true
+  }
+  
+  // Member只能控制自己有权限的设备
+  if (isMember.value) {
+    const currentUser = globalStore.members?.find(member => 
+      member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
+    )
+    return currentUser?.deviceIds?.includes(deviceId) || false
+  }
+  
+  return false
+}
 
 // =========================
 // Room navigation data/state
@@ -264,6 +296,39 @@ const setActiveRoom = (roomId) => {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 两列 */
   gap: 16px;
+}
+
+/* 设备包装器样式 */
+.device-wrapper {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* 禁用设备样式 */
+.device-wrapper.disabled {
+  opacity: 0.6;
+  filter: grayscale(80%);
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.device-wrapper.disabled::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  z-index: 2;
+  color: var(--color-disabled-text);
+  background: var(--color-bg-card);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes pulse {
