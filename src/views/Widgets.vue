@@ -134,15 +134,15 @@
   <div v-if="roomPendingDelete" class="device-modal" @click="closeDeleteConfirm">
     <div class="delete-modal-content" @click.stop>
       <div class="delete-modal-header">
-        <h3>Delete Room</h3>
+        <h3>删除房间</h3>
         <button class="delete-close-btn" @click="closeDeleteConfirm">X</button>
       </div>
       <div class="delete-modal-body">
-        <p>Are you sure you want to delete "{{ roomPendingDelete.name }}"? Devices in this room will be moved to All Devices.</p>
+        <p>确定要删除房间 "{{ roomPendingDelete.name }}" 吗？此房间中的设备将移动到所有设备区域。</p>
       </div>
       <div class="delete-modal-footer">
-        <button class="action-btn" @click="closeDeleteConfirm">Cancel</button>
-        <button class="action-btn danger" @click="removeRoom">Delete</button>
+        <button class="action-btn" @click="closeDeleteConfirm">取消</button>
+        <button class="action-btn danger" @click="removeRoom">删除</button>
       </div>
     </div>
   </div>
@@ -151,15 +151,15 @@
   <div v-if="addRoomModalOpen" class="device-modal" @click="cancelAddRoom">
     <div class="delete-modal-content" @click.stop>
       <div class="delete-modal-header">
-        <h3>Add Room</h3>
+        <h3>添加房间</h3>
         <button class="delete-close-btn" @click="cancelAddRoom">X</button>
       </div>
       <div class="delete-modal-body">
-        <input class="input" v-model="newRoomName" placeholder="Enter room name" @keyup.enter="confirmAddRoom" />
+        <input class="input" v-model="newRoomName" placeholder="请输入房间名称" @keyup.enter="confirmAddRoom" />
       </div>
       <div class="delete-modal-footer">
-        <button class="action-btn" @click="cancelAddRoom">Cancel</button>
-        <button class="action-btn success" @click="confirmAddRoom" :disabled="!newRoomName.trim()">Add</button>
+        <button class="cancel-btn" @click="cancelAddRoom">取消</button>
+        <button class="action-btn success" @click="confirmAddRoom" :disabled="!newRoomName.trim()">添加</button>
       </div>
     </div>
   </div>
@@ -1057,7 +1057,7 @@ onMounted(() => {
 }
 
 .action-btn {
-  padding: 12px 12px;
+  padding: 10px 20px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg-secondary);
@@ -1085,17 +1085,31 @@ onMounted(() => {
   border-color: var(--color-danger);
 }
 
-/* 浅绿色成功按钮（Add） */
+/* 成功按钮（Add） */
 .action-btn.success {
-  background: color-mix(in oklab, var(--color-success) 12%, transparent);
-  color: var(--color-success);
-  border-color: color-mix(in oklab, var(--color-success) 35%, transparent);
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border-color: var(--color-primary);
 }
 
-.action-btn.success:hover {
-  background: var(--color-success);
-  color: var(--color-white);
-  border-color: var(--color-success);
+.action-btn.success:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
 }
 
 /* 设备大图预览 */
