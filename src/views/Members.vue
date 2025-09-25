@@ -53,10 +53,7 @@
               :disabled="!canEditMember(member)"
               :title="!canEditMember(member) ? '您没有权限编辑此成员' : '编辑'"
             >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
+              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExIDRINGEyIDIgMCAwIDAtMiAyVjE0YTIgMiAwIDAgMCAyIDJIMTRhMiAyIDAgMCAwIDItMlY3IiBzdHJva2U9IiM2NjY2NjYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJNMTguNSAyLjVhMi4xMjEgMi4xMjEgMCAwIDEgMyAzTDEyIDE1bC00IDEgMS00IDkuNS05LjV6IiBzdHJva2U9IiM2NjY2NjYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K" style="width: 16px; height: 16px;">
             </button>
             <button 
               v-if="!member.isOwner"
@@ -66,20 +63,13 @@
               :disabled="!canDeleteMember(member)"
               :title="!canDeleteMember(member) ? '您没有权限删除此成员' : '删除'"
             >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
+              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBvbHlsaW5lIHBvaW50cz0iMyw2IDUsNiAyMSw2IiBzdHJva2U9IiNlNzQ0NDQiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJNMTkgNnYxNGEyIDIgMCAwIDEtMiAySDdhMiAyIDAgMCAxLTItMlY2bTMgMFY0YTIgMiAwIDAgMSAyLTJoNGEyIDIgMCAwIDEgMiAydjIiIHN0cm9rZT0iI2U3NDQ0NCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+Cjwvc3ZnPgo=" style="width: 16px; height: 16px;">
             </button>
             <div v-if="member.isOwner" class="admin-badge" title="拥有者不可删除">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
+              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJsMy4wOSA2LjI2TDIyIDkuMjdsLTUgNC44NyAxLjE4IDYuODhMMTIgMTcuNzdsLTYuMTggMy4yNUw3IDE0LjE0IDIgOS4yN2w2LjkxLTEuMDFMMTIgMnoiIHN0cm9rZT0iI2ZmYzEwNyIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSIjZmZjMTA3Ii8+Cjwvc3ZnPgo=" style="width: 16px; height: 16px;">
             </div>
             <div class="expand-icon" :class="{ expanded: expandedMembers.includes(member.id) }">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
+              <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBvbHlsaW5lIHBvaW50cz0iNiw5IDEyLDE1IDE4LDkiIHN0cm9rZT0iIzY2NjY2NiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+Cjwvc3ZnPgo=" style="width: 16px; height: 16px;">
             </div>
           </div>
         </div>
@@ -1149,7 +1139,7 @@ onUnmounted(() => {
 }
 
 .action-btn {
-  background: none;
+  background: var(--color-nav-idle);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   width: 32px;
@@ -1168,13 +1158,13 @@ onUnmounted(() => {
 }
 
 .action-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--color-nav-idle);
+  color: var(--color-nav-idle);
 }
 
 .action-btn.danger:hover {
-  border-color: var(--color-member-border-danger);
-  color: var(--color-member-border-danger);
+  border-color: var(--color-nav-idle);
+  color: var(--color-nav-idle);
 }
 
 .action-btn.small {
@@ -1218,12 +1208,14 @@ onUnmounted(() => {
   border-color: var(--color-disabled-border);
 }
 
-.action-btn svg {
+.action-btn svg,
+.action-btn img {
   width: 16px;
   height: 16px;
 }
 
-.member-node.collapsed .action-btn svg {
+.member-node.collapsed .action-btn svg,
+.member-node.collapsed .action-btn img {
   width: 12px;
   height: 12px;
 }
@@ -1245,12 +1237,14 @@ onUnmounted(() => {
   height: 24px;
 }
 
-.admin-badge svg {
+.admin-badge svg,
+.admin-badge img {
   width: 16px;
   height: 16px;
 }
 
-.member-node.collapsed .admin-badge svg {
+.member-node.collapsed .admin-badge svg,
+.member-node.collapsed .admin-badge img {
   width: 12px;
   height: 12px;
 }
@@ -1341,12 +1335,14 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 
-.expand-icon svg {
+.expand-icon svg,
+.expand-icon img {
   width: 16px;
   height: 16px;
 }
 
-.member-node.collapsed .expand-icon svg {
+.member-node.collapsed .expand-icon svg,
+.member-node.collapsed .expand-icon img {
   width: 12px;
   height: 12px;
 }
