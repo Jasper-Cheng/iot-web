@@ -3,7 +3,13 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-actions">
-        <button class="add-room-btn" @click="addRoom">
+        <button 
+          class="add-room-btn" 
+          :class="{ disabled: isMember }"
+          :disabled="isMember"
+          :title="isMember ? '只有拥有者可以添加房间' : '添加房间'"
+          @click="addRoom"
+        >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none"/>
           </svg>
@@ -61,7 +67,13 @@
             <h3 class="room-title">{{ room.name }}</h3>
             <div class="room-actions">
               <span class="device-count">{{ getRoomDevices(room.id).length }} devices</span>
-              <button class="delete-room-btn" title="Delete room" @click.stop="openDeleteConfirm(room)">
+              <button 
+                class="delete-room-btn" 
+                :class="{ disabled: isMember }"
+                :disabled="isMember"
+                :title="isMember ? '只有拥有者可以删除房间' : '删除房间'"
+                @click.stop="openDeleteConfirm(room)"
+              >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6 7h12M9 7v12m6-12v12M10 4h4a1 1 0 0 1 1 1v2H9V5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.5"/>
                 </svg>
@@ -190,6 +202,15 @@ const widgetsPage = ref(null)
 
 // 全局状态
 const globalStore = useGlobalStore()
+
+// 权限检查方法
+const isOwner = computed(() => {
+  return globalStore.user?.role === 'owner' || globalStore.user?.account?.role === 'owner'
+})
+
+const isMember = computed(() => {
+  return globalStore.user?.role === 'member' || globalStore.user?.account?.role === 'member'
+})
 
 // 房间数据 - 使用真实数据
 const rooms = computed(() => {
@@ -697,9 +718,25 @@ onMounted(() => {
   gap: 8px;
 }
 
-.add-room-btn:hover {
+.add-room-btn:hover:not(:disabled) {
   background: var(--color-primary-hover);
   transform: translateY(-2px);
+}
+
+.add-room-btn:disabled,
+.add-room-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
+}
+
+.add-room-btn:disabled:hover,
+.add-room-btn.disabled:hover {
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  transform: none;
 }
 
 .add-room-btn svg {
@@ -768,9 +805,24 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.delete-room-btn:hover {
+.delete-room-btn:hover:not(:disabled) {
   color: var(--color-danger);
   border-color: var(--color-danger);
+}
+
+.delete-room-btn:disabled,
+.delete-room-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
+}
+
+.delete-room-btn:disabled:hover,
+.delete-room-btn.disabled:hover {
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
 }
 
 .room-title {
