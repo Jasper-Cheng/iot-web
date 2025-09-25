@@ -28,6 +28,18 @@
               :is="getDeviceComponent(device.cardName)"
               :device="device"
             />
+            <!-- 修改设备名称按钮 -->
+            <button 
+              v-if="canControlDevice(device.id)"
+              class="edit-name-btn"
+              @click="openEditNameModal(device)"
+              :title="'修改设备名称'"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -48,6 +60,31 @@
         <ColorControlPanel />
         <EnergyPanel />
         <DeviceStatsPanel :rooms="roomsWithDevices" />
+      </div>
+    </div>
+
+    <!-- 修改设备名称弹窗 -->
+    <div v-if="showEditNameModal" class="device-modal" @click="closeEditNameModal">
+      <div class="delete-modal-content" @click.stop>
+        <div class="delete-modal-header">
+          <h3>修改设备名称</h3>
+          <button class="delete-close-btn" @click="closeEditNameModal">X</button>
+        </div>
+        <div class="delete-modal-body">
+          <input 
+            class="input" 
+            v-model="editingDeviceName" 
+            placeholder="请输入新的设备名称" 
+            @keyup.enter="confirmEditName" 
+            :disabled="isEditingName"
+          />
+        </div>
+        <div class="delete-modal-footer">
+          <button class="cancel-btn" @click="closeEditNameModal" :disabled="isEditingName">取消</button>
+          <button class="action-btn success" @click="confirmEditName" :disabled="isEditingName || !editingDeviceName.trim()">
+            {{ isEditingName ? '修改中...' : '确认' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -115,6 +152,12 @@ const rooms = computed(() => {
 // 当前选中的房间
 const activeRoom = ref('all')
 
+// 修改设备名称相关状态
+const showEditNameModal = ref(false)
+const editingDevice = ref(null)
+const editingDeviceName = ref('')
+const isEditingName = ref(false)
+
 // 过滤后的设备列表
 const filteredDevices = computed(() => {
   const allDevices = globalStore.devices || []
@@ -161,6 +204,48 @@ const roomsWithDevices = computed(() => {
 // =========================
 const setActiveRoom = (roomId) => {
   activeRoom.value = roomId
+}
+
+// =========================
+// 修改设备名称相关方法
+// =========================
+const openEditNameModal = (device) => {
+  editingDevice.value = device
+  editingDeviceName.value = device.name
+  showEditNameModal.value = true
+}
+
+const closeEditNameModal = () => {
+  showEditNameModal.value = false
+  editingDevice.value = null
+  editingDeviceName.value = ''
+  isEditingName.value = false
+}
+
+const confirmEditName = async () => {
+  if (!editingDevice.value || !editingDeviceName.value.trim()) {
+    return
+  }
+
+  isEditingName.value = true
+  
+  try {
+    // 这里需要调用API更新设备名称
+    // 暂时直接更新本地状态
+    const device = globalStore.devices.find(d => d.id === editingDevice.value.id)
+    if (device) {
+      device.name = editingDeviceName.value.trim()
+    }
+    
+    // 显示成功消息
+    console.log('设备名称修改成功')
+    
+    closeEditNameModal()
+  } catch (error) {
+    console.error('修改设备名称失败:', error)
+  } finally {
+    isEditingName.value = false
+  }
 }
 
 </script>
@@ -304,6 +389,45 @@ const setActiveRoom = (roomId) => {
   transition: all 0.3s ease;
 }
 
+/* 修改设备名称按钮 */
+.edit-name-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+  opacity: 0;
+}
+
+.device-wrapper:hover .edit-name-btn {
+  opacity: 1;
+}
+
+.edit-name-btn:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.edit-name-btn svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-text-secondary);
+}
+
+.edit-name-btn:hover svg {
+  color: var(--color-primary-text);
+}
+
 /* 禁用设备样式 */
 .device-wrapper.disabled {
   opacity: 0.6;
@@ -329,6 +453,141 @@ const setActiveRoom = (roomId) => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 修改设备名称弹窗样式 */
+.device-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-member-modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.delete-modal-content {
+  background: var(--color-bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: var(--color-member-shadow-medium);
+}
+
+.delete-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.delete-modal-header h3 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.delete-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-close-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.delete-modal-body {
+  margin-bottom: 20px;
+}
+
+.delete-modal-body .input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.delete-modal-body .input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(191, 254, 1, 0.2);
+}
+
+.delete-modal-body .input:disabled {
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+}
+
+.delete-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.action-btn.success {
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border-color: var(--color-primary);
+}
+
+.action-btn.success:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @keyframes pulse {
