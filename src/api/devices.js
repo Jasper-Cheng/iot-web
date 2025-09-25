@@ -63,6 +63,14 @@ export const getDeviceStatus = (id) => {
   })
 }
 
+export const updateDeviceName = (id, name) => {
+  return request({
+    url: `/devices/${id}/name`,
+    method: 'patch',
+    data: { name: name }
+  })
+}
+
 // 新增：更新设备状态
 export const updateDeviceStatus = (deviceId, statusData) => {
   return new Promise((resolve) => {

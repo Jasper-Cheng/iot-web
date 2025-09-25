@@ -94,6 +94,7 @@
 import { ref, computed } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
+import { updateDeviceName } from '../api/devices'
 import WiFiCard from '../cards/WiFiCard.vue'
 import TvCard from '../cards/TvCard.vue'
 import MusicCard from '../cards/MusicCard.vue'
@@ -230,19 +231,27 @@ const confirmEditName = async () => {
   isEditingName.value = true
   
   try {
-    // 这里需要调用API更新设备名称
-    // 暂时直接更新本地状态
-    const device = globalStore.devices.find(d => d.id === editingDevice.value.id)
-    if (device) {
-      device.name = editingDeviceName.value.trim()
+    // 调用API更新设备名称
+    const response = await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim())
+    
+    if (response && response.name) {
+      // 更新本地设备状态
+      const device = globalStore.devices.find(d => d.id === editingDevice.value.id)
+      if (device) {
+        device.name = response.name
+      }
+      
+      // 显示成功消息
+      console.log('设备名称修改成功:', response.name)
+      
+      closeEditNameModal()
+    } else {
+      throw new Error('修改设备名称失败')
     }
-    
-    // 显示成功消息
-    console.log('设备名称修改成功')
-    
-    closeEditNameModal()
   } catch (error) {
     console.error('修改设备名称失败:', error)
+    // 这里可以添加用户提示，比如使用 ElMessage
+    alert('修改设备名称失败，请重试')
   } finally {
     isEditingName.value = false
   }
