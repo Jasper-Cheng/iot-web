@@ -220,20 +220,8 @@ const isMember = computed(() => {
 
 // 检查当前用户是否有权限控制指定设备
 const canControlDevice = (deviceId) => {
-  // Owner可以控制所有设备
-  if (isOwner.value) {
-    return true
-  }
-  
-  // Member只能控制自己有权限的设备
-  if (isMember.value) {
-    const currentUser = globalStore.members?.find(member => 
-      member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
-    )
-    return currentUser?.deviceIds?.includes(deviceId) || false
-  }
-  
-  return false
+  // 只有Owner可以控制设备，Member不能删除设备
+  return isOwner.value
 }
 
 // 房间数据 - 使用真实数据
