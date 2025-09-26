@@ -1454,6 +1454,7 @@ body, html {
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .message-log-header h3 {
@@ -1472,6 +1473,7 @@ body, html {
   /* 隐藏滚动条但保持滚动功能 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  border-radius: 0 0 16px 16px;
 }
 
 .message-log-body::-webkit-scrollbar {
