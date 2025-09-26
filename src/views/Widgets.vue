@@ -138,7 +138,7 @@
               :class="{ disabled: !canControlDevice(selectedDevice.id) }"
               :disabled="!canControlDevice(selectedDevice.id)"
               :title="!canControlDevice(selectedDevice.id) ? '您没有权限删除此设备' : '删除设备'"
-              @click="removeDevice(selectedDevice)"
+              @click="openDeleteDeviceConfirm(selectedDevice)"
             >
               Remove Device
             </button>
@@ -148,19 +148,56 @@
     </div>
   </div>
 
-  <!-- 删除房间确认弹窗（独立样式） -->
-  <div v-if="roomPendingDelete" class="device-modal" @click="closeDeleteConfirm">
-    <div class="delete-modal-content" @click.stop>
-      <div class="delete-modal-header">
+  <!-- 删除房间确认弹窗 -->
+  <div v-if="roomPendingDelete" class="confirm-overlay" @click="closeDeleteConfirm">
+    <div class="confirm-modal" @click.stop>
+      <div class="confirm-header">
+        <div class="confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9v4" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M12 17h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
         <h3>删除房间</h3>
-        <button class="delete-close-btn" @click="closeDeleteConfirm">X</button>
       </div>
-      <div class="delete-modal-body">
-        <p>确定要删除房间 "{{ roomPendingDelete.name }}" 吗？此房间中的设备将移动到所有设备区域。</p>
+      <div class="confirm-content">
+        <p>确定要删除房间 <strong>"{{ roomPendingDelete.name }}"</strong> 吗？</p>
+        <p>此房间中的设备将移动到所有设备区域。</p>
       </div>
-      <div class="delete-modal-footer">
-        <button class="action-btn" @click="closeDeleteConfirm">取消</button>
-        <button class="action-btn danger" @click="removeRoom">删除</button>
+      <div class="confirm-actions">
+        <button class="btn-cancel" @click="closeDeleteConfirm">取消</button>
+        <button class="btn-delete" @click="removeRoom">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除设备确认弹窗 -->
+  <div v-if="devicePendingDelete" class="confirm-overlay" @click="closeDeleteDeviceConfirm">
+    <div class="confirm-modal" @click.stop>
+      <div class="confirm-header">
+        <div class="confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9v4" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M12 17h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
+        <h3>删除设备</h3>
+      </div>
+      <div class="confirm-content">
+        <p>确定要删除设备 <strong>"{{ devicePendingDelete.name }}"</strong> 吗？</p>
+        <p>此操作将<strong>永久删除</strong>设备，包括：</p>
+        <ul>
+          <li>设备的所有配置和设置</li>
+          <li>设备的历史数据记录</li>
+          <li>设备与房间的关联关系</li>
+        </ul>
+        <p class="warning-text">删除后设备将<strong>无法恢复</strong>，请谨慎操作！</p>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn-cancel" @click="closeDeleteDeviceConfirm">取消</button>
+        <button class="btn-delete" @click="confirmDeleteDevice">删除</button>
       </div>
     </div>
   </div>
@@ -336,6 +373,57 @@ const openDeleteConfirm = (room) => {
 }
 const closeDeleteConfirm = () => {
   roomPendingDelete.value = null
+}
+
+// 删除设备确认弹窗状态
+const devicePendingDelete = ref(null)
+const openDeleteDeviceConfirm = (device) => {
+  devicePendingDelete.value = device
+}
+
+const closeDeleteDeviceConfirm = () => {
+  devicePendingDelete.value = null
+}
+
+// 确认删除设备
+const confirmDeleteDevice = async () => {
+  const device = devicePendingDelete.value
+  if (!device || !device.sn) return
+  
+  try {
+    // 调用解绑设备 API，传入 SN
+    await unbindDeviceBySN(device.sn)
+    
+    // 从 localDevices 中移除
+    const localIndex = localDevices.value.findIndex(d => d.id === device.id)
+    if (localIndex > -1) {
+      localDevices.value.splice(localIndex, 1)
+    }
+    
+    // 从 globalStore.rooms 中移除
+    if (device.roomId !== 'unassigned') {
+      const room = globalStore.rooms.find(r => r.id === device.roomId)
+      if (room && room.devices) {
+        room.devices = room.devices.filter(rd => rd.device_id !== device.id)
+      }
+    }
+    
+    // 从 globalStore.devices 中移除
+    const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
+    if (globalIndex > -1) {
+      globalStore.devices.splice(globalIndex, 1)
+    }
+    
+    // 关闭设备详情弹窗和确认弹窗
+    closeDeviceModal()
+    closeDeleteDeviceConfirm()
+    
+    ElMessage.success('设备删除成功')
+  } catch (error) {
+    console.error('删除设备失败:', error)
+    ElMessage.error('删除设备失败，请重试')
+    closeDeleteDeviceConfirm()
+  }
 }
 
 // 删除房间（将房间内设备移回 All Devices）
@@ -1048,76 +1136,135 @@ onMounted(() => {
   border-top: 1px solid var(--color-border);
 }
 
-/* 删除房间确认弹窗独立样式 */
-.delete-modal-content {
-  background: var(--color-bg-card);
-  border-radius: 14px;
+/* 确认弹窗样式 - 参考注销用户弹窗 */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-shadow-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
   padding: 20px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 12px 32px var(--color-widgets-modal-shadow);
+  box-shadow: 0 10px 30px var(--shadow-soft);
 }
 
-.delete-modal-header {
+.confirm-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
-.delete-modal-header h3 {
-  font-size: 18px;
+.confirm-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-warning-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: var(--color-warning);
+}
+
+.confirm-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.confirm-header h3 {
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0;
+  flex: 1;
 }
 
-.delete-close-btn {
-  background: none;
-  border: 1px solid var(--color-border);
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+.confirm-content {
+  margin: 0 0 20px;
+}
+
+.confirm-content p {
+  margin: 0 0 12px 0;
   color: var(--color-text-secondary);
-  cursor: pointer;
-}
-
-.delete-close-btn:hover {
-  color: var(--color-text-primary);
-}
-
-.delete-modal-body {
-  margin: 8px 0 16px;
-}
-
-.delete-modal-body p {
-  margin: 0;
   line-height: 1.6;
+  font-size: 14px;
+}
+
+.confirm-content p:last-child {
+  margin-bottom: 0;
+}
+
+.confirm-content ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
   color: var(--color-text-secondary);
+  font-size: 14px;
 }
 
-.delete-modal-body .input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  outline: none;
+.confirm-content li {
+  margin-bottom: 6px;
+  line-height: 1.5;
 }
 
-.delete-modal-body .input:focus {
-  border-color: var(--color-primary);
+.warning-text {
+  color: var(--color-danger) !important;
+  font-weight: 500;
+  font-size: 14px;
 }
 
-.delete-modal-footer {
+.confirm-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--color-border);
+}
+
+.btn-cancel,
+.btn-delete {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.btn-cancel {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.btn-cancel:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.btn-delete {
+  background: color-mix(in oklab, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in oklab, var(--color-danger) 30%, transparent);
+}
+
+.btn-delete:hover {
+  background: var(--color-danger);
+  color: var(--color-white);
+  border-color: var(--color-danger);
 }
 
 .action-btn {
