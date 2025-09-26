@@ -37,7 +37,7 @@ export const useGlobalStore = defineStore('global', {
 		//   {
 		//     name: "设备1",
 		//     sn: "AC001-250922-000123",  // 设备序列号：模型code-生产日期-流水号
-		//     status: "unconfigured",     // 设备状态：unconfigured/online/offline
+		//     status: "unconfigured",     // 设备状态：unconfigured/configured/unbound/bound
 		//     id: 11,                     // 设备ID
 		//     user_id: 16,                // 所属用户ID
 		//     model_id: 45,               // 模型ID
