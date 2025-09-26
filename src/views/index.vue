@@ -431,8 +431,8 @@ import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
-import { deleteUser, deleteFamilyMember } from '../api/users'
-import { bindDeviceBySN } from '../api/devices'
+import { deleteUser, deleteFamilyMember, markAllMessagesAsRead } from '../api/users'
+import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
 import { ElMessage } from 'element-plus'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
@@ -637,15 +637,24 @@ const loadMoreReadMessages = () => {
 
 // 一键已读
 const markAllAsRead = async () => {
-  // 这里需要调用标记所有消息为已读的API
-  // 暂时模拟操作
   try {
-    // TODO: 调用标记已读API
     console.log('标记所有消息为已读')
+    
+    // 调用API标记所有消息为已读
+    await markAllMessagesAsRead(globalStore.user?.id)
+    
+    // 清空未读消息列表
+    unreadMessages.value = []
+    
+    // 更新全局消息状态
+    globalStore.messages.forEach(message => {
+      if (message.status === 'new') {
+        message.status = 'read'
+      }
+    })
+    
     ElMessage.success('所有消息已标记为已读')
     closeNotificationMenu()
-    // 更新未读消息列表
-    updateUnreadMessages()
   } catch (error) {
     console.error('标记已读失败:', error)
     ElMessage.error('操作失败，请重试')
@@ -655,8 +664,10 @@ const markAllAsRead = async () => {
 // 标记单条消息为已读
 const markMessageAsRead = async (message) => {
   try {
-    // TODO: 调用标记单条消息为已读的API
     console.log('标记消息为已读:', message.id)
+    
+    // 调用API标记消息为已读
+    await markMessageAsReadAPI(message.id, 'read')
     
     // 直接移除消息，无动画效果
     const index = unreadMessages.value.findIndex(m => m.id === message.id)
@@ -669,6 +680,8 @@ const markMessageAsRead = async (message) => {
     if (globalMessage) {
       globalMessage.status = 'read'
     }
+    
+    console.log('消息已成功标记为已读')
   } catch (error) {
     console.error('标记消息已读失败:', error)
     ElMessage.error('操作失败，请重试')

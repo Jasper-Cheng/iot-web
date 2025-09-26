@@ -112,3 +112,14 @@ export const updateDeviceStatus = (deviceId, statusData) => {
     }, 300)
   })
 }
+
+// 标记消息已读
+export const markMessageAsRead = (messageId, status = 'read') => {
+  return request({
+    url: `/device-messages/${messageId}/status`,
+    method: 'patch',
+    params: {
+      status: status
+    }
+  })
+}
