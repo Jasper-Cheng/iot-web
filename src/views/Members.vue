@@ -694,13 +694,8 @@ const editMember = async () => {
       await updateFamilyMember(editingMember.value.id, updateData)
     }
     
-    // 重新从服务器加载成员数据，watch会自动调用loadData()
-    await globalStore.loadMembers(globalStore.user?.user_id)
-    
-    // 如果是当前用户，使用统一的更新方法
-    if (globalStore.user?.id === editingMember.value.id) {
-      globalStore.updateUserInfo(updateData)
-    }
+    // 直接更新本地状态，不重新调用接口
+    globalStore.updateMemberInfo(editingMember.value.id, updateData)
     
     ElMessage.success('更新成功')
     closeModal()
@@ -752,11 +747,10 @@ const confirmDeleteMember = async () => {
   if (!member) return
   
   try {
-    const response = await deleteFamilyMember(member.id)
+    await deleteFamilyMember(member.id)
     
-    // 删除成功（API没有抛出异常就认为成功）
-    // 重新从服务器加载成员数据，watch会自动调用loadData()
-    await globalStore.loadMembers(globalStore.user?.user_id)
+    // 直接更新本地状态，不重新调用接口
+    globalStore.removeMemberInfo(member.id)
     closeDeleteConfirm()
     ElMessage.success('删除成员成功')
   } catch (error) {

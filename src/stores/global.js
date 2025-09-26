@@ -443,6 +443,53 @@ export const useGlobalStore = defineStore('global', {
 				// 同步到localStorage
 				this.saveToLocalStorage()
 			}
+		},
+		
+		// 更新成员信息（本地更新，不调用接口）
+		updateMemberInfo(memberId, updateData) {
+			const memberIndex = this.members.findIndex(member => member.id === memberId)
+			if (memberIndex !== -1) {
+				const updatedMember = { ...this.members[memberIndex] }
+				
+				// 确保account对象存在
+				if (!updatedMember.account) {
+					updatedMember.account = {}
+				} else {
+					updatedMember.account = { ...updatedMember.account }
+				}
+				
+				// 只更新有值的字段到account对象中
+				if (updateData.account) updatedMember.account.account = updateData.account
+				if (updateData.name) updatedMember.account.name = updateData.name
+				if (updateData.gender) updatedMember.account.gender = updateData.gender
+				if (updateData.phone) updatedMember.account.phone = updateData.phone
+				if (updateData.email) updatedMember.account.email = updateData.email
+				if (updateData.avatar) updatedMember.account.avatar = updateData.avatar
+				
+				// 更新成员列表（创建新数组以触发响应式更新）
+				this.members = [
+					...this.members.slice(0, memberIndex),
+					updatedMember,
+					...this.members.slice(memberIndex + 1)
+				]
+				
+				// 如果是当前用户，同时更新用户信息
+				if (this.user?.id === memberId) {
+					this.updateUserInfo(updateData)
+				}
+			}
+		},
+		
+		// 删除成员（本地更新，不调用接口）
+		removeMemberInfo(memberId) {
+			const memberIndex = this.members.findIndex(member => member.id === memberId)
+			if (memberIndex !== -1) {
+				// 从成员列表中移除指定成员（创建新数组以触发响应式更新）
+				this.members = [
+					...this.members.slice(0, memberIndex),
+					...this.members.slice(memberIndex + 1)
+				]
+			}
 		}
 	}
 })
