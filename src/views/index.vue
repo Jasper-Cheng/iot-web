@@ -117,7 +117,7 @@
             <span class="toggle-knob" :class="{ right: currentTheme === 'dark' }"></span>
           </div>
           <div class="notification-container">
-            <button class="notification-btn" @click.stop="toggleNotificationMenu">
+            <button class="notification-btn" @click.stop="toggleNotificationMenuAndCloseUserMenu">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -237,7 +237,7 @@
               </div>
             </div>
           </div>
-          <div class="user-profile" @click.stop="toggleUserMenu">
+          <div class="user-profile" @click.stop="toggleUserMenuAndCloseNotificationMenu">
             <img 
               :src="globalStore.user?.account?.avatar || DEFAULT_NO_AVATAR_URL" 
               :alt="globalStore.user?.account?.name || 'User Avatar'" 
@@ -566,6 +566,18 @@ const closeAllMenus = () => {
   closeNotificationMenu()
 }
 
+// 切换消息通知菜单并关闭用户菜单
+const toggleNotificationMenuAndCloseUserMenu = () => {
+  closeUserMenu()
+  toggleNotificationMenu()
+}
+
+// 切换用户菜单并关闭消息通知菜单
+const toggleUserMenuAndCloseNotificationMenu = () => {
+  closeNotificationMenu()
+  toggleUserMenu()
+}
+
 // 更新未读消息（从已加载的数据中过滤）
 const updateUnreadMessages = () => {
   unreadMessages.value = globalStore.messages.filter(msg => msg.status === 'new')
@@ -646,42 +658,16 @@ const markMessageAsRead = async (message) => {
     // TODO: 调用标记单条消息为已读的API
     console.log('标记消息为已读:', message.id)
     
-    // 添加动画效果：高度减少并滑出
-    const messageElement = document.querySelector(`[data-message-id="${message.id}"]`)
-    if (messageElement) {
-      messageElement.style.transition = 'all 0.3s ease-out'
-      messageElement.style.height = '0'
-      messageElement.style.opacity = '0'
-      messageElement.style.transform = 'translateX(100%)'
-      messageElement.style.margin = '0'
-      messageElement.style.padding = '0'
-      messageElement.style.border = 'none'
-      
-      // 动画完成后移除元素
-      setTimeout(() => {
-        const index = unreadMessages.value.findIndex(m => m.id === message.id)
-        if (index > -1) {
-          unreadMessages.value.splice(index, 1)
-        }
-        
-        // 更新全局消息状态
-        const globalMessage = globalStore.messages.find(m => m.id === message.id)
-        if (globalMessage) {
-          globalMessage.status = 'read'
-        }
-      }, 300)
-    } else {
-      // 如果找不到元素，直接移除
-      const index = unreadMessages.value.findIndex(m => m.id === message.id)
-      if (index > -1) {
-        unreadMessages.value.splice(index, 1)
-      }
-      
-      // 更新全局消息状态
-      const globalMessage = globalStore.messages.find(m => m.id === message.id)
-      if (globalMessage) {
-        globalMessage.status = 'read'
-      }
+    // 直接移除消息，无动画效果
+    const index = unreadMessages.value.findIndex(m => m.id === message.id)
+    if (index > -1) {
+      unreadMessages.value.splice(index, 1)
+    }
+    
+    // 更新全局消息状态
+    const globalMessage = globalStore.messages.find(m => m.id === message.id)
+    if (globalMessage) {
+      globalMessage.status = 'read'
     }
   } catch (error) {
     console.error('标记消息已读失败:', error)
@@ -1188,14 +1174,14 @@ body, html {
   background: var(--color-bg-secondary);
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 20px;
+  gap: 8px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
 .notification-icon {
-  width: 56px;
-  height: 56px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--color-primary);
   display: flex;
@@ -1205,21 +1191,20 @@ body, html {
 }
 
 .notification-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 14px;
+  height: 14px;
   color: var(--color-bg-primary);
 }
 
 .notification-details h4 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .notification-details p {
   margin: 0;
-  font-size: 14px;
+  font-size: 11px;
   color: var(--color-text-secondary);
 }
 
@@ -1227,6 +1212,13 @@ body, html {
   max-height: 320px;
   overflow-y: auto;
   background: var(--color-bg-secondary);
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.notification-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .no-messages {
@@ -1406,16 +1398,6 @@ body, html {
   height: 10px;
 }
 
-/* 消息移除动画 */
-.message-item.removing {
-  height: 0 !important;
-  opacity: 0 !important;
-  transform: translateX(100%) !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  overflow: hidden;
-}
 
 /* 消息日志弹窗 */
 .message-log-modal-content {
@@ -1675,12 +1657,12 @@ body, html {
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 8px;
+  padding: 8px 16px;
   color: var(--color-text-primary);
   text-decoration: none;
   transition: all 0.2s ease;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -1690,8 +1672,8 @@ body, html {
 }
 
 .dropdown-item svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   color: var(--color-text-secondary);
   transition: color 0.2s ease;
 }
