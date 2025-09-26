@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { fetchDeviceStatuses } from '../api/devices'
+import { fetchDeviceStatuses, getDeviceMessages } from '../api/devices'
 import { getMembers, getUserDetail, getMemberDevicePermissions } from '../api/users'
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
@@ -112,16 +112,38 @@ export const useGlobalStore = defineStore('global', {
 		//   }
 		// ]
 		rooms: [],
+		
+		// 设备消息数据
+		// 消息列表数据结构：
+		// [
+		//   {
+		//     device_id: 60,                    // 设备ID
+		//     level: "normal",                  // 消息级别：low/normal/high
+		//     message: "温度异常",               // 消息内容
+		//     detail: {                         // 详细信息
+		//       status: "operational",          // 状态
+		//       component: "Network",           // 组件
+		//       last_check: "2025-09-26T00:44:21.231357" // 最后检查时间
+		//     },
+		//     id: 172,                          // 消息ID
+		//     status: "new",                    // 消息状态：new/read
+		//     created_at: "2025-09-26T01:40:22" // 创建时间
+		//   }
+		// ]
+		messages: [],
+		
 		loading: {
 			devices: false,
 			members: false,
 			rooms: false,
+			messages: false,
 			auth: false
 		},
 		errors: {
 			devices: null,
 			members: null,
 			rooms: null,
+			messages: null,
 			auth: null
 		}
 	}),
@@ -249,11 +271,40 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.members = false
 			}
 		},
-		async loadAll(userId = 1) {
+		async loadMessages(userId) {
+			this.loading.messages = true
+			this.errors.messages = null
+			try {
+				const res = await getDeviceMessages({
+					user_id: userId,
+					status: 'new'
+				})
+				
+				// API直接返回消息数组，request.js已经提取了response.data
+				this.messages = Array.isArray(res) ? res : []
+				
+			} catch (err) {
+				this.errors.messages = err
+				console.error('消息列表加载失败:', err)
+			} finally {
+				this.loading.messages = false
+			}
+		},
+		
+		async loadAll() {
+			// 检查认证状态和用户ID
+			if (!this.isAuthenticated || !this.user?.user_id) {
+				console.warn('用户未认证或用户ID无效，跳过数据加载')
+				return
+			}
+			
+			const userId = this.user.user_id
+			
 			await Promise.all([
 				this.loadDevices(userId),
 				this.loadRooms(userId),
-				this.loadMembers(userId)
+				this.loadMembers(userId),
+				this.loadMessages(userId)
 			])
 		},
 		

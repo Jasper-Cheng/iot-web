@@ -419,9 +419,7 @@ const submitAddDevice = async () => {
       closeAddDeviceModal()
       
       // 刷新设备列表
-      await globalStore.loadDevices(globalStore.user?.id)
-      await globalStore.loadRooms(globalStore.user?.id)
-      await globalStore.loadMembers(globalStore.user?.id)
+      await globalStore.loadAll()
     }
   } catch (error) {
     console.error('添加设备失败:', error)
@@ -495,12 +493,8 @@ onMounted(() => {
   const theme = initTheme()
   currentTheme.value = theme
   
-  // 如果用户已认证，加载设备列表、房间列表和成员列表
-  if (globalStore.isAuthenticated && globalStore.user?.user_id) {
-    globalStore.loadDevices(globalStore.user.user_id)
-    globalStore.loadRooms(globalStore.user.user_id)
-    globalStore.loadMembers(globalStore.user.user_id)
-  }
+  // 加载所有数据
+  globalStore.loadAll()
 })
 
 // 组件销毁时移除事件监听
