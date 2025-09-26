@@ -193,7 +193,7 @@
                           <span class="message-level" :class="`level-${message.level}`">
                             {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
                           </span>
-                          <span class="message-time">{{ formatTime(message.created_at) }}</span>
+                          <span class="message-time">{{ formatTime(message) }}</span>
                           <button 
                             class="mark-read-single-btn" 
                             @click="markMessageAsRead(message)"
@@ -394,30 +394,60 @@
             :key="message.id" 
             class="message-log-item"
           >
-            <div class="message-header">
-              <span class="message-level" :class="`level-${message.level}`">
-                {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
-              </span>
-              <span class="message-time">{{ formatTime(message.created_at) }}</span>
+            <div class="message-icon" :class="`level-${message.level}`">
+              <svg v-if="message.level === 'normal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <svg v-else-if="message.level === 'error'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 8v4" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 16h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
             </div>
-            <div class="message-content">{{ message.message }}</div>
-            <div v-if="getDeviceName(message.device_id)" class="message-detail">
-              <div class="detail-item">
-                <span class="detail-label">设备:</span>
-                <span class="detail-value">{{ getDeviceName(message.device_id) }}</span>
+            <div class="message-content">
+              <div class="message-text">{{ message.message }}</div>
+              <div class="message-footer">
+                <div v-if="getDeviceName(message.device_id)" class="message-device">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2"/>
+                    <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  {{ getDeviceName(message.device_id) }}
+                </div>
+                <div class="message-meta">
+                  <span class="message-level" :class="`level-${message.level}`">
+                    {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
+                  </span>
+                  <span class="message-time">{{ formatTime(message) }}</span>
+                </div>
               </div>
             </div>
           </div>
           
-          <!-- 加载更多按钮 -->
-          <div v-if="hasMoreReadMessages" class="load-more-container">
+          <!-- 加载更多按钮或没有更多提示 -->
+          <div class="load-more-container">
             <button 
+              v-if="hasMoreReadMessages"
               class="load-more-btn" 
               @click="loadMoreReadMessages"
               :disabled="isLoadingReadMessages"
             >
               {{ isLoadingReadMessages ? '加载中...' : '加载更多' }}
             </button>
+            <div v-else-if="readMessages.length > 0" class="no-more-messages">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <span>没有更多消息了</span>
+            </div>
           </div>
         </div>
       </div>
@@ -591,7 +621,7 @@ const loadReadMessages = async (page = 1, append = false) => {
   try {
     const messages = await globalStore.loadReadMessages(globalStore.user.user_id, {
       limit: readMessagesLimit.value,
-      offset: (page - 1) * readMessagesLimit.value
+      skip: (page - 1) * readMessagesLimit.value
     })
     
     if (append) {
@@ -688,32 +718,23 @@ const markMessageAsRead = async (message) => {
   }
 }
 
-// 格式化时间
-const formatTime = (timeString) => {
+// 格式化时间 - 优先显示updated_at，否则显示created_at
+const formatTime = (message) => {
+  // 优先使用updated_at，如果为null则使用created_at
+  const timeString = message.updated_at || message.created_at
   if (!timeString) return ''
+  
   const date = new Date(timeString)
-  const now = new Date()
-  const diff = now - date
   
-  // 小于1分钟
-  if (diff < 60000) {
-    return '刚刚'
-  }
+  // 格式化为 YYYY-MM-DD HH:mm:ss
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
   
-  // 小于1小时
-  if (diff < 3600000) {
-    const minutes = Math.floor(diff / 60000)
-    return `${minutes}分钟前`
-  }
-  
-  // 小于24小时
-  if (diff < 86400000) {
-    const hours = Math.floor(diff / 3600000)
-    return `${hours}小时前`
-  }
-  
-  // 大于24小时，显示具体日期
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // 获取设备名字
@@ -1414,18 +1435,20 @@ body, html {
 
 /* 消息日志弹窗 */
 .message-log-modal-content {
-  background: var(--color-bg-card);
-  border-radius: 14px;
+  background: var(--color-shadow-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-soft);
   width: 80%;
   max-width: 800px;
   max-height: 80vh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .message-log-header {
-  padding: 20px 24px;
+  background: var(--color-bg-secondary);
+  padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
@@ -1435,7 +1458,7 @@ body, html {
 
 .message-log-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -1444,6 +1467,15 @@ body, html {
   flex: 1;
   overflow-y: auto;
   padding: 0;
+  background: var(--color-bg-secondary);
+  min-height: 0; /* 确保flex子元素可以收缩 */
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.message-log-body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .message-log-list {
@@ -1451,17 +1483,125 @@ body, html {
 }
 
 .message-log-item {
-  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease-out;
+  min-height: 60px;
+  overflow: hidden;
 }
 
 .message-log-item:hover {
-  background-color: var(--color-bg-hover);
+  background-color: var(--color-hover);
 }
 
 .message-log-item:last-child {
   border-bottom: none;
+}
+
+/* 消息日志弹窗中的消息样式 - 与通知下拉菜单保持一致 */
+.message-log-item .message-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.message-log-item .message-icon.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.message-log-item .message-icon.level-error {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.message-log-item .message-icon.level-fatal {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
+}
+
+.message-log-item .message-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.message-log-item .message-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.message-log-item .message-text {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.message-log-item .message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-log-item .message-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-log-item .message-level {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.message-log-item .message-level.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.message-log-item .message-level.level-error {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.message-log-item .message-level.level-fatal {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
+}
+
+.message-log-item .message-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.message-log-item .message-device {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.message-log-item .message-device svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-text-muted);
 }
 
 /* 加载更多按钮 */
@@ -1492,6 +1632,24 @@ body, html {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* 没有更多消息提示 */
+.no-more-messages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.no-more-messages svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
 }
 
 .user-profile {

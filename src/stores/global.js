@@ -302,7 +302,7 @@ export const useGlobalStore = defineStore('global', {
 					user_id: userId,
 					status: 'read',
 					limit: params.limit || 20,
-					offset: params.offset || 0
+					skip: params.skip || 0
 				})
 				
 				// 返回已读消息数组

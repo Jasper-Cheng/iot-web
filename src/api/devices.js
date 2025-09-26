@@ -91,6 +91,10 @@ export const getDeviceMessages = (params) => {
     requestParams.status = params.status
   }
   
+  if (params.skip !== undefined) {
+    requestParams.skip = params.skip
+  }
+  
   return request({
     url: '/device-messages/',
     method: 'get',
