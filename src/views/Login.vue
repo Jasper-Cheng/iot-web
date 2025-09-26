@@ -31,7 +31,7 @@
             type="text" 
             id="username" 
             v-model="formData.username"
-            placeholder="请输入账户"
+            placeholder="请输入账户或手机号"
             required
           />
         </div>
