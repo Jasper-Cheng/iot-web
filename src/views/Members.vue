@@ -360,15 +360,8 @@ const canAddMember = computed(() => {
 
 // 检查是否可以管理设备权限
 const canManageDevicePermissions = (member) => {
-  // Owner可以管理所有成员的设备权限
-  if (isOwner.value) {
-    return true
-  }
-  // Member可以管理自己的设备权限
-  if (isMember.value) {
-    return member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
-  }
-  return false
+  // 只有Owner可以管理设备权限，Member不能操作设备权限
+  return isOwner.value
 }
 
 // 工具函数
@@ -1271,8 +1264,12 @@ onUnmounted(() => {
 
 .toggle-switch.disabled .toggle-slider {
   cursor: not-allowed;
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
+  background-color: var(--color-switch-indicator);
+  border-color: var(--color-border);
+}
+
+.toggle-switch.disabled .toggle-slider:before {
+  background-color: var(--color-switch-indicator-active);
 }
 
 .toggle-switch.disabled input:checked + .toggle-slider {
