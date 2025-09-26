@@ -150,6 +150,14 @@
   --color-shadow-overlay: rgba(0, 0, 0, 0.5);
   --color-shadow-dark: rgba(0, 0, 0, 0.6);
   --color-shadow-darker: rgba(0, 0, 0, 0.8);
+  
+  /* 消息级别颜色 */
+  --color-message-normal: #16a34a;                    /* 普通消息颜色 */
+  --color-message-normal-bg: rgba(34, 197, 94, 0.1);  /* 普通消息背景 */
+  --color-message-error: #d97706;                     /* 错误消息颜色 */
+  --color-message-error-bg: rgba(245, 158, 11, 0.1);  /* 错误消息背景 */
+  --color-message-fatal: #dc2626;                     /* 致命消息颜色 */
+  --color-message-fatal-bg: rgba(239, 68, 68, 0.1);   /* 致命消息背景 */
 }
 
 /* 浅色主题覆盖 */
@@ -299,4 +307,12 @@
   --color-shadow-overlay: rgba(0, 0, 0, 0.3);
   --color-shadow-dark: rgba(0, 0, 0, 0.4);
   --color-shadow-darker: rgba(0, 0, 0, 0.6);
+  
+  /* 消息级别颜色 */
+  --color-message-normal: #16a34a;                    /* 普通消息颜色 */
+  --color-message-normal-bg: rgba(34, 197, 94, 0.1);  /* 普通消息背景 */
+  --color-message-error: #d97706;                     /* 错误消息颜色 */
+  --color-message-error-bg: rgba(245, 158, 11, 0.1);  /* 错误消息背景 */
+  --color-message-fatal: #dc2626;                     /* 致命消息颜色 */
+  --color-message-fatal-bg: rgba(239, 68, 68, 0.1);   /* 致命消息背景 */
 }

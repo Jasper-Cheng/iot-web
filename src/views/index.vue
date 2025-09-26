@@ -1,5 +1,5 @@
 <template>
-  <div class="home" @click="closeUserMenu">
+  <div class="home" @click="closeAllMenus">
     <!-- 左侧导航栏 -->
     <nav class="sidebar">
       <!-- Logo区域 -->
@@ -116,12 +116,127 @@
             </span>
             <span class="toggle-knob" :class="{ right: currentTheme === 'dark' }"></span>
           </div>
-          <button class="notification-btn">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-          </button>
+          <div class="notification-container">
+            <button class="notification-btn" @click.stop="toggleNotificationMenu">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <!-- 未读消息数量徽章 -->
+              <span v-if="unreadMessages.length > 0" class="notification-badge">{{ unreadMessages.length }}</span>
+            </button>
+            
+            <!-- 通知下拉菜单 -->
+            <div v-if="showNotificationMenu" class="notification-dropdown" @click.stop>
+              <!-- 通知头部信息 -->
+              <div class="notification-info">
+                <div class="notification-icon">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
+                  </svg>
+                </div>
+                <div class="notification-details">
+                  <h4>消息通知</h4>
+                  <p class="notification-count">{{ unreadMessages.length }} 条未读消息</p>
+                </div>
+              </div>
+              
+              <div class="dropdown-divider"></div>
+              
+              <!-- 消息列表 -->
+              <div class="notification-content">
+                <div v-if="unreadMessages.length === 0" class="no-messages">
+                  <div class="no-messages-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                  </div>
+                  <p>暂无未读消息</p>
+                </div>
+                <div v-else class="message-list">
+                  <div 
+                    v-for="message in unreadMessages" 
+                    :key="message.id" 
+                    :data-message-id="message.id"
+                    class="message-item"
+                  >
+                    <div class="message-icon" :class="`level-${message.level}`">
+                      <svg v-if="message.level === 'normal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
+                      </svg>
+                      <svg v-else-if="message.level === 'error'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                        <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M12 8v4" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M12 16h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+                      </svg>
+                    </div>
+                    <div class="message-content">
+                      <div class="message-text">{{ message.message }}</div>
+                      <div class="message-footer">
+                        <div v-if="getDeviceName(message.device_id)" class="message-device">
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2"/>
+                            <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                          {{ getDeviceName(message.device_id) }}
+                        </div>
+                        <div class="message-meta">
+                          <span class="message-level" :class="`level-${message.level}`">
+                            {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
+                          </span>
+                          <span class="message-time">{{ formatTime(message.created_at) }}</span>
+                          <button 
+                            class="mark-read-single-btn" 
+                            @click="markMessageAsRead(message)"
+                            :title="'标记为已读'"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                              <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="dropdown-divider"></div>
+              
+              <!-- 操作按钮 -->
+              <div class="dropdown-menu">
+                <div class="dropdown-actions">
+                  <a href="#" class="dropdown-item" @click.prevent="markAllAsRead" :class="{ disabled: unreadMessages.length === 0 }">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    一键已读
+                  </a>
+                  <a href="#" class="dropdown-item" @click.prevent="openMessageLogModal">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+                      <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+                      <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    消息日志
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="user-profile" @click.stop="toggleUserMenu">
             <img 
               :src="globalStore.user?.account?.avatar || DEFAULT_NO_AVATAR_URL" 
@@ -258,10 +373,60 @@
       </div>
     </div>
   </div>
+
+  <!-- 消息日志弹窗 -->
+  <div v-if="showMessageLogModal" class="device-modal" @click="closeMessageLogModal">
+    <div class="message-log-modal-content" @click.stop>
+      <div class="message-log-header">
+        <h3>消息日志</h3>
+        <button class="delete-close-btn" @click="closeMessageLogModal">X</button>
+      </div>
+      <div class="message-log-body">
+        <div v-if="isLoadingReadMessages && readMessages.length === 0" class="loading-messages">
+          加载中...
+        </div>
+        <div v-else-if="readMessages.length === 0" class="no-messages">
+          暂无已读消息
+        </div>
+        <div v-else class="message-log-list">
+          <div 
+            v-for="message in readMessages" 
+            :key="message.id" 
+            class="message-log-item"
+          >
+            <div class="message-header">
+              <span class="message-level" :class="`level-${message.level}`">
+                {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
+              </span>
+              <span class="message-time">{{ formatTime(message.created_at) }}</span>
+            </div>
+            <div class="message-content">{{ message.message }}</div>
+            <div v-if="getDeviceName(message.device_id)" class="message-detail">
+              <div class="detail-item">
+                <span class="detail-label">设备:</span>
+                <span class="detail-value">{{ getDeviceName(message.device_id) }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 加载更多按钮 -->
+          <div v-if="hasMoreReadMessages" class="load-more-container">
+            <button 
+              class="load-more-btn" 
+              @click="loadMoreReadMessages"
+              :disabled="isLoadingReadMessages"
+            >
+              {{ isLoadingReadMessages ? '加载中...' : '加载更多' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Login from './Login.vue'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
@@ -295,6 +460,16 @@ const deviceForm = ref({
 
 // 添加设备加载状态
 const isAddingDevice = ref(false)
+
+// 通知相关
+const showNotificationMenu = ref(false)
+const showMessageLogModal = ref(false)
+const unreadMessages = ref([])
+const readMessages = ref([])
+const isLoadingReadMessages = ref(false)
+const readMessagesPage = ref(1)
+const readMessagesLimit = ref(20)
+const hasMoreReadMessages = ref(true)
 
 // 当前主题
 const currentTheme = ref('dark')
@@ -371,6 +546,181 @@ const toggleUserMenu = () => {
 // 关闭用户下拉菜单
 const closeUserMenu = () => {
   showUserMenu.value = false
+}
+
+// 通知相关方法
+const toggleNotificationMenu = () => {
+  showNotificationMenu.value = !showNotificationMenu.value
+  if (showNotificationMenu.value) {
+    updateUnreadMessages()
+  }
+}
+
+const closeNotificationMenu = () => {
+  showNotificationMenu.value = false
+}
+
+// 关闭所有菜单
+const closeAllMenus = () => {
+  closeUserMenu()
+  closeNotificationMenu()
+}
+
+// 更新未读消息（从已加载的数据中过滤）
+const updateUnreadMessages = () => {
+  unreadMessages.value = globalStore.messages.filter(msg => msg.status === 'new')
+}
+
+// 加载已读消息（分页）
+const loadReadMessages = async (page = 1, append = false) => {
+  if (!globalStore.user?.user_id) return
+  
+  isLoadingReadMessages.value = true
+  try {
+    const messages = await globalStore.loadReadMessages(globalStore.user.user_id, {
+      limit: readMessagesLimit.value,
+      offset: (page - 1) * readMessagesLimit.value
+    })
+    
+    if (append) {
+      readMessages.value = [...readMessages.value, ...messages]
+    } else {
+      readMessages.value = messages
+    }
+    
+    // 判断是否还有更多数据
+    hasMoreReadMessages.value = messages.length === readMessagesLimit.value
+    readMessagesPage.value = page
+    
+  } catch (error) {
+    console.error('加载已读消息失败:', error)
+  } finally {
+    isLoadingReadMessages.value = false
+  }
+}
+
+// 打开消息日志弹窗
+const openMessageLogModal = () => {
+  showMessageLogModal.value = true
+  showNotificationMenu.value = false
+  // 重置分页状态并加载第一页
+  readMessagesPage.value = 1
+  hasMoreReadMessages.value = true
+  loadReadMessages(1, false)
+}
+
+// 关闭消息日志弹窗
+const closeMessageLogModal = () => {
+  showMessageLogModal.value = false
+  // 清空已读消息列表
+  readMessages.value = []
+}
+
+// 加载更多已读消息
+const loadMoreReadMessages = () => {
+  if (!isLoadingReadMessages.value && hasMoreReadMessages.value) {
+    loadReadMessages(readMessagesPage.value + 1, true)
+  }
+}
+
+// 一键已读
+const markAllAsRead = async () => {
+  // 这里需要调用标记所有消息为已读的API
+  // 暂时模拟操作
+  try {
+    // TODO: 调用标记已读API
+    console.log('标记所有消息为已读')
+    ElMessage.success('所有消息已标记为已读')
+    closeNotificationMenu()
+    // 更新未读消息列表
+    updateUnreadMessages()
+  } catch (error) {
+    console.error('标记已读失败:', error)
+    ElMessage.error('操作失败，请重试')
+  }
+}
+
+// 标记单条消息为已读
+const markMessageAsRead = async (message) => {
+  try {
+    // TODO: 调用标记单条消息为已读的API
+    console.log('标记消息为已读:', message.id)
+    
+    // 添加动画效果：高度减少并滑出
+    const messageElement = document.querySelector(`[data-message-id="${message.id}"]`)
+    if (messageElement) {
+      messageElement.style.transition = 'all 0.3s ease-out'
+      messageElement.style.height = '0'
+      messageElement.style.opacity = '0'
+      messageElement.style.transform = 'translateX(100%)'
+      messageElement.style.margin = '0'
+      messageElement.style.padding = '0'
+      messageElement.style.border = 'none'
+      
+      // 动画完成后移除元素
+      setTimeout(() => {
+        const index = unreadMessages.value.findIndex(m => m.id === message.id)
+        if (index > -1) {
+          unreadMessages.value.splice(index, 1)
+        }
+        
+        // 更新全局消息状态
+        const globalMessage = globalStore.messages.find(m => m.id === message.id)
+        if (globalMessage) {
+          globalMessage.status = 'read'
+        }
+      }, 300)
+    } else {
+      // 如果找不到元素，直接移除
+      const index = unreadMessages.value.findIndex(m => m.id === message.id)
+      if (index > -1) {
+        unreadMessages.value.splice(index, 1)
+      }
+      
+      // 更新全局消息状态
+      const globalMessage = globalStore.messages.find(m => m.id === message.id)
+      if (globalMessage) {
+        globalMessage.status = 'read'
+      }
+    }
+  } catch (error) {
+    console.error('标记消息已读失败:', error)
+    ElMessage.error('操作失败，请重试')
+  }
+}
+
+// 格式化时间
+const formatTime = (timeString) => {
+  if (!timeString) return ''
+  const date = new Date(timeString)
+  const now = new Date()
+  const diff = now - date
+  
+  // 小于1分钟
+  if (diff < 60000) {
+    return '刚刚'
+  }
+  
+  // 小于1小时
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000)
+    return `${minutes}分钟前`
+  }
+  
+  // 小于24小时
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000)
+    return `${hours}小时前`
+  }
+  
+  // 大于24小时，显示具体日期
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+}
+
+// 获取设备名字
+const getDeviceName = (deviceId) => {
+  const device = globalStore.devices.find(d => d.id === deviceId)
+  return device ? device.name : '未知设备'
 }
 
 // 显示注销确认弹窗
@@ -487,6 +837,11 @@ const confirmDelete = async () => {
     showDeleteConfirmModal.value = false
   }
 }
+
+// 监听未读消息变化，自动更新未读消息列表
+watch(() => globalStore.messages, () => {
+  updateUnreadMessages()
+}, { deep: true })
 
 // 初始化主题
 onMounted(() => {
@@ -791,6 +1146,359 @@ body, html {
   height: 20px;
 }
 
+/* 通知容器 */
+.notification-container {
+  position: relative;
+}
+
+/* 通知徽章 */
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--color-danger);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 18px;
+}
+
+/* 通知下拉菜单样式 */
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: var(--color-shadow-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  min-width: 380px;
+  z-index: 9999;
+  overflow: hidden;
+  margin-top: 0;
+}
+
+.notification-info {
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notification-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-bg-primary);
+}
+
+.notification-details h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.notification-details p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.notification-content {
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+}
+
+.no-messages {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.no-messages-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: var(--color-text-muted);
+}
+
+.no-messages-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.message-list {
+  padding: 0;
+}
+
+.message-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.3s ease-out;
+  min-height: 60px;
+  overflow: hidden;
+}
+
+.message-item:hover {
+  background-color: var(--color-hover);
+}
+
+.message-item:last-child {
+  border-bottom: none;
+}
+
+.message-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.message-icon.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.message-icon.level-error {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.message-icon.level-fatal {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
+}
+
+.message-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.message-text {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-level {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.message-level.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.message-level.level-error {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.message-level.level-fatal {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+
+.message-device {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.message-device svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-text-muted);
+}
+
+/* 单条消息标记已读按钮 */
+.mark-read-single-btn {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  opacity: 1;
+  transform: scale(1);
+  margin-left: 6px;
+}
+
+.mark-read-single-btn:hover {
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.mark-read-single-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* 消息移除动画 */
+.message-item.removing {
+  height: 0 !important;
+  opacity: 0 !important;
+  transform: translateX(100%) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+/* 消息日志弹窗 */
+.message-log-modal-content {
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-log-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.message-log-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.message-log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.message-log-list {
+  padding: 0;
+}
+
+.message-log-item {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s ease;
+}
+
+.message-log-item:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.message-log-item:last-child {
+  border-bottom: none;
+}
+
+/* 加载更多按钮 */
+.load-more-container {
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+
+.load-more-btn {
+  padding: 10px 24px;
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .user-profile {
   display: flex;
   align-items: center;
@@ -831,7 +1539,7 @@ body, html {
 /* 用户下拉菜单样式 */
 .user-dropdown {
   position: absolute;
-  top: calc(100% - 20px);
+  top: calc(100% - 36px);
   right: 16px;
   background: var(--color-shadow-overlay);
   border: 1px solid var(--color-border);

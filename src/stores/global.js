@@ -117,19 +117,21 @@ export const useGlobalStore = defineStore('global', {
 		// 消息列表数据结构：
 		// [
 		//   {
-		//     device_id: 60,                    // 设备ID
-		//     level: "normal",                  // 消息级别：low/normal/high
-		//     message: "温度异常",               // 消息内容
-		//     detail: {                         // 详细信息
-		//       status: "operational",          // 状态
-		//       component: "Network",           // 组件
-		//       last_check: "2025-09-26T00:44:21.231357" // 最后检查时间
+		//     device_id: 41,                    // 设备ID
+		//     level: "error",                   // 消息级别：normal/error/fatal
+		//     message: "电量不足",               // 消息内容
+		//     detail: {                         // 详细信息（可选）
+		//       severity: "medium",             // 严重程度
+		//       component: "CPU",               // 组件
+		//       error_code: "ERR6506"           // 错误代码
 		//     },
-		//     id: 172,                          // 消息ID
-		//     status: "new",                    // 消息状态：new/read
-		//     created_at: "2025-09-26T01:40:22" // 创建时间
+		//     id: 119,                          // 消息ID
+		//     status: "read",                   // 消息状态：new/read
+		//     created_at: "2025-09-26T02:17:08", // 创建时间
+		//     updated_at: null                  // 更新时间
 		//   }
 		// ]
+		// 注意：界面只显示设备名字，不显示detail中的字段
 		messages: [],
 		
 		loading: {
@@ -285,7 +287,31 @@ export const useGlobalStore = defineStore('global', {
 				
 			} catch (err) {
 				this.errors.messages = err
-				console.error('消息列表加载失败:', err)
+				console.error('未读消息加载失败:', err)
+			} finally {
+				this.loading.messages = false
+			}
+		},
+		
+		// 加载已读消息（支持分页）
+		async loadReadMessages(userId, params = {}) {
+			this.loading.messages = true
+			this.errors.messages = null
+			try {
+				const res = await getDeviceMessages({
+					user_id: userId,
+					status: 'read',
+					limit: params.limit || 20,
+					offset: params.offset || 0
+				})
+				
+				// 返回已读消息数组
+				return Array.isArray(res) ? res : []
+				
+			} catch (err) {
+				this.errors.messages = err
+				console.error('已读消息加载失败:', err)
+				return []
 			} finally {
 				this.loading.messages = false
 			}
