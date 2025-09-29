@@ -155,7 +155,6 @@ export const useGlobalStore = defineStore('global', {
 			this.errors.devices = null
 			try {
 				const res = await fetchDeviceStatuses({ user_id: userId })
-				console.log('devices', res)
 				// API直接返回设备数组，request.js已经提取了response.data
 				const devices = Array.isArray(res) ? res : []
 				

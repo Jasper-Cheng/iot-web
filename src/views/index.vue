@@ -506,21 +506,23 @@
             </div>
           </div>
           
-          <!-- 加载更多按钮 -->
-          <button 
-            v-if="hasMorePointsHistory"
-            class="load-more-btn" 
-            @click="loadMorePointsHistory"
-            :disabled="isLoadingPointsHistory"
-          >
-            {{ isLoadingPointsHistory ? '加载中...' : '加载更多' }}
-          </button>
-          <div v-else-if="pointsHistory.length > 0" class="no-more-messages">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            <span>没有更多记录了</span>
+          <!-- 加载更多按钮或没有更多提示 -->
+          <div class="load-more-container">
+            <button 
+              v-if="hasMorePointsHistory"
+              class="load-more-btn" 
+              @click="loadMorePointsHistory"
+              :disabled="isLoadingPointsHistory"
+            >
+              {{ isLoadingPointsHistory ? '加载中...' : '加载更多' }}
+            </button>
+            <div v-else-if="pointsHistory.length > 0" class="no-more-messages">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <span>没有更多记录了</span>
+            </div>
           </div>
         </div>
       </div>
