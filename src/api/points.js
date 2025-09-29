@@ -31,3 +31,15 @@ export const checkIn = (extra = {}) => {
     }
   })
 }
+
+// 获取日历签到数据
+export const getCheckinCalendar = (year, month) => {
+  return request({
+    url: '/check-in/calendar',
+    method: 'get',
+    params: {
+      year: year,
+      month: month
+    }
+  })
+}

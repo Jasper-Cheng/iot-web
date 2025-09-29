@@ -81,8 +81,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { checkIn } from '../api/points'
+import { ref, computed, onMounted, watch } from 'vue'
+import { checkIn, getCheckinCalendar } from '../api/points'
 import { ElMessage } from 'element-plus'
 
 // 定义 props
@@ -228,6 +228,36 @@ const nextMonth = () => {
   }, 200)
 }
 
+// 获取指定月份的签到数据
+const loadCheckinData = async (year, month) => {
+  try {
+    const response = await getCheckinCalendar(year, month)
+    
+    // 清空当前月份的签到数据
+    const currentMonthData = new Map()
+    
+    // 将服务器返回的签到日期添加到本地数据中
+    if (response.check_in_dates && Array.isArray(response.check_in_dates)) {
+      response.check_in_dates.forEach(dateStr => {
+        currentMonthData.set(dateStr, {
+          date: dateStr,
+          timestamp: new Date(dateStr).getTime(),
+          pointsEarned: 0, // 服务器没有返回具体积分，可以后续优化
+          continuousDays: response.continuous_days || 0,
+          checkInTime: dateStr
+        })
+      })
+    }
+    
+    // 更新签到数据
+    checkinData.value = currentMonthData
+    
+  } catch (error) {
+    console.error('加载签到数据失败:', error)
+    // 不显示错误提示，因为这是后台数据加载
+  }
+}
+
 // 处理日期点击
 const handleDayClick = async (day) => {
   if (!day.canCheckIn || isLoading.value) return
@@ -257,7 +287,11 @@ const handleDayClick = async (day) => {
     
     // 触发签到成功事件
     emit('checkin-success', response)
-    console.log('签到成功:', response)
+    
+    // 重新加载当前月份的签到数据
+    const year = currentDate.value.getFullYear()
+    const month = currentDate.value.getMonth() + 1
+    loadCheckinData(year, month)
     
   } catch (error) {
     console.error('签到失败:', error)
@@ -276,6 +310,20 @@ const handleDayClick = async (day) => {
     isLoading.value = false
   }
 }
+
+// 监听当前日期变化，重新加载签到数据
+watch(currentDate, (newDate) => {
+  const year = newDate.getFullYear()
+  const month = newDate.getMonth() + 1 // getMonth() 返回 0-11，需要 +1
+  loadCheckinData(year, month)
+}, { immediate: false })
+
+// 组件挂载时加载当前月份的签到数据
+onMounted(() => {
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  loadCheckinData(year, month)
+})
 </script>
 
 <style scoped>
