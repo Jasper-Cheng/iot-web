@@ -46,14 +46,9 @@
 
       <!-- 右侧内容区域 -->
       <div class="right-section">
-        <!-- 固定组件 -->
-        <div class="cards-row">
-          <WiFiCard />
-          <TvCard />
-        </div>
-        <div class="music-row">
-          <MusicCard />
-          <SocketsCard />
+       
+        <div class="calendar-row">
+          <CheckinCalendar />
         </div>
         <!-- 智能控制面板 -->
         <SmartControlPanel />
@@ -99,6 +94,7 @@ import WiFiCard from '../cards/WiFiCard.vue'
 import TvCard from '../cards/TvCard.vue'
 import MusicCard from '../cards/MusicCard.vue'
 import SocketsCard from '../cards/SocketsCard.vue'
+import CheckinCalendar from '../components/CheckinCalendar.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
 import EnergyPanel from '../components/EnergyPanel.vue'
 import DeviceStatsPanel from '../components/DeviceStatsPanel.vue'
@@ -382,6 +378,16 @@ const confirmEditName = async () => {
 }
 
 .music-row > * {
+  flex: 1;
+}
+
+.calendar-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.calendar-row > * {
   flex: 1;
 }
 
