@@ -43,3 +43,14 @@ export const getCheckinCalendar = (year, month) => {
     }
   })
 }
+
+// 获取签到统计数据
+export const getCheckinStats = (accountId) => {
+  if (!accountId) {
+    throw new Error('Account ID is required to get checkin stats.')
+  }
+  return request({
+    url: `/check-in/stats/${accountId}`,
+    method: 'get'
+  })
+}

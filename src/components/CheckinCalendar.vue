@@ -82,8 +82,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { checkIn, getCheckinCalendar } from '../api/points'
+import { checkIn, getCheckinCalendar, getCheckinStats } from '../api/points'
 import { ElMessage } from 'element-plus'
+import { useGlobalStore } from '../stores/global'
 
 // 定义 props
 const props = defineProps({
@@ -96,10 +97,21 @@ const props = defineProps({
 // 定义 emits
 const emit = defineEmits(['checkin-success'])
 
+// 全局状态
+const globalStore = useGlobalStore()
+
 // 响应式数据
 const currentDate = ref(new Date())
 const isLoading = ref(false)
 const checkinData = ref(new Map()) // 存储打卡数据
+const checkinStats = ref({
+  total_check_ins: 0,
+  total_points: 0,
+  continuous_days: 0,
+  longest_continuous: 0,
+  this_month_check_ins: 0,
+  this_month_points: 0
+})
 
 // 星期几的显示
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
@@ -115,20 +127,11 @@ const currentYear = computed(() => {
 
 // 计算打卡统计
 const checkinCount = computed(() => {
-  return checkinData.value.size
+  return checkinStats.value.total_check_ins || 0
 })
 
 const currentStreak = computed(() => {
-  const today = new Date()
-  let streak = 0
-  let checkDate = new Date(today)
-  
-  while (checkinData.value.has(formatDate(checkDate))) {
-    streak++
-    checkDate.setDate(checkDate.getDate() - 1)
-  }
-  
-  return streak
+  return checkinStats.value.longest_continuous || 0
 })
 
 // 格式化日期为 YYYY-MM-DD
@@ -228,6 +231,18 @@ const nextMonth = () => {
   }, 200)
 }
 
+// 获取签到统计数据
+const loadCheckinStats = async () => {
+  if (!globalStore.user?.account?.id) return
+  
+  try {
+    const response = await getCheckinStats(globalStore.user.account.id)
+    checkinStats.value = response
+  } catch (error) {
+    console.error('加载签到统计失败:', error)
+  }
+}
+
 // 获取指定月份的签到数据
 const loadCheckinData = async (year, month) => {
   try {
@@ -288,10 +303,13 @@ const handleDayClick = async (day) => {
     // 触发签到成功事件
     emit('checkin-success', response)
     
-    // 重新加载当前月份的签到数据
+    // 重新加载统计数据和当前月份的签到数据
     const year = currentDate.value.getFullYear()
     const month = currentDate.value.getMonth() + 1
-    loadCheckinData(year, month)
+    await Promise.all([
+      loadCheckinStats(),
+      loadCheckinData(year, month)
+    ])
     
   } catch (error) {
     console.error('签到失败:', error)
@@ -318,11 +336,13 @@ watch(currentDate, (newDate) => {
   loadCheckinData(year, month)
 }, { immediate: false })
 
-// 组件挂载时加载当前月份的签到数据
-onMounted(() => {
-  const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth() + 1
-  loadCheckinData(year, month)
+// 组件挂载时加载签到统计数据和当前月份的签到数据
+onMounted(async () => {
+  // 并行加载统计数据和日历数据
+  await Promise.all([
+    loadCheckinStats(),
+    loadCheckinData(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1)
+  ])
 })
 </script>
 
