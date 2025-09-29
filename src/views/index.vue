@@ -744,7 +744,36 @@ const closeMessageLogModal = () => {
 // 加载更多已读消息
 const loadMoreReadMessages = () => {
   if (!isLoadingReadMessages.value && hasMoreReadMessages.value) {
-    loadReadMessages(readMessagesPage.value + 1, true)
+    // 计算累积的 limit 和 skip
+    const currentSkip = readMessages.value.length
+    const nextLimit = currentSkip + 20  // limit = skip + 20
+    
+    loadMoreReadMessagesDirect(currentSkip, nextLimit)
+  }
+}
+
+// 直接加载更多消息的函数
+const loadMoreReadMessagesDirect = async (skip, limit) => {
+  if (!globalStore.user?.user_id) return
+  
+  isLoadingReadMessages.value = true
+  try {
+    const messages = await globalStore.loadReadMessages(globalStore.user.user_id, {
+      limit: limit,
+      skip: skip
+    })
+    
+    // 追加到现有消息列表
+    readMessages.value = [...readMessages.value, ...messages]
+    
+    // 判断是否还有更多数据
+    hasMoreReadMessages.value = messages.length === (limit - skip)
+    readMessagesPage.value = Math.floor(skip / 20) + 1
+    
+  } catch (error) {
+    console.error('加载已读消息失败:', error)
+  } finally {
+    isLoadingReadMessages.value = false
   }
 }
 
@@ -804,7 +833,36 @@ const closePointsHistoryModal = () => {
 
 const loadMorePointsHistory = () => {
   if (!isLoadingPointsHistory.value && hasMorePointsHistory.value) {
-    loadPointsHistory(pointsHistoryPage.value + 1, true)
+    // 计算累积的 limit 和 skip
+    const currentSkip = pointsHistory.value.length
+    const nextLimit = currentSkip + 20  // limit = skip + 20
+    
+    loadMorePointsHistoryDirect(currentSkip, nextLimit)
+  }
+}
+
+// 直接加载更多积分记录的函数
+const loadMorePointsHistoryDirect = async (skip, limit) => {
+  if (!globalStore.user?.account?.id) return
+  
+  isLoadingPointsHistory.value = true
+  try {
+    const response = await getPointsHistory(globalStore.user.account.id, {
+      skip: skip,
+      limit: limit
+    })
+    
+    // 追加到现有积分历史列表
+    pointsHistory.value = [...pointsHistory.value, ...response]
+    
+    // 判断是否还有更多数据
+    hasMorePointsHistory.value = response.length === (limit - skip)
+    pointsHistoryPage.value = Math.floor(skip / 20) + 1
+    
+  } catch (error) {
+    console.error('加载积分历史失败:', error)
+  } finally {
+    isLoadingPointsHistory.value = false
   }
 }
 
