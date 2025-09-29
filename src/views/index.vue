@@ -265,10 +265,23 @@
                   <span class="user-role">{{ getRoleText(globalStore.user?.account?.role) }}</span>
                   <span class="user-gender">{{ getGenderText(globalStore.user?.account?.gender) }}</span>
                 </div>
+                <div class="user-points">
+                  <span class="points-label">积分</span>
+                  <span class="points-value">{{ userPoints || 0 }}</span>
+                </div>
               </div>
             </div>
             <div class="dropdown-divider"></div>
             <div class="dropdown-menu">
+              <a href="#" class="dropdown-item" @click.prevent="openPointsHistoryModal">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                积分记录
+              </a>
+              <div class="dropdown-divider"></div>
               <div class="dropdown-actions">
                 <a href="#" class="dropdown-item" @click.prevent="logout">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -453,6 +466,66 @@
       </div>
     </div>
   </div>
+
+  <!-- 积分记录弹窗 -->
+  <div v-if="showPointsHistoryModal" class="device-modal" @click="closePointsHistoryModal">
+    <div class="points-history-modal-content" @click.stop>
+      <div class="points-history-header">
+        <h3>积分记录</h3>
+        <button class="delete-close-btn" @click="closePointsHistoryModal">X</button>
+      </div>
+      <div class="points-history-body">
+        <div v-if="isLoadingPointsHistory && pointsHistory.length === 0" class="loading-messages">
+          加载中...
+        </div>
+        <div v-else-if="pointsHistory.length === 0" class="no-messages">
+          暂无积分记录
+        </div>
+        <div v-else class="points-history-list">
+          <div 
+            v-for="record in pointsHistory" 
+            :key="record.id" 
+            class="points-history-item"
+          >
+            <div class="points-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </div>
+            <div class="points-content">
+              <div class="points-description">{{ record.description }}</div>
+              <div class="points-details">
+                <span class="points-amount" :class="{ 'positive': record.points > 0, 'negative': record.points < 0 }">
+                  {{ record.points > 0 ? '+' : '' }}{{ record.points }}
+                </span>
+                <span class="points-balance">余额: {{ record.balance }}</span>
+              </div>
+              <div class="points-time">{{ formatPointsTime(record.created_at) }}</div>
+            </div>
+          </div>
+          
+          <!-- 加载更多按钮 -->
+          <button 
+            v-if="hasMorePointsHistory"
+            class="load-more-btn" 
+            @click="loadMorePointsHistory"
+            :disabled="isLoadingPointsHistory"
+          >
+            {{ isLoadingPointsHistory ? '加载中...' : '加载更多' }}
+          </button>
+          <div v-else-if="pointsHistory.length > 0" class="no-more-messages">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <span>没有更多记录了</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -463,6 +536,7 @@ import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
 import { deleteUser, deleteFamilyMember, markAllMessagesAsRead } from '../api/users'
 import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
+import { getPointsBalance, getPointsHistory } from '../api/points'
 import { ElMessage } from 'element-plus'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
@@ -500,6 +574,15 @@ const isLoadingReadMessages = ref(false)
 const readMessagesPage = ref(1)
 const readMessagesLimit = ref(20)
 const hasMoreReadMessages = ref(true)
+
+// 积分相关
+const userPoints = ref(0)
+const showPointsHistoryModal = ref(false)
+const pointsHistory = ref([])
+const isLoadingPointsHistory = ref(false)
+const pointsHistoryPage = ref(1)
+const pointsHistoryLimit = ref(20)
+const hasMorePointsHistory = ref(true)
 
 // 当前主题
 const currentTheme = ref('dark')
@@ -662,6 +745,90 @@ const closeMessageLogModal = () => {
 const loadMoreReadMessages = () => {
   if (!isLoadingReadMessages.value && hasMoreReadMessages.value) {
     loadReadMessages(readMessagesPage.value + 1, true)
+  }
+}
+
+// 积分相关方法
+const loadUserPoints = async () => {
+  if (!globalStore.user?.account?.id) return
+  
+  try {
+    const response = await getPointsBalance(globalStore.user.account.id)
+    userPoints.value = response.available_balance || 0
+  } catch (error) {
+    console.error('加载积分余额失败:', error)
+  }
+}
+
+const loadPointsHistory = async (page = 1, append = false) => {
+  if (!globalStore.user?.account?.id) return
+  
+  isLoadingPointsHistory.value = true
+  try {
+    const response = await getPointsHistory(globalStore.user.account.id, {
+      skip: (page - 1) * pointsHistoryLimit.value,
+      limit: pointsHistoryLimit.value
+    })
+    
+    if (append) {
+      pointsHistory.value = [...pointsHistory.value, ...response]
+    } else {
+      pointsHistory.value = response
+    }
+    
+    // 判断是否还有更多数据
+    hasMorePointsHistory.value = response.length === pointsHistoryLimit.value
+    pointsHistoryPage.value = page
+    
+  } catch (error) {
+    console.error('加载积分历史失败:', error)
+  } finally {
+    isLoadingPointsHistory.value = false
+  }
+}
+
+const openPointsHistoryModal = () => {
+  showPointsHistoryModal.value = true
+  showUserMenu.value = false
+  // 重置分页状态并加载第一页
+  pointsHistoryPage.value = 1
+  hasMorePointsHistory.value = true
+  loadPointsHistory(1, false)
+}
+
+const closePointsHistoryModal = () => {
+  showPointsHistoryModal.value = false
+  // 清空积分历史列表
+  pointsHistory.value = []
+}
+
+const loadMorePointsHistory = () => {
+  if (!isLoadingPointsHistory.value && hasMorePointsHistory.value) {
+    loadPointsHistory(pointsHistoryPage.value + 1, true)
+  }
+}
+
+const formatPointsTime = (timestamp) => {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) { // 1分钟内
+    return '刚刚'
+  } else if (diff < 3600000) { // 1小时内
+    return `${Math.floor(diff / 60000)}分钟前`
+  } else if (diff < 86400000) { // 1天内
+    return `${Math.floor(diff / 3600000)}小时前`
+  } else if (diff < 604800000) { // 1周内
+    return `${Math.floor(diff / 86400000)}天前`
+  } else {
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 }
 
@@ -870,6 +1037,9 @@ onMounted(() => {
   
   // 加载所有数据
   globalStore.loadAll()
+  
+  // 加载积分数据
+  loadUserPoints()
 })
 
 // 组件销毁时移除事件监听
@@ -1446,6 +1616,19 @@ body, html {
   flex-direction: column;
 }
 
+/* 积分记录弹窗 */
+.points-history-modal-content {
+  background: var(--color-shadow-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  width: 80%;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .message-log-header {
   background: var(--color-bg-secondary);
   padding: 12px 16px;
@@ -1464,7 +1647,37 @@ body, html {
   color: var(--color-text-primary);
 }
 
+.points-history-header {
+  background: var(--color-bg-secondary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.points-history-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
 .message-log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: var(--color-bg-secondary);
+  min-height: 0; /* 确保flex子元素可以收缩 */
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  border-radius: 0 0 16px 16px;
+}
+
+.points-history-body {
   flex: 1;
   overflow-y: auto;
   padding: 0;
@@ -1501,6 +1714,90 @@ body, html {
 
 .message-log-item:last-child {
   border-bottom: none;
+}
+
+.points-history-list {
+  padding: 0;
+}
+
+.points-history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.3s ease-out;
+  min-height: 70px;
+  overflow: hidden;
+}
+
+.points-history-item:hover {
+  background-color: var(--color-hover);
+}
+
+.points-history-item:last-child {
+  border-bottom: none;
+}
+
+.points-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-primary-text);
+}
+
+.points-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.points-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.points-description {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.points-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.points-amount {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.points-amount.positive {
+  color: var(--color-success);
+}
+
+.points-amount.negative {
+  color: var(--color-danger);
+}
+
+.points-balance {
+  color: var(--color-text-secondary);
+}
+
+.points-time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
 }
 
 /* 消息日志弹窗中的消息样式 - 与通知下拉菜单保持一致 */
@@ -1728,6 +2025,27 @@ body, html {
   font-size: 18px;
   font-weight: 700;
   color: var(--color-text-primary);
+}
+
+.user-points {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--color-primary);
+  border-radius: 20px;
+  color: var(--color-primary-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.points-label {
+  opacity: 0.8;
+}
+
+.points-value {
+  font-weight: 700;
 }
 
 .user-details p {

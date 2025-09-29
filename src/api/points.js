@@ -1,0 +1,22 @@
+import request from '../utils/request'
+
+// 获取积分余额
+export const getPointsBalance = (accountId) => {
+  return request({
+    url: `/points/balance/${accountId}`,
+    method: 'get'
+  })
+}
+
+// 获取积分历史记录
+export const getPointsHistory = (accountId, params = {}) => {
+  return request({
+    url: `/points/history/${accountId}`,
+    method: 'get',
+    params: {
+      skip: params.skip || 0,
+      limit: params.limit || 20,
+      ...params
+    }
+  })
+}
