@@ -1,20 +1,31 @@
 <template>
   <div class="checkin-calendar">
     <div class="calendar-header">
-      <div class="calendar-icon">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
-          <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
-          <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
-          <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </div>
-      <div class="calendar-info">
-        <h4>打卡日历</h4>
-        <div class="calendar-stats">
-          <span class="checkin-count">{{ checkinCount }}天</span>
-          <span class="checkin-streak">{{ currentStreak }}天连击</span>
+      <div class="calendar-left">
+        <div class="calendar-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+            <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+            <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+            <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+          </svg>
         </div>
+        <div class="calendar-info">
+          <h4>打卡日历</h4>
+          <div class="calendar-stats">
+            <span class="checkin-count">{{ checkinCount }}天</span>
+            <span class="checkin-streak">{{ currentStreak }}天连击</span>
+          </div>
+        </div>
+      </div>
+      <div class="calendar-right">
+        <button class="checkin-history-btn" @click="openCheckinHistoryModal" title="查看打卡记录">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+          <span>打卡记录</span>
+        </button>
       </div>
     </div>
     
@@ -64,17 +75,157 @@
     </div>
 
     <div class="calendar-legend">
-      <div class="legend-item">
-        <div class="legend-dot checked"></div>
-        <span>已打卡</span>
+      <div class="legend-left">
+        <div class="legend-item">
+          <div class="legend-dot checked"></div>
+          <span>已打卡</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot today"></div>
+          <span>今天</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot available"></div>
+          <span>可打卡</span>
+        </div>
       </div>
-      <div class="legend-item">
-        <div class="legend-dot today"></div>
-        <span>今天</span>
+      <div class="legend-right">
+        <button class="reward-rules-btn" @click="openRewardRulesModal" title="查看奖励规则">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+          <span>奖励规则</span>
+        </button>
       </div>
-      <div class="legend-item">
-        <div class="legend-dot available"></div>
-        <span>可打卡</span>
+    </div>
+
+    <!-- 奖励规则弹窗 -->
+    <div v-if="showRewardRulesModal" class="device-modal" @click="closeRewardRulesModal">
+      <div class="reward-rules-modal-content" @click.stop>
+        <div class="reward-rules-header">
+          <div class="header-left">
+            <div class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </div>
+            <div class="header-title">
+              <h3>奖励规则</h3>
+              <p class="header-subtitle">签到获得积分奖励</p>
+            </div>
+          </div>
+          <button class="delete-close-btn" @click="closeRewardRulesModal">X</button>
+        </div>
+        <div class="reward-rules-body">
+          <div class="reward-rules-list">
+            <div class="reward-rule-item">
+              <div class="rule-icon normal">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+              </div>
+              <div class="rule-content">
+                <div class="rule-title">普通签到</div>
+                <div class="rule-description">每日签到可获得</div>
+                <div class="rule-points">5积分</div>
+              </div>
+            </div>
+            
+            <div class="reward-rule-item">
+              <div class="rule-icon streak">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+              </div>
+              <div class="rule-content">
+                <div class="rule-title">连续签到 3-6天</div>
+                <div class="rule-description">连续签到可获得额外奖励</div>
+                <div class="rule-points">10积分</div>
+              </div>
+            </div>
+            
+            <div class="reward-rule-item">
+              <div class="rule-icon super">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+              </div>
+              <div class="rule-content">
+                <div class="rule-title">连续签到 7天以上</div>
+                <div class="rule-description">连续签到可获得超级奖励</div>
+                <div class="rule-points">20积分</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 打卡记录弹窗 -->
+    <div v-if="showCheckinHistoryModal" class="device-modal" @click="closeCheckinHistoryModal">
+      <div class="checkin-history-modal-content" @click.stop>
+        <div class="checkin-history-header">
+          <div class="header-left">
+            <div class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="header-title">
+              <h3>打卡记录</h3>
+              <p class="header-subtitle">总签到: {{ checkinStats.total_check_ins }}天</p>
+            </div>
+          </div>
+          <button class="delete-close-btn" @click="closeCheckinHistoryModal">X</button>
+        </div>
+        <div class="checkin-history-body">
+          <div v-if="isLoadingCheckinHistory && checkinHistory.length === 0" class="loading-messages">
+            加载中...
+          </div>
+          <div v-else-if="checkinHistory.length === 0" class="no-messages">
+            暂无打卡记录
+          </div>
+          <div v-else class="checkin-history-list">
+            <div 
+              v-for="record in checkinHistory" 
+              :key="record.id" 
+              class="checkin-history-item"
+            >
+              <div class="checkin-content">
+                <div class="checkin-main-row">
+                  <div class="checkin-description">每日签到</div>
+                  <span class="checkin-amount positive">+{{ record.points_earned || 0 }}</span>
+                </div>
+                <div class="checkin-details">
+                  <span class="checkin-balance">连续: {{ record.continuous_days || 0 }}天</span>
+                </div>
+                <div class="checkin-time">{{ formatCheckinTime(record.check_in_time) }}</div>
+              </div>
+            </div>
+            
+            <!-- 加载更多按钮或没有更多提示 -->
+            <div class="load-more-container">
+              <button 
+                v-if="hasMoreCheckinHistory"
+                class="load-more-btn" 
+                @click="loadMoreCheckinHistory"
+                :disabled="isLoadingCheckinHistory"
+              >
+                {{ isLoadingCheckinHistory ? '加载中...' : '加载更多' }}
+              </button>
+              <div v-else-if="checkinHistory.length > 0" class="no-more-messages">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                <span>没有更多记录了</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -112,6 +263,17 @@ const checkinStats = ref({
   this_month_check_ins: 0,
   this_month_points: 0
 })
+
+// 打卡记录弹窗相关数据
+const showCheckinHistoryModal = ref(false)
+const checkinHistory = ref([])
+const isLoadingCheckinHistory = ref(false)
+const checkinHistoryPage = ref(1)
+const checkinHistoryLimit = ref(20)
+const hasMoreCheckinHistory = ref(true)
+
+// 奖励规则弹窗相关数据
+const showRewardRulesModal = ref(false)
 
 // 星期几的显示
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
@@ -336,6 +498,75 @@ watch(currentDate, (newDate) => {
   loadCheckinData(year, month)
 }, { immediate: false })
 
+// 奖励规则相关方法
+const openRewardRulesModal = () => {
+  showRewardRulesModal.value = true
+}
+
+const closeRewardRulesModal = () => {
+  showRewardRulesModal.value = false
+}
+
+// 打卡记录相关方法
+const openCheckinHistoryModal = () => {
+  showCheckinHistoryModal.value = true
+  checkinHistoryPage.value = 1
+  hasMoreCheckinHistory.value = true
+  loadCheckinHistory(1, false, 20, 0)
+}
+
+const closeCheckinHistoryModal = () => {
+  showCheckinHistoryModal.value = false
+  checkinHistory.value = []
+}
+
+const loadCheckinHistory = async (page = 1, append = false, customLimit = null, customSkip = null) => {
+  if (!globalStore.user?.account?.id) return
+  isLoadingCheckinHistory.value = true
+  try {
+    // 这里需要添加获取打卡记录的API，暂时使用模拟数据
+    const mockData = [
+      {
+        id: 1,
+        check_in_time: new Date().toISOString(),
+        points_earned: 10,
+        continuous_days: 1
+      }
+    ]
+    
+    if (append) {
+      checkinHistory.value = [...checkinHistory.value, ...mockData]
+    } else {
+      checkinHistory.value = mockData
+    }
+    hasMoreCheckinHistory.value = false // 模拟数据，没有更多
+  } catch (error) {
+    console.error('加载打卡记录失败:', error)
+  } finally {
+    isLoadingCheckinHistory.value = false
+  }
+}
+
+const loadMoreCheckinHistory = () => {
+  if (!isLoadingCheckinHistory.value && hasMoreCheckinHistory.value) {
+    const currentSkip = checkinHistory.value.length
+    const nextLimit = currentSkip + 20
+    loadCheckinHistory(checkinHistoryPage.value + 1, true, nextLimit, currentSkip)
+  }
+}
+
+const formatCheckinTime = (timestamp) => {
+  const date = new Date(timestamp)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
+
 // 组件挂载时加载签到统计数据和当前月份的签到数据
 onMounted(async () => {
   // 并行加载统计数据和日历数据
@@ -360,8 +591,69 @@ onMounted(async () => {
 .calendar-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   margin-bottom: 16px;
+}
+
+.calendar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkin-history-btn {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkin-history-btn:hover {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.checkin-history-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.reward-rules-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reward-rules-btn:hover {
+  color: var(--color-primary);
+}
+
+.reward-rules-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .calendar-icon {
@@ -552,10 +844,21 @@ onMounted(async () => {
 
 .calendar-legend {
   display: flex;
-  justify-content: center;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
   padding-top: 12px;
   border-top: 1px solid var(--color-border);
+}
+
+.legend-left {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legend-right {
+  display: flex;
+  align-items: center;
 }
 
 .legend-item {
@@ -583,6 +886,348 @@ onMounted(async () => {
 .legend-dot.available {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+}
+
+
+/* 奖励规则弹窗样式 */
+.reward-rules-modal-content {
+  background: var(--color-shadow-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  width: 80%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reward-rules-header {
+  background: var(--color-bg-secondary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.reward-rules-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--color-bg-secondary);
+  min-height: 0;
+}
+
+.reward-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reward-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.reward-rule-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rule-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rule-icon.normal {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.rule-icon.streak {
+  background: var(--color-success);
+  color: white;
+}
+
+.rule-icon.super {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.rule-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.rule-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rule-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.rule-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.rule-points {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+/* 打卡记录弹窗样式 */
+.device-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.checkin-history-modal-content {
+  background: var(--color-shadow-overlay);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  width: 80%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.checkin-history-header {
+  background: var(--color-bg-secondary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-text);
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.header-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.delete-close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-close-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.checkin-history-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: var(--color-bg-secondary);
+  min-height: 0;
+}
+
+.checkin-history-list {
+  padding: 0;
+}
+
+.checkin-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.checkin-history-item:hover {
+  background-color: var(--color-hover);
+}
+
+.checkin-history-item:last-child {
+  border-bottom: none;
+}
+
+.checkin-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.checkin-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.checkin-description {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.checkin-amount {
+  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.checkin-amount.positive {
+  color: var(--color-success);
+  background: var(--color-success);
+  color: white;
+}
+
+.checkin-details {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.checkin-balance {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.checkin-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.load-more-container {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.load-more-btn {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.no-more-messages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.no-more-messages svg {
+  width: 16px;
+  height: 16px;
+}
+
+.loading-messages,
+.no-messages {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+  font-size: 14px;
 }
 
 /* 响应式设计 */
