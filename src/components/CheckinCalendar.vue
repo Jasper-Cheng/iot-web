@@ -196,13 +196,16 @@
             >
               <div class="checkin-content">
                 <div class="checkin-main-row">
-                  <div class="checkin-description">每日签到</div>
-                  <span class="checkin-amount positive">+{{ record.points_earned || 0 }}</span>
+                  <div class="checkin-description">
+                    {{ getCheckinTypeText(record.check_in_type) }}
+                    <span class="checkin-amount positive">+{{ record.points_earned || 0 }}</span>
+                  </div>
+                  <div v-if="record.extra && record.extra.platform" class="checkin-platform">来源: {{ record.extra.platform }}</div>
                 </div>
                 <div class="checkin-details">
                   <span class="checkin-balance">连续: {{ record.continuous_days || 0 }}天</span>
+                  <span class="checkin-time">{{ formatCheckinTime(record.check_in_time) }}</span>
                 </div>
-                <div class="checkin-time">{{ formatCheckinTime(record.check_in_time) }}</div>
               </div>
             </div>
             
@@ -233,7 +236,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { checkIn, getCheckinCalendar, getCheckinStats } from '../api/points'
+import { checkIn, getCheckinCalendar, getCheckinStats, getCheckinHistory } from '../api/points'
 import { ElMessage } from 'element-plus'
 import { useGlobalStore } from '../stores/global'
 
@@ -521,27 +524,37 @@ const closeCheckinHistoryModal = () => {
 }
 
 const loadCheckinHistory = async (page = 1, append = false, customLimit = null, customSkip = null) => {
-  if (!globalStore.user?.account?.id) return
+  if (isLoadingCheckinHistory.value) return
+  
   isLoadingCheckinHistory.value = true
+  
   try {
-    // 这里需要添加获取打卡记录的API，暂时使用模拟数据
-    const mockData = [
-      {
-        id: 1,
-        check_in_time: new Date().toISOString(),
-        points_earned: 10,
-        continuous_days: 1
-      }
-    ]
+    const limit = customLimit || checkinHistoryLimit.value
+    const skip = customSkip !== null ? customSkip : (page - 1) * limit
+    
+    const globalStore = useGlobalStore()
+    const accountId = globalStore.user?.account?.id
+    
+    if (!accountId) {
+      ElMessage.error('用户信息不完整，无法加载打卡记录')
+      return
+    }
+    
+    const response = await getCheckinHistory(accountId, skip, limit)
     
     if (append) {
-      checkinHistory.value = [...checkinHistory.value, ...mockData]
+      checkinHistory.value = [...checkinHistory.value, ...response]
     } else {
-      checkinHistory.value = mockData
+      checkinHistory.value = response
     }
-    hasMoreCheckinHistory.value = false // 模拟数据，没有更多
+    
+    // 更新分页信息
+    checkinHistoryPage.value = page
+    hasMoreCheckinHistory.value = response.length === limit
+    
   } catch (error) {
     console.error('加载打卡记录失败:', error)
+    ElMessage.error('加载打卡记录失败')
   } finally {
     isLoadingCheckinHistory.value = false
   }
@@ -565,6 +578,15 @@ const formatCheckinTime = (timestamp) => {
     minute: '2-digit',
     second: '2-digit'
   })
+}
+
+const getCheckinTypeText = (type) => {
+  const typeMap = {
+    'normal': '正常',
+    'bonus': '奖励',
+    'makeup': '补签'
+  }
+  return typeMap[type] || '签到'
 }
 
 // 组件挂载时加载签到统计数据和当前月份的签到数据
@@ -1022,7 +1044,7 @@ onMounted(async () => {
   border-radius: 16px;
   box-shadow: 0 10px 30px var(--shadow-soft);
   width: 80%;
-  max-width: 600px;
+  max-width: 800px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -1047,8 +1069,8 @@ onMounted(async () => {
 }
 
 .header-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--color-primary);
   display: flex;
@@ -1065,7 +1087,7 @@ onMounted(async () => {
 
 .header-title h3 {
   margin: 0 0 4px 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -1099,6 +1121,14 @@ onMounted(async () => {
   padding: 0;
   background: var(--color-bg-secondary);
   min-height: 0;
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  border-radius: 0 0 16px 16px;
+}
+
+.checkin-history-body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .checkin-history-list {
@@ -1143,7 +1173,10 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--color-text-primary);
   line-height: 1.3;
-  flex: 1;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .checkin-amount {
@@ -1162,15 +1195,22 @@ onMounted(async () => {
 
 .checkin-details {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   font-size: 13px;
-  margin-bottom: 4px;
 }
 
 .checkin-balance {
   color: var(--color-text-muted);
   font-weight: 500;
   font-size: 11px;
+}
+
+.checkin-platform {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: right;
 }
 
 .checkin-time {
@@ -1181,45 +1221,49 @@ onMounted(async () => {
 }
 
 .load-more-container {
-  padding: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid var(--color-border);
 }
 
 .load-more-btn {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  padding: 8px 16px;
+  padding: 10px 24px;
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border: none;
   border-radius: 8px;
-  cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .load-more-btn:hover:not(:disabled) {
-  background: var(--color-hover);
-  border-color: var(--color-primary);
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
 }
 
 .load-more-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .no-more-messages {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  padding: 16px;
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .no-more-messages svg {
   width: 16px;
   height: 16px;
+  color: var(--color-text-muted);
 }
 
 .loading-messages,

@@ -54,3 +54,17 @@ export const getCheckinStats = (accountId) => {
     method: 'get'
   })
 }
+
+export const getCheckinHistory = (accountId, skip = 0, limit = 20) => {
+  if (!accountId) {
+    throw new Error('Account ID is required to get checkin history.')
+  }
+  return request({
+    url: `/check-in/history/${accountId}`,
+    method: 'get',
+    params: {
+      skip: skip,
+      limit: limit
+    }
+  })
+}
