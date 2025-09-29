@@ -265,23 +265,30 @@
                   <span class="user-role">{{ getRoleText(globalStore.user?.account?.role) }}</span>
                   <span class="user-gender">{{ getGenderText(globalStore.user?.account?.gender) }}</span>
                 </div>
-                <div class="user-points">
-                  <span class="points-label">积分</span>
+              </div>
+            </div>
+            <div class="user-points-section">
+              <div class="user-points">
+                <div class="points-left">
+                  <div class="points-icon-small">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                  </div>
                   <span class="points-value">{{ userPoints || 0 }}</span>
                 </div>
+                <button class="points-history-btn" @click.prevent="openPointsHistoryModal" title="查看积分记录">
+                  <span class="points-history-text">积分记录</span>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none"/>
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="dropdown-divider"></div>
             <div class="dropdown-menu">
-              <a href="#" class="dropdown-item" @click.prevent="openPointsHistoryModal">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-                积分记录
-              </a>
-              <div class="dropdown-divider"></div>
               <div class="dropdown-actions">
                 <a href="#" class="dropdown-item" @click.prevent="logout">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -471,7 +478,19 @@
   <div v-if="showPointsHistoryModal" class="device-modal" @click="closePointsHistoryModal">
     <div class="points-history-modal-content" @click.stop>
       <div class="points-history-header">
-        <h3>积分记录</h3>
+        <div class="header-left">
+          <div class="header-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+          <div class="header-title">
+            <h3>积分记录</h3>
+            <p class="header-subtitle">当前积分: {{ userPoints || 0 }}</p>
+          </div>
+        </div>
         <button class="delete-close-btn" @click="closePointsHistoryModal">X</button>
       </div>
       <div class="points-history-body">
@@ -487,22 +506,17 @@
             :key="record.id" 
             class="points-history-item"
           >
-            <div class="points-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-            </div>
             <div class="points-content">
-              <div class="points-description">{{ record.description }}</div>
-              <div class="points-details">
+              <div class="points-description">
+                {{ record.description }}
                 <span class="points-amount" :class="{ 'positive': record.points > 0, 'negative': record.points < 0 }">
                   {{ record.points > 0 ? '+' : '' }}{{ record.points }}
                 </span>
-                <span class="points-balance">余额: {{ record.balance }}</span>
               </div>
-              <div class="points-time">{{ formatPointsTime(record.created_at) }}</div>
+              <div class="points-details">
+                <span class="points-balance">余额: {{ record.balance }}</span>
+                <span class="points-time">{{ formatPointsTime(record.created_at) }}</span>
+              </div>
             </div>
           </div>
           
@@ -870,26 +884,14 @@ const loadMorePointsHistoryDirect = async (skip, limit) => {
 
 const formatPointsTime = (timestamp) => {
   const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now - date
-  
-  if (diff < 60000) { // 1分钟内
-    return '刚刚'
-  } else if (diff < 3600000) { // 1小时内
-    return `${Math.floor(diff / 60000)}分钟前`
-  } else if (diff < 86400000) { // 1天内
-    return `${Math.floor(diff / 3600000)}小时前`
-  } else if (diff < 604800000) { // 1周内
-    return `${Math.floor(diff / 86400000)}天前`
-  } else {
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
 }
 
 // 一键已读
@@ -1718,11 +1720,41 @@ body, html {
   border-radius: 16px 16px 0 0;
 }
 
-.points-history-header h3 {
-  margin: 0;
-  font-size: 16px;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-text);
+  flex-shrink: 0;
+}
+
+.header-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.header-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 .message-log-body {
@@ -1783,12 +1815,11 @@ body, html {
 .points-history-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
-  transition: all 0.3s ease-out;
-  min-height: 70px;
-  overflow: hidden;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .points-history-item:hover {
@@ -1799,65 +1830,64 @@ body, html {
   border-bottom: none;
 }
 
-.points-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--color-primary-text);
-}
-
-.points-icon svg {
-  width: 18px;
-  height: 18px;
-}
 
 .points-content {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
 }
 
 .points-description {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--color-text-primary);
-  margin: 0;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .points-details {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .points-amount {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
 }
 
 .points-amount.positive {
   color: var(--color-success);
+  background: var(--color-success);
+  color: white;
 }
 
 .points-amount.negative {
   color: var(--color-danger);
+  background: var(--color-danger);
+  color: white;
 }
 
 .points-balance {
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 11px;
 }
 
 .points-time {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-muted);
   margin: 0;
+  font-weight: 500;
 }
 
 /* 消息日志弹窗中的消息样式 - 与通知下拉菜单保持一致 */
@@ -2087,25 +2117,75 @@ body, html {
   color: var(--color-text-primary);
 }
 
+.user-points-section {
+  background: var(--color-bg-secondary);
+  padding: 12px 20px;
+}
+
 .user-points {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: var(--color-primary);
-  border-radius: 20px;
-  color: var(--color-primary-text);
-  font-size: 14px;
-  font-weight: 600;
+  justify-content: space-between;
+  transition: all 0.3s ease;
 }
 
-.points-label {
-  opacity: 0.8;
+.points-icon-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-text);
+  flex-shrink: 0;
+}
+
+.points-icon-small svg {
+  width: 12px;
+  height: 12px;
+}
+
+.points-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .points-value {
+  font-size: 14px;
   font-weight: 700;
+  color: var(--color-primary);
+}
+
+.points-history-btn {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.points-history-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-primary);
+}
+
+.points-history-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.points-history-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .user-details p {
