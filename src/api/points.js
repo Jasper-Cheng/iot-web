@@ -20,3 +20,14 @@ export const getPointsHistory = (accountId, params = {}) => {
     }
   })
 }
+
+// 签到接口
+export const checkIn = (extra = {}) => {
+  return request({
+    url: '/check-in/',
+    method: 'post',
+    data: {
+      extra:extra
+    }
+  })
+}

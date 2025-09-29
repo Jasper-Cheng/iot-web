@@ -82,6 +82,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { checkIn } from '../api/points'
+import { ElMessage } from 'element-plus'
 
 // 定义 props
 const props = defineProps({
@@ -90,6 +92,9 @@ const props = defineProps({
     default: () => ({})
   }
 })
+
+// 定义 emits
+const emit = defineEmits(['checkin-success'])
 
 // 响应式数据
 const currentDate = ref(new Date())
@@ -175,7 +180,7 @@ const calendarDays = computed(() => {
     const dateStr = formatDate(dayDate)
     const isToday = dateStr === todayStr
     const checkedIn = checkinData.value.has(dateStr)
-    const canCheckIn = !checkedIn && (isToday || dayDate < today)
+    const canCheckIn = !checkedIn && isToday
     
     days.push({
       date,
@@ -224,19 +229,51 @@ const nextMonth = () => {
 }
 
 // 处理日期点击
-const handleDayClick = (day) => {
-  if (!day.canCheckIn) return
+const handleDayClick = async (day) => {
+  if (!day.canCheckIn || isLoading.value) return
   
   const dateStr = day.dateStr
   if (checkinData.value.has(dateStr)) {
-    // 取消打卡
-    checkinData.value.delete(dateStr)
-  } else {
-    // 添加打卡
+    // 已签到，不能取消
+    return
+  }
+  
+  // 执行签到
+  isLoading.value = true
+  try {
+    const response = await checkIn({
+      ip_address: '', // 可以后续添加IP获取逻辑
+      platform: 'web'
+    })
+    
+    // 签到成功，更新本地数据
     checkinData.value.set(dateStr, {
       date: dateStr,
-      timestamp: new Date().getTime()
+      timestamp: new Date().getTime(),
+      pointsEarned: response.points_earned || 0,
+      continuousDays: response.continuous_days || 1,
+      checkInTime: response.check_in_time
     })
+    
+    // 触发签到成功事件
+    emit('checkin-success', response)
+    console.log('签到成功:', response)
+    
+  } catch (error) {
+    console.error('签到失败:', error)
+    
+    // 显示服务器返回的错误信息
+    let errorMessage = '签到失败'
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    // 使用ElMessage显示错误信息
+    ElMessage.error(errorMessage)
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -308,8 +345,7 @@ const handleDayClick = (day) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding: 8px 0;
+  margin-bottom: 8px;
 }
 
 .nav-btn {

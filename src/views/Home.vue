@@ -48,7 +48,7 @@
       <div class="right-section">
        <!-- 智能控制面板 -->
        <SmartControlPanel />
-        <CheckinCalendar />
+        <CheckinCalendar @checkin-success="handleCheckinSuccess" />
         <ColorControlPanel />
         <EnergyPanel />
         <DeviceStatsPanel :rooms="roomsWithDevices" />
@@ -150,6 +150,13 @@ const activeRoom = ref('all')
 const showEditNameModal = ref(false)
 const editingDevice = ref(null)
 const editingDeviceName = ref('')
+
+// 处理签到成功
+const handleCheckinSuccess = (response) => {
+  console.log('签到成功，获得积分:', response.points_earned)
+  // 可以在这里添加成功提示
+  // 如果需要刷新积分显示，可以触发父组件的积分更新
+}
 const isEditingName = ref(false)
 
 // 过滤后的设备列表
