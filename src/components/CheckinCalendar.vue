@@ -249,13 +249,7 @@ const handleDayClick = (day) => {
   border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 18px;
-  transition: all 0.3s ease;
   min-height: 400px;
-}
-
-.checkin-calendar:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 8px var(--color-shadow-light);
 }
 
 .calendar-header {

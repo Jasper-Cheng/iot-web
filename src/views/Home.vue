@@ -46,12 +46,9 @@
 
       <!-- 右侧内容区域 -->
       <div class="right-section">
-       
-        <div class="calendar-row">
-          <CheckinCalendar />
-        </div>
-        <!-- 智能控制面板 -->
-        <SmartControlPanel />
+       <!-- 智能控制面板 -->
+       <SmartControlPanel />
+        <CheckinCalendar />
         <ColorControlPanel />
         <EnergyPanel />
         <DeviceStatsPanel :rooms="roomsWithDevices" />
