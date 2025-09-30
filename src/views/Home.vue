@@ -105,8 +105,6 @@ const globalStore = useGlobalStore()
 // 实时数据管理
 const {
   connectionState,
-  deviceData,
-  deviceStatus,
   getDeviceData,
   getDeviceStatus,
   isDeviceOnline,
@@ -114,8 +112,7 @@ const {
   getDeviceHumidity,
   getDevicePower,
   getDeviceFanSpeed,
-  getDevicePowerState,
-  subscribeMultipleDevices
+  getDevicePowerState
 } = useDeviceRealtime()
 
 // 权限检查方法
@@ -223,28 +220,9 @@ const filteredDevices = computed(() => {
   })
 })
 
-// 监听设备列表变化，自动订阅设备事件
-watch(filteredDevices, async (newDevices) => {
-  if (newDevices.length > 0 && connectionState.value === 'connected') {
-    try {
-      await subscribeMultipleDevices(newDevices)
-      console.log('已订阅设备事件:', newDevices.map(d => d.id))
-    } catch (error) {
-      console.error('订阅设备事件失败:', error)
-    }
-  }
-}, { immediate: true })
-
 // 监听连接状态变化
-watch(connectionState, async (newState) => {
-  if (newState === 'connected' && filteredDevices.value.length > 0) {
-    try {
-      await subscribeMultipleDevices(filteredDevices.value)
-      console.log('连接恢复，重新订阅设备事件')
-    } catch (error) {
-      console.error('重新订阅设备事件失败:', error)
-    }
-  }
+watch(connectionState, (newState) => {
+  console.log('WebSocket连接状态变化:', newState)
 })
 
 // 房间设备统计数据
