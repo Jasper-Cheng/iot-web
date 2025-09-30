@@ -71,7 +71,6 @@ class WebSocketManager {
           this.reconnectAttempts = 0
           this.emit('stateChange', this.state)
           this.emit('connected', event)
-          this.log('WebSocket connected successfully')
           
           // 启动心跳检测
           this.startHeartbeat()

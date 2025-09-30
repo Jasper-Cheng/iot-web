@@ -139,7 +139,6 @@ export function useDeviceRealtime() {
       // 监听连接状态变化
       wsManager.on('stateChange', (state) => {
         connectionState.value = state
-        console.log('WebSocket状态变化:', state)
       })
 
       // 监听设备属性更新
@@ -159,7 +158,7 @@ export function useDeviceRealtime() {
 
       // 连接WebSocket
       await wsManager.connect()
-      console.log('WebSocket连接成功')
+      // console.log('WebSocket连接成功')
     } catch (error) {
       console.error('WebSocket连接失败:', error)
     }
