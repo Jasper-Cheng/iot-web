@@ -6,7 +6,7 @@ class WebSocketManager {
   constructor(options = {}) {
     // 配置选项
     this.options = {
-      url: options.url || 'ws://localhost:8080/ws',
+      url: options.url || '',
       protocols: options.protocols || [],
       reconnectInterval: options.reconnectInterval || 3000, // 重连间隔(ms)
       maxReconnectAttempts: options.maxReconnectAttempts || 5, // 最大重连次数
@@ -501,6 +501,17 @@ let wsManagerInstance = null
  * @returns {WebSocketManager} WebSocket管理器实例
  */
 export function getWebSocketManager(options = {}) {
+  // 如果URL包含用户ID占位符，需要动态替换
+  if (options.url && options.url.includes('{user_id}')) {
+    // user_id只能从外部传入
+    const userId = options.userId
+    if (userId) {
+      options.url = options.url.replace('{user_id}', userId)
+    } else {
+      throw new Error('user_id is required when URL contains {user_id} placeholder')
+    }
+  }
+  
   if (!wsManagerInstance) {
     wsManagerInstance = new WebSocketManager(options)
   }
@@ -513,6 +524,17 @@ export function getWebSocketManager(options = {}) {
  * @returns {WebSocketManager} 新的WebSocket管理器实例
  */
 export function createWebSocketManager(options = {}) {
+  // 如果URL包含用户ID占位符，需要动态替换
+  if (options.url && options.url.includes('{user_id}')) {
+    // user_id只能从外部传入
+    const userId = options.userId
+    if (userId) {
+      options.url = options.url.replace('{user_id}', userId)
+    } else {
+      throw new Error('user_id is required when URL contains {user_id} placeholder')
+    }
+  }
+  
   return new WebSocketManager(options)
 }
 
