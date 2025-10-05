@@ -4,15 +4,29 @@
       <div class="speaker-card-info">
         <h3>Smart Speaker</h3>
         <p>Xiaomi AI Speaker</p>
+        <div class="connection-status">
+          <div 
+            :class="['status-indicator', { 
+              'connected': wsConnected && deviceOnline,
+              'disconnected': !wsConnected || !deviceOnline 
+            }]"
+          ></div>
+          <span class="status-text">
+            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+          </span>
+        </div>
       </div>
       
-      <div class="power-switch">
-        <span class="switch-label">{{ speakerPower ? 'On' : 'Off' }}</span>
-        <div 
-          :class="['switch-button', { active: speakerPower }]"
-          @click="toggleSpeaker"
-        ></div>
-      </div>
+       <div class="power-switch">
+         <span class="switch-label">{{ effectiveSpeakerPower ? 'On' : 'Off' }}</span>
+         <div 
+           :class="['switch-button', { 
+             active: effectiveSpeakerPower,
+             disabled: !wsConnected || !deviceOnline 
+           }]"
+           @click="toggleSpeaker"
+         ></div>
+       </div>
     </div>
     
     <!-- 歌曲信息和歌词显示区域 -->
@@ -74,37 +88,46 @@
       </div>
       
       <div class="control-buttons">
-        <button class="control-btn prev-btn" :disabled="!speakerPower" @click="previousSong">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 20L9 12l10-8v16zM5 19V5v14z" stroke="currentColor" stroke-width="2" fill="none"/>
-          </svg>
-        </button>
-        
-        <button 
-          class="control-btn play-pause-btn" 
-          :disabled="!speakerPower" 
-          @click="togglePlayPause"
-        >
-          <svg v-if="speakerStatus === 'playing'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 4h4v16H6V4zM14 4h4v16h-4V4z" stroke="currentColor" stroke-width="2" fill="none"/>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="2" fill="none"/>
-          </svg>
-        </button>
-        
-        <button class="control-btn next-btn" :disabled="!speakerPower" @click="nextSong">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 4l10 8-10 8V4zM19 4v16" stroke="currentColor" stroke-width="2" fill="none"/>
-          </svg>
-        </button>
+         <button 
+           class="control-btn prev-btn" 
+           :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+           @click="previousSong"
+         >
+           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M19 20L9 12l10-8v16zM5 19V5v14z" stroke="currentColor" stroke-width="2" fill="none"/>
+           </svg>
+         </button>
+         
+         <button 
+           class="control-btn play-pause-btn" 
+           :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+           @click="togglePlayPause"
+         >
+           <svg v-if="speakerStatus === 'playing'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M6 4h4v16H6V4zM14 4h4v16h-4V4z" stroke="currentColor" stroke-width="2" fill="none"/>
+           </svg>
+           <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="2" fill="none"/>
+           </svg>
+         </button>
+         
+         <button 
+           class="control-btn next-btn" 
+           :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+           @click="nextSong"
+         >
+           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M5 4l10 8-10 8V4zM19 4v16" stroke="currentColor" stroke-width="2" fill="none"/>
+           </svg>
+         </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { useDeviceRealtime } from '../composables/useDeviceRealtime'
 
 // 定义 props
 const props = defineProps({
@@ -114,11 +137,38 @@ const props = defineProps({
   }
 })
 
+// 使用设备实时数据管理
+const {
+  connectionState,
+  getDeviceData,
+  getDeviceStatus,
+  isDeviceOnline,
+  getDevicePowerState,
+  invokeDeviceService,
+  subscribeDeviceEvents,
+  getDeviceProperties
+} = useDeviceRealtime()
+
+// 设备ID - 从props或使用默认值
+const deviceId = computed(() => props.device?.id || 'speaker_001')
+
 // =========================
 // Speaker state and modes
 // =========================
 const speakerPower = ref(false)
 const speakerStatus = ref('idle') // idle, playing, paused
+
+// WebSocket连接状态
+const wsConnected = computed(() => connectionState.value === 'connected')
+
+// 设备在线状态
+const deviceOnline = computed(() => isDeviceOnline(deviceId.value))
+
+// 实时设备数据
+const deviceData = computed(() => getDeviceData(deviceId.value))
+
+// 实时设备状态
+const deviceStatus = computed(() => getDeviceStatus(deviceId.value))
 const currentSong = ref({
   title: '夜曲',
   artist: '周杰伦',
@@ -176,12 +226,70 @@ const isDragging = ref(false)
 
 // 音响状态文本
 const speakerStatusText = computed(() => {
-  if (!speakerPower.value) return 'Offline'
-  switch (speakerStatus.value) {
-    case 'idle': return 'Idle'
-    case 'playing': return 'Playing'
-    case 'paused': return 'Paused'
-    default: return 'Unknown'
+  return speakerPower.value ? 'On' : 'Off'
+})
+
+// 确保离线时开关始终为Off
+const effectiveSpeakerPower = computed(() => {
+  // 如果设备离线或WebSocket未连接，强制为Off
+  if (!deviceOnline.value || !wsConnected.value) {
+    return false
+  }
+  return speakerPower.value
+})
+
+// 监听设备数据变化，更新音响状态
+watch(deviceData, (newData) => {
+  if (newData && Object.keys(newData).length > 0) {
+    // 更新音响开关状态
+    if (newData.power_state !== undefined) {
+      speakerPower.value = newData.power_state
+    }
+    
+    // 更新播放状态
+    if (newData.play_status !== undefined) {
+      speakerStatus.value = newData.play_status
+    }
+    
+    // 更新当前歌曲信息
+    if (newData.current_song) {
+      currentSong.value = {
+        title: newData.current_song.title || currentSong.value.title,
+        artist: newData.current_song.artist || currentSong.value.artist,
+        album: newData.current_song.album || currentSong.value.album,
+        cover: newData.current_song.cover || currentSong.value.cover
+      }
+    }
+    
+    // 更新播放进度
+    if (newData.current_time !== undefined) {
+      currentTime.value = newData.current_time
+    }
+    
+    if (newData.song_duration !== undefined) {
+      songDuration.value = newData.song_duration
+    }
+    
+    // 更新歌词索引
+    if (newData.lyric_index !== undefined) {
+      currentLyricIndex.value = newData.lyric_index
+    }
+  }
+}, { deep: true })
+
+// 监听设备在线状态
+watch(deviceOnline, (isOnline) => {
+  if (!isOnline) {
+    speakerPower.value = false
+    speakerStatus.value = 'idle'
+  }
+})
+
+// 监听WebSocket连接状态
+watch(wsConnected, (isConnected) => {
+  if (!isConnected) {
+    speakerPower.value = false
+    speakerStatus.value = 'idle'
   }
 })
 
@@ -195,46 +303,79 @@ const progressPercentage = computed(() => {
 // Speaker control functions
 // =========================
 // 切换音响开关
-const toggleSpeaker = () => {
-  speakerPower.value = !speakerPower.value
-  if (!speakerPower.value) {
-    speakerStatus.value = 'idle'
-    currentTime.value = 0
-    currentLyricIndex.value = 0
-  } else {
-    speakerStatus.value = 'paused'
+const toggleSpeaker = async () => {
+  // 设备不在线或WebSocket未连接时不允许操作
+  if (!deviceOnline.value || !wsConnected.value) {
+    console.warn('设备离线或WebSocket未连接，无法控制设备')
+    return
+  }
+  
+  try {
+    const newPowerState = !speakerPower.value
+    await invokeDeviceService(deviceId.value, 'setPower', { power: newPowerState })
+    
+    // 本地更新状态
+    speakerPower.value = newPowerState
+    if (!speakerPower.value) {
+      speakerStatus.value = 'idle'
+      currentTime.value = 0
+      currentLyricIndex.value = 0
+    } else {
+      speakerStatus.value = 'paused'
+    }
+  } catch (error) {
+    console.error('控制音响开关失败:', error)
   }
 }
 
 // 切换播放/暂停
-const togglePlayPause = () => {
-  if (!speakerPower.value) return
+const togglePlayPause = async () => {
+  if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
   
-  if (speakerStatus.value === 'playing') {
-    speakerStatus.value = 'paused'
-  } else if (speakerStatus.value === 'paused') {
-    speakerStatus.value = 'playing'
-    startPlaybackSimulation()
-  } else {
-    speakerStatus.value = 'playing'
-    startPlaybackSimulation()
+  try {
+    const newStatus = speakerStatus.value === 'playing' ? 'paused' : 'playing'
+    await invokeDeviceService(deviceId.value, 'setPlayStatus', { status: newStatus })
+    
+    // 本地更新状态
+    speakerStatus.value = newStatus
+    if (speakerStatus.value === 'playing') {
+      startPlaybackSimulation()
+    } else {
+      stopPlaybackSimulation()
+    }
+  } catch (error) {
+    console.error('控制播放状态失败:', error)
   }
 }
 
 // 上一曲
-const previousSong = () => {
-  if (!speakerPower.value) return
+const previousSong = async () => {
+  if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
   
-  currentSongIndex.value = currentSongIndex.value > 0 ? currentSongIndex.value - 1 : playlist.value.length - 1
-  loadSong(currentSongIndex.value)
+  try {
+    await invokeDeviceService(deviceId.value, 'previousSong', {})
+    
+    // 本地更新状态
+    currentSongIndex.value = currentSongIndex.value > 0 ? currentSongIndex.value - 1 : playlist.value.length - 1
+    loadSong(currentSongIndex.value)
+  } catch (error) {
+    console.error('切换上一曲失败:', error)
+  }
 }
 
 // 下一曲
-const nextSong = () => {
-  if (!speakerPower.value) return
+const nextSong = async () => {
+  if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
   
-  currentSongIndex.value = currentSongIndex.value < playlist.value.length - 1 ? currentSongIndex.value + 1 : 0
-  loadSong(currentSongIndex.value)
+  try {
+    await invokeDeviceService(deviceId.value, 'nextSong', {})
+    
+    // 本地更新状态
+    currentSongIndex.value = currentSongIndex.value < playlist.value.length - 1 ? currentSongIndex.value + 1 : 0
+    loadSong(currentSongIndex.value)
+  } catch (error) {
+    console.error('切换下一曲失败:', error)
+  }
 }
 
 // 加载歌曲
@@ -334,6 +475,65 @@ const stopPlaybackSimulation = () => {
   }
 }
 
+// 组件挂载时订阅设备事件
+onMounted(async () => {
+  try {
+    // 订阅音响设备事件
+    await subscribeDeviceEvents(deviceId.value, [
+      'sensorAlert', 
+      'statusChange', 
+      'propertyUpdate',
+      'playStatusChange',
+      'songChange',
+      'volumeChange'
+    ])
+    
+    // 只有在设备在线时才获取设备属性
+    if (deviceOnline.value && wsConnected.value) {
+      const properties = await getDeviceProperties(deviceId.value, [
+        'power_state',
+        'play_status', 
+        'current_song',
+        'current_time',
+        'song_duration',
+        'volume',
+        'lyric_index'
+      ])
+      
+      // 更新本地状态
+      if (properties) {
+        if (properties.power_state !== undefined) {
+          speakerPower.value = properties.power_state
+        }
+        if (properties.play_status !== undefined) {
+          speakerStatus.value = properties.play_status
+        }
+        if (properties.current_song) {
+          currentSong.value = properties.current_song
+        }
+        if (properties.current_time !== undefined) {
+          currentTime.value = properties.current_time
+        }
+        if (properties.song_duration !== undefined) {
+          songDuration.value = properties.song_duration
+        }
+        if (properties.lyric_index !== undefined) {
+          currentLyricIndex.value = properties.lyric_index
+        }
+      }
+    } else {
+      // 设备离线时，确保开关为Off状态
+      speakerPower.value = false
+      speakerStatus.value = 'idle'
+    }
+  } catch (error) {
+    console.error('初始化音响设备失败:', error)
+    // 出错时也确保开关为Off状态
+    speakerPower.value = false
+    speakerStatus.value = 'idle'
+  }
+})
+
 onBeforeUnmount(() => {
   stopPlaybackSimulation()
 })
@@ -361,6 +561,36 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
+.status-indicator.disconnected {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.status-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .card-header {
@@ -410,6 +640,15 @@ onBeforeUnmount(() => {
 
 .switch-button.active::after {
   left: 16px;
+}
+
+.switch-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch-button.disabled:hover {
+  transform: none;
 }
 
 /* 歌曲信息和歌词区域 */
