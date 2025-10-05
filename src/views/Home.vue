@@ -87,7 +87,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { updateDeviceName } from '../api/devices'
-import { useDeviceRealtime } from '../composables/useDeviceRealtime'
 import WiFiCard from '../cards/WiFiCard.vue'
 import TvCard from '../cards/TvCard.vue'
 import MusicCard from '../cards/MusicCard.vue'
@@ -102,18 +101,6 @@ import { ElMessage } from 'element-plus'
 // 全局状态
 const globalStore = useGlobalStore()
 
-// 实时数据管理
-const {
-  connectionState,
-  getDeviceData,
-  getDeviceStatus,
-  isDeviceOnline,
-  getDeviceTemperature,
-  getDeviceHumidity,
-  getDevicePower,
-  getDeviceFanSpeed,
-  getDevicePowerState
-} = useDeviceRealtime()
 
 // 权限检查方法
 const isOwner = computed(() => {
@@ -197,33 +184,9 @@ const filteredDevices = computed(() => {
     )
   }
   
-  // 为每个设备添加实时数据
-  return devices.map(device => {
-    const realtimeData = getDeviceData(device.id)
-    const realtimeStatus = getDeviceStatus(device.id)
-    
-    return {
-      ...device,
-      // 实时数据
-      realtimeData,
-      realtimeStatus,
-      // 实时状态
-      isOnline: isDeviceOnline(device.id),
-      temperature: getDeviceTemperature(device.id),
-      humidity: getDeviceHumidity(device.id),
-      power: getDevicePower(device.id),
-      fanSpeed: getDeviceFanSpeed(device.id),
-      powerState: getDevicePowerState(device.id),
-      // 连接状态
-      connectionState: connectionState.value
-    }
-  })
+  return devices
 })
 
-// 监听连接状态变化
-watch(connectionState, (newState) => {
-  console.log('WebSocket连接状态变化:', newState)
-})
 
 // 房间设备统计数据
 const roomsWithDevices = computed(() => {
