@@ -1,9 +1,8 @@
 <template>
   <div class="speaker-card">
     <div class="card-header">
-      <div class="speaker-card-info">
-        <h3>Smart Speaker</h3>
-        <p>Xiaomi AI Speaker</p>
+        <div class="speaker-card-info">
+          <h3>{{ device.name || 'Smart Speaker' }}</h3>
         <div class="connection-status">
           <div 
             :class="['status-indicator', { 
@@ -14,6 +13,7 @@
           <span class="status-text">
             {{ wsConnected && deviceOnline ? '在线' : '离线' }}
           </span>
+          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
         </div>
       </div>
       
@@ -149,7 +149,7 @@ const {
   getDeviceProperties
 } = useDeviceRealtime()
 
-// 设备ID - 从props或使用默认值
+// 设备ID - 从props中获取
 const deviceId = computed(() => props.device?.id || 'speaker_001')
 
 // =========================
@@ -591,6 +591,14 @@ onBeforeUnmount(() => {
   font-size: 10px;
   color: var(--color-text-muted);
   font-weight: 500;
+}
+
+.device-sn {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
 }
 
 .card-header {
