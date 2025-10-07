@@ -288,19 +288,6 @@ export function useDeviceRealtime() {
     return data.status === 'online' || data.online === true
   }
 
-  /**
-   * 批量订阅多个设备的事件
-   * @param {Array<Object>} devices - 设备列表
-   */
-  const subscribeMultipleDevices = async (devices) => {
-    const promises = devices.map(device => {
-      if (device.id) {
-        return subscribeDeviceEvents(device.id, ['sensorAlert', 'statusChange', 'propertyUpdate'])
-      }
-    })
-    
-    await Promise.allSettled(promises)
-  }
 
   /**
    * 清理设备数据
@@ -341,7 +328,6 @@ export function useDeviceRealtime() {
     invokeDeviceService,
     subscribeDeviceEvents,
     unsubscribeDeviceEvents,
-    subscribeMultipleDevices,
     
     // 数据获取方法
     getDeviceData,
