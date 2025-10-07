@@ -88,38 +88,152 @@
       </div>
       
       <div class="control-buttons">
-         <button 
-           class="control-btn prev-btn" 
-           :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
-           @click="previousSong"
-         >
-           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-             <path d="M19 20L9 12l10-8v16zM5 19V5v14z" stroke="currentColor" stroke-width="2" fill="none"/>
-           </svg>
-         </button>
+        <!-- 音量控制按钮 -->
+        <div class="volume-control-wrapper">
+          <button 
+            class="control-btn volume-btn" 
+            :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+            @click="toggleVolumePanel"
+          >
+            <svg v-if="mute" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="currentColor"/>
+              <path d="M2 2l20 20" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 9v6h4l5 5V4L7 9H3zM16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="currentColor"/>
+            </svg>
+          </button>
+          <!-- 音量调节面板 -->
+          <div v-if="showVolumePanel" class="volume-panel">
+            <div class="volume-slider-vertical">
+              <input 
+                type="range" 
+                class="volume-slider-vertical-input" 
+                :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                :value="displayVolume" 
+                @input="updateVolumeDisplay"
+                @change="updateVolume"
+                min="0" 
+                max="100"
+                orient="vertical"
+              />
+              <div class="volume-value">{{ displayVolume }}%</div>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          class="control-btn prev-btn" 
+          :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+          @click="previousSong"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 20L9 12l10-8v16zM5 19V5v14z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </button>
          
-         <button 
-           class="control-btn play-pause-btn" 
-           :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
-           @click="togglePlayPause"
-         >
-           <svg v-if="speakerStatus === 'playing'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-             <path d="M6 4h4v16H6V4zM14 4h4v16h-4V4z" stroke="currentColor" stroke-width="2" fill="none"/>
-           </svg>
-           <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-             <path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="2" fill="none"/>
-           </svg>
-         </button>
+        <button 
+          class="control-btn play-pause-btn" 
+          :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+          @click="togglePlayPause"
+        >
+          <svg v-if="speakerStatus === 'playing'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 4h4v16H6V4zM14 4h4v16h-4V4z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 5v14l11-7z" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </button>
          
-         <button 
-           class="control-btn next-btn" 
-           :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
-           @click="nextSong"
-         >
-           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-             <path d="M5 4l10 8-10 8V4zM19 4v16" stroke="currentColor" stroke-width="2" fill="none"/>
-           </svg>
-         </button>
+        <button 
+          class="control-btn next-btn" 
+          :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+          @click="nextSong"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 4l10 8-10 8V4zM19 4v16" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </button>
+
+        <!-- 均衡器控制按钮 -->
+        <div class="equalizer-control-wrapper">
+          <button 
+            class="control-btn equalizer-btn" 
+            :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+            @click="toggleEqualizerPanel"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 14h2v-4H3v4zM7 18h2V6H7v12zM11 16h2V8h-2v8zM15 20h2V4h-2v16zM19 12h2v-2h-2v2z" fill="currentColor"/>
+            </svg>
+          </button>
+          <!-- 音效设置面板 -->
+          <div v-if="showEqualizerPanel" class="equalizer-panel">
+            <div class="equalizer-content">
+              <!-- 均衡器模式 -->
+              <div class="equalizer-mode">
+                <div class="control-label">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
+                  </svg>
+                  <span>均衡器</span>
+                </div>
+                <select 
+                  class="equalizer-select" 
+                  :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                  :value="equalizer" 
+                  @change="updateEqualizer"
+                >
+                  <option value="normal">标准</option>
+                  <option value="pop">流行</option>
+                  <option value="rock">摇滚</option>
+                  <option value="jazz">爵士</option>
+                  <option value="classical">古典</option>
+                </select>
+              </div>
+              
+              <!-- 低音和高音调节 -->
+              <div class="tone-controls">
+                <div class="tone-control">
+                  <div class="control-label">
+                    <span>低音</span>
+                  </div>
+                  <div class="tone-slider-container">
+                    <input 
+                      type="range" 
+                      class="tone-slider" 
+                      :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                      :value="displayBass" 
+                      @input="updateBassDisplay"
+                      @change="updateBass"
+                      min="-10" 
+                      max="10"
+                    />
+                    <span class="tone-value">{{ displayBass }}</span>
+                  </div>
+                </div>
+                
+                <div class="tone-control">
+                  <div class="control-label">
+                    <span>高音</span>
+                  </div>
+                  <div class="tone-slider-container">
+                    <input 
+                      type="range" 
+                      class="tone-slider" 
+                      :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                      :value="displayTreble" 
+                      @input="updateTrebleDisplay"
+                      @change="updateTreble"
+                      min="-10" 
+                      max="10"
+                    />
+                    <span class="tone-value">{{ displayTreble }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -167,6 +281,35 @@ const wsConnected = computed(() => deviceManager.connectionState.value === 'conn
 // =========================
 const speakerPower = ref(false)
 const speakerStatus = ref('idle') // idle, playing, paused
+
+// 音量和音效控制 - 从 deviceData 中获取，支持拖动时实时更新
+const volume = computed(() => deviceData.value.volume || 50)
+const mute = computed(() => deviceData.value.mute || false)
+const equalizer = computed(() => deviceData.value.equalizer || 'normal')
+const bass = computed(() => deviceData.value.bass || 0)
+const treble = computed(() => deviceData.value.treble || 0)
+
+// 拖动时的临时值，用于实时显示
+const tempVolume = ref(50)
+const tempBass = ref(0)
+const tempTreble = ref(0)
+
+// 显示用的值，优先使用临时值（拖动时），否则使用 deviceData 中的值
+const displayVolume = computed(() => {
+  return tempVolume.value !== null ? tempVolume.value : volume.value
+})
+
+const displayBass = computed(() => {
+  return tempBass.value !== null ? tempBass.value : bass.value
+})
+
+const displayTreble = computed(() => {
+  return tempTreble.value !== null ? tempTreble.value : treble.value
+})
+
+// 面板显示状态
+const showVolumePanel = ref(false) // 音量面板显示状态
+const showEqualizerPanel = ref(false) // 均衡器面板显示状态
 
 const currentSong = ref({
   title: '夜曲',
@@ -264,6 +407,17 @@ watch(deviceData, (newData) => {
       songDuration.value = newData.duration
     }
     
+    // 同步临时值，确保显示一致性
+    if (tempVolume.value === null) {
+      tempVolume.value = newData.volume || 50
+    }
+    if (tempBass.value === null) {
+      tempBass.value = newData.bass || 0
+    }
+    if (tempTreble.value === null) {
+      tempTreble.value = newData.treble || 0
+    }
+    
     // 其他属性可以在这里处理
     // 例如：volume, mute, source, repeat, shuffle, equalizer, bass, treble 等
   }
@@ -272,15 +426,11 @@ watch(deviceData, (newData) => {
 // 监听设备在线状态
 watch(deviceOnline, async (isOnline) => {
   if (isOnline) {
-    console.log('设备上线，开始获取设备属性')
     // 只有在WebSocket连接时才能获取属性
     if (wsConnected.value) {
       await fetchDeviceProperties()
-    } else {
-      console.log('WebSocket未连接，等待连接建立...')
     }
   } else {
-    console.log('设备离线')
     speakerPower.value = false
     speakerStatus.value = 'idle'
   }
@@ -289,16 +439,11 @@ watch(deviceOnline, async (isOnline) => {
 // 监听WebSocket连接状态
 watch(wsConnected, async (isConnected) => {
   if (isConnected) {
-    console.log('WebSocket连接已建立')
     // 只有在设备在线时才获取属性
     if (deviceOnline.value) {
-      console.log('设备在线，开始获取设备属性')
       await fetchDeviceProperties()
-    } else {
-      console.log('设备离线，等待设备上线...')
     }
   } else {
-    console.log('WebSocket连接断开')
     speakerPower.value = false
     speakerStatus.value = 'idle'
   }
@@ -490,12 +635,10 @@ const stopPlaybackSimulation = () => {
 const fetchDeviceProperties = async () => {
   // 检查设备是否在线，只有在线时才获取属性
   if (!deviceOnline.value) {
-    console.log('设备离线，跳过获取设备属性')
     return
   }
   
   try {
-    console.log('设备在线，开始获取设备属性...')
     const properties = await deviceManager.getDeviceProperties(deviceId.value, [
       // 基础控制属性
       'power',           // 电源开关状态 (true/false)
@@ -527,8 +670,6 @@ const fetchDeviceProperties = async () => {
       'bluetoothDevice', // 连接的蓝牙设备名称
       'firmwareVersion'  // 固件版本号
     ])
-    
-    console.log('获取到的设备属性:', properties)
     
     // 更新本地状态
     if (properties) {
@@ -572,28 +713,143 @@ const fetchDeviceProperties = async () => {
 
 // 组件挂载时初始化
 onMounted(async () => {
-  console.log('SpeakerCard 初始化开始')
-  console.log('设备ID:', deviceId.value)
-  console.log('WebSocket连接状态:', wsConnected.value)
-  console.log('设备在线状态:', deviceOnline.value)
-  
   // 如果WebSocket已连接且设备在线，直接获取属性
   if (wsConnected.value && deviceOnline.value) {
     await fetchDeviceProperties()
   } else {
-    if (!wsConnected.value) {
-      console.log('WebSocket未连接，等待连接建立...')
-    }
-    if (!deviceOnline.value) {
-      console.log('设备离线，等待设备上线...')
-    }
     // 设备离线时，确保开关为Off状态
     speakerPower.value = false
     speakerStatus.value = 'idle'
   }
 })
 
+// =========================
+// 音量和音效控制方法
+// =========================
+
+// 切换音量面板显示
+const toggleVolumePanel = () => {
+  showVolumePanel.value = !showVolumePanel.value
+  // 关闭均衡器面板
+  if (showVolumePanel.value) {
+    showEqualizerPanel.value = false
+  }
+}
+
+// 切换均衡器面板显示
+const toggleEqualizerPanel = () => {
+  showEqualizerPanel.value = !showEqualizerPanel.value
+  // 关闭音量面板
+  if (showEqualizerPanel.value) {
+    showVolumePanel.value = false
+  }
+}
+
+// 关闭所有面板
+const closeAllPanels = () => {
+  showVolumePanel.value = false
+  showEqualizerPanel.value = false
+}
+
+// 处理全局点击事件
+const handleGlobalClick = (event) => {
+  // 只有当有面板打开时才进行检测
+  if (!showVolumePanel.value && !showEqualizerPanel.value) {
+    return
+  }
+
+  // 检查点击是否在 SpeakerCard 组件内部
+  const speakerCard = document.querySelector('.speaker-card')
+  if (!speakerCard?.contains(event.target)) {
+    closeAllPanels()
+    return
+  }
+
+  // 检查点击是否在面板或按钮内部
+  const volumePanel = document.querySelector('.volume-panel')
+  const equalizerPanel = document.querySelector('.equalizer-panel')
+  const volumeBtn = document.querySelector('.volume-btn')
+  const equalizerBtn = document.querySelector('.equalizer-btn')
+
+  // 如果点击的不是面板或按钮，则关闭所有面板
+  if (!volumePanel?.contains(event.target) &&
+      !equalizerPanel?.contains(event.target) &&
+      !volumeBtn?.contains(event.target) &&
+      !equalizerBtn?.contains(event.target)) {
+    closeAllPanels()
+  }
+}
+
+// 更新音量显示（拖动过程中）
+const updateVolumeDisplay = (event) => {
+  const newVolume = parseInt(event.target.value)
+  // 更新临时值，用于实时显示
+  tempVolume.value = newVolume
+}
+
+// 更新音量（手指抬起时）
+const updateVolume = (event) => {
+  const newVolume = parseInt(event.target.value)
+  // 清除临时值，使用 deviceData 中的值
+  tempVolume.value = null
+  // 调用设备服务更新音量
+  deviceManager.invokeDeviceService(deviceId.value, 'setVolume', { volume: newVolume })
+}
+
+// 切换静音
+const toggleMute = () => {
+  const newMuteState = !mute.value
+  // 调用设备服务切换静音
+  deviceManager.invokeDeviceService(deviceId.value, 'setMute', { mute: newMuteState })
+}
+
+// 更新均衡器模式
+const updateEqualizer = (event) => {
+  const newEqualizer = event.target.value
+  // 调用设备服务更新均衡器
+  deviceManager.invokeDeviceService(deviceId.value, 'setEqualizer', { mode: newEqualizer })
+}
+
+// 更新低音显示（拖动过程中）
+const updateBassDisplay = (event) => {
+  const newBass = parseInt(event.target.value)
+  // 更新临时值，用于实时显示
+  tempBass.value = newBass
+}
+
+// 更新低音（手指抬起时）
+const updateBass = (event) => {
+  const newBass = parseInt(event.target.value)
+  // 清除临时值，使用 deviceData 中的值
+  tempBass.value = null
+  // 调用设备服务更新低音
+  deviceManager.invokeDeviceService(deviceId.value, 'setBass', { level: newBass })
+}
+
+// 更新高音显示（拖动过程中）
+const updateTrebleDisplay = (event) => {
+  const newTreble = parseInt(event.target.value)
+  // 更新临时值，用于实时显示
+  tempTreble.value = newTreble
+}
+
+// 更新高音（手指抬起时）
+const updateTreble = (event) => {
+  const newTreble = parseInt(event.target.value)
+  // 清除临时值，使用 deviceData 中的值
+  tempTreble.value = null
+  // 调用设备服务更新高音
+  deviceManager.invokeDeviceService(deviceId.value, 'setTreble', { level: newTreble })
+}
+
+// 添加全局点击事件监听器
+onMounted(() => {
+  // 使用 capture 模式确保能捕获到所有点击事件
+  document.addEventListener('click', handleGlobalClick, true)
+})
+
 onBeforeUnmount(() => {
+  document.removeEventListener('click', handleGlobalClick, true)
   stopPlaybackSimulation()
 })
 </script>
@@ -637,13 +893,13 @@ onBeforeUnmount(() => {
 }
 
 .status-indicator.connected {
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
 }
 
 .status-indicator.disconnected {
-  background: #ef4444;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
 }
 
 .status-text {
@@ -923,6 +1179,132 @@ onBeforeUnmount(() => {
   gap: 24px;
 }
 
+.volume-control-wrapper {
+  position: relative;
+  margin-right: 12px;
+}
+
+.equalizer-control-wrapper {
+  position: relative;
+  margin-left: 12px;
+}
+
+/* 音量面板样式 */
+.volume-panel {
+  position: absolute;
+  bottom: 100%;
+  left: -50%;
+  margin-bottom: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 12px var(--color-shadow-medium);
+  z-index: 1000;
+  animation: fadeInUp 0.3s ease;
+}
+
+.volume-slider-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.volume-slider-vertical-input {
+  width: 6px;
+  height: 120px;
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  writing-mode: vertical-lr;
+  direction: rtl;
+}
+
+.volume-slider-vertical-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: grab;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.volume-slider-vertical-input::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px var(--color-shadow-light);
+}
+
+.volume-slider-vertical-input::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.volume-slider-vertical-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: grab;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.volume-slider-vertical-input::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px var(--color-shadow-light);
+}
+
+.volume-slider-vertical-input::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+/* 均衡器面板样式 */
+.equalizer-panel {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px var(--color-shadow-medium);
+  z-index: 1000;
+  min-width: 280px;
+  animation: fadeInUp 0.3s ease;
+}
+
+.equalizer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.equalizer-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .control-btn {
   width: 48px;
   height: 48px;
@@ -972,6 +1354,336 @@ onBeforeUnmount(() => {
   height: 24px;
 }
 
+/* 音量和音效控制样式 */
+.audio-controls-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.volume-control {
+  margin-bottom: 20px;
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.control-label svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+.volume-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.volume-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.volume-btn:hover:not(:disabled) {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.volume-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.volume-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.equalizer-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.equalizer-btn:hover:not(:disabled) {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.equalizer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.equalizer-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.volume-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-bg-tertiary);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: grab;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px var(--color-shadow-light);
+}
+
+.volume-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: grab;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px var(--color-shadow-light);
+}
+
+.volume-slider::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.volume-slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.volume-value {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  min-width: 35px;
+  text-align: right;
+}
+
+/* 音效控制样式 */
+.audio-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.equalizer-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equalizer-select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+  min-height: 36px;
+}
+
+.equalizer-select:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: var(--color-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+}
+
+.equalizer-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-hover);
+  background-color: var(--color-bg-card);
+}
+
+.equalizer-select:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px var(--color-shadow-light);
+}
+
+.equalizer-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.equalizer-select option {
+  padding: 8px 12px;
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.equalizer-select option:hover {
+  background: var(--color-hover);
+}
+
+.equalizer-select option:checked {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.tone-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.tone-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tone-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tone-slider {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-bg-tertiary);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tone-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: grab;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.tone-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px var(--color-shadow-light);
+}
+
+.tone-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.tone-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: grab;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 4px var(--color-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.tone-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px var(--color-shadow-light);
+}
+
+.tone-slider::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.tone-slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tone-value {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  min-width: 25px;
+  text-align: center;
+}
+
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -1005,6 +1717,53 @@ onBeforeUnmount(() => {
   .play-pause-btn {
     width: 48px;
     height: 48px;
+  }
+  
+  .audio-controls-section {
+    padding: 16px;
+  }
+  
+  .tone-controls {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .volume-slider-container {
+    gap: 8px;
+  }
+  
+  .volume-btn {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .volume-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .equalizer-btn {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .equalizer-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .equalizer-select {
+    min-height: 32px;
+    font-size: 11px;
+  }
+  
+  .control-label {
+    font-size: 11px;
+  }
+  
+  .control-label svg {
+    width: 14px;
+    height: 14px;
   }
 }
 </style>
