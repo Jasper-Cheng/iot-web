@@ -83,14 +83,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, provide } from 'vue'
 import { useGlobalStore } from '../stores/global'
+import { useDeviceRealtime } from '../composables/useDeviceRealtime'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { updateDeviceName } from '../api/devices'
-import WiFiCard from '../cards/WiFiCard.vue'
-import TvCard from '../cards/TvCard.vue'
-import MusicCard from '../cards/MusicCard.vue'
-import SocketsCard from '../cards/SocketsCard.vue'
 import CheckinCalendar from '../components/CheckinCalendar.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
 import EnergyPanel from '../components/EnergyPanel.vue'
@@ -100,6 +97,17 @@ import { ElMessage } from 'element-plus'
 
 // 全局状态
 const globalStore = useGlobalStore()
+
+// 使用设备实时数据管理
+const {
+  connectionState,
+  deviceData,
+  isDeviceOnline,
+  invokeDeviceService,
+  subscribeDeviceEvents,
+  getDeviceProperties,
+  unsubscribeDeviceEvents
+} = useDeviceRealtime()
 
 
 // 权限检查方法
@@ -187,6 +195,21 @@ const filteredDevices = computed(() => {
   return devices
 })
 
+
+/**
+ * 提供设备管理方法给子组件
+ * 通过 Vue 的 provide/inject 机制，让所有子组件都能访问设备管理功能
+ * 子组件通过 inject('deviceManager') 获取这些方法和数据
+ */
+provide('deviceManager', {
+  deviceData,            // 设备实时数据存储 (Map<deviceId, data>)
+  isDeviceOnline,        // 检查指定设备是否在线
+  invokeDeviceService,   // 调用设备服务 (如开关、调节等)
+  getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
+  subscribeDeviceEvents, // 订阅设备事件通知
+  unsubscribeDeviceEvents, // 取消订阅设备事件
+  connectionState        // WebSocket 连接状态
+})
 
 // 房间设备统计数据
 const roomsWithDevices = computed(() => {
