@@ -223,11 +223,6 @@ const imageError = ref(false)
 const progressBar = ref(null)
 const isDragging = ref(false)
 
-// 音响状态文本
-const speakerStatusText = computed(() => {
-  return speakerPower.value ? 'On' : 'Off'
-})
-
 // 确保离线时开关始终为Off
 const effectiveSpeakerPower = computed(() => {
   // 如果设备离线或WebSocket未连接，强制为Off

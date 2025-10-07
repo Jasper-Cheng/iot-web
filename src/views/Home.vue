@@ -438,7 +438,7 @@ const confirmEditName = async () => {
 /* 修改设备名称按钮 */
 .edit-name-btn {
   position: absolute;
-  top: 8px;
+  top: 4px;
   right: 8px;
   width: 24px;
   height: 24px;
