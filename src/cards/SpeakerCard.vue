@@ -153,10 +153,10 @@ const deviceId = computed(() => props.device?.id || 'speaker_001')
 // 设备数据
 const deviceData = computed(() => deviceManager.deviceData.get(deviceId.value) || {})
 
-// 设备在线状态 - 基于设备数据判断
+// 设备在线状态 - 基于传入的device中的status判断
+// 设备状态：unconfigured/configured/unbound/bound/online/offline/fault
 const deviceOnline = computed(() => {
-  const data = deviceData.value
-  return data.status === 'online' || data.online === true
+  return props.device?.status === 'online'
 })
 
 // WebSocket连接状态
