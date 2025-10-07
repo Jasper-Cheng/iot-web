@@ -126,8 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
-import { useDeviceRealtime } from '../composables/useDeviceRealtime'
+import { ref, computed, onBeforeUnmount, onMounted, watch, inject } from 'vue'
 
 // 定义 props
 const props = defineProps({
@@ -137,33 +136,37 @@ const props = defineProps({
   }
 })
 
-// 使用设备实时数据管理
-const {
-  connectionState,
-  getDeviceData,
-  isDeviceOnline,
-  invokeDeviceService,
-  subscribeDeviceEvents,
-  getDeviceProperties
-} = useDeviceRealtime()
+
+// 注入设备管理器
+const deviceManager = inject('deviceManager', {
+  deviceData: new Map(),
+  invokeDeviceService: () => Promise.reject('Device manager not available'),
+  getDeviceProperties: () => Promise.reject('Device manager not available'),
+  subscribeDeviceEvents: () => Promise.reject('Device manager not available'),
+  unsubscribeDeviceEvents: () => Promise.reject('Device manager not available'),
+  connectionState: { value: 'disconnected' }
+})
 
 // 设备ID - 从props中获取
 const deviceId = computed(() => props.device?.id || 'speaker_001')
+
+// 设备数据
+const deviceData = computed(() => deviceManager.deviceData.get(deviceId.value) || {})
+
+// 设备在线状态 - 基于设备数据判断
+const deviceOnline = computed(() => {
+  const data = deviceData.value
+  return data.status === 'online' || data.online === true
+})
+
+// WebSocket连接状态
+const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
 // =========================
 // Speaker state and modes
 // =========================
 const speakerPower = ref(false)
 const speakerStatus = ref('idle') // idle, playing, paused
-
-// WebSocket连接状态
-const wsConnected = computed(() => connectionState.value === 'connected')
-
-// 设备在线状态
-const deviceOnline = computed(() => isDeviceOnline(deviceId.value))
-
-// 实时设备数据
-const deviceData = computed(() => getDeviceData(deviceId.value))
 
 const currentSong = ref({
   title: '夜曲',
@@ -238,52 +241,69 @@ const effectiveSpeakerPower = computed(() => {
 watch(deviceData, (newData) => {
   if (newData && Object.keys(newData).length > 0) {
     // 更新音响开关状态
-    if (newData.power_state !== undefined) {
-      speakerPower.value = newData.power_state
+    if (newData.power !== undefined) {
+      speakerPower.value = newData.power
     }
     
     // 更新播放状态
-    if (newData.play_status !== undefined) {
-      speakerStatus.value = newData.play_status
+    if (newData.playing !== undefined) {
+      speakerStatus.value = newData.playing ? 'playing' : 'paused'
     }
     
     // 更新当前歌曲信息
-    if (newData.current_song) {
+    if (newData.track || newData.artist || newData.album) {
       currentSong.value = {
-        title: newData.current_song.title || currentSong.value.title,
-        artist: newData.current_song.artist || currentSong.value.artist,
-        album: newData.current_song.album || currentSong.value.album,
-        cover: newData.current_song.cover || currentSong.value.cover
+        title: newData.track || currentSong.value.title,
+        artist: newData.artist || currentSong.value.artist,
+        album: newData.album || currentSong.value.album,
+        cover: currentSong.value.cover // 保持原有封面
       }
     }
     
     // 更新播放进度
-    if (newData.current_time !== undefined) {
-      currentTime.value = newData.current_time
+    if (newData.position !== undefined) {
+      currentTime.value = newData.position
     }
     
-    if (newData.song_duration !== undefined) {
-      songDuration.value = newData.song_duration
+    if (newData.duration !== undefined) {
+      songDuration.value = newData.duration
     }
     
-    // 更新歌词索引
-    if (newData.lyric_index !== undefined) {
-      currentLyricIndex.value = newData.lyric_index
-    }
+    // 其他属性可以在这里处理
+    // 例如：volume, mute, source, repeat, shuffle, equalizer, bass, treble 等
   }
 }, { deep: true })
 
 // 监听设备在线状态
-watch(deviceOnline, (isOnline) => {
-  if (!isOnline) {
+watch(deviceOnline, async (isOnline) => {
+  if (isOnline) {
+    console.log('设备上线，开始获取设备属性')
+    // 只有在WebSocket连接时才能获取属性
+    if (wsConnected.value) {
+      await fetchDeviceProperties()
+    } else {
+      console.log('WebSocket未连接，等待连接建立...')
+    }
+  } else {
+    console.log('设备离线')
     speakerPower.value = false
     speakerStatus.value = 'idle'
   }
 })
 
 // 监听WebSocket连接状态
-watch(wsConnected, (isConnected) => {
-  if (!isConnected) {
+watch(wsConnected, async (isConnected) => {
+  if (isConnected) {
+    console.log('WebSocket连接已建立')
+    // 只有在设备在线时才获取属性
+    if (deviceOnline.value) {
+      console.log('设备在线，开始获取设备属性')
+      await fetchDeviceProperties()
+    } else {
+      console.log('设备离线，等待设备上线...')
+    }
+  } else {
+    console.log('WebSocket连接断开')
     speakerPower.value = false
     speakerStatus.value = 'idle'
   }
@@ -308,7 +328,7 @@ const toggleSpeaker = async () => {
   
   try {
     const newPowerState = !speakerPower.value
-    await invokeDeviceService(deviceId.value, 'setPower', { power: newPowerState })
+    await deviceManager.invokeDeviceService(deviceId.value, 'setPower', { power: newPowerState })
     
     // 本地更新状态
     speakerPower.value = newPowerState
@@ -330,7 +350,7 @@ const togglePlayPause = async () => {
   
   try {
     const newStatus = speakerStatus.value === 'playing' ? 'paused' : 'playing'
-    await invokeDeviceService(deviceId.value, 'setPlayStatus', { status: newStatus })
+    await deviceManager.invokeDeviceService(deviceId.value, 'setPlayStatus', { status: newStatus })
     
     // 本地更新状态
     speakerStatus.value = newStatus
@@ -349,7 +369,7 @@ const previousSong = async () => {
   if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
   
   try {
-    await invokeDeviceService(deviceId.value, 'previousSong', {})
+    await deviceManager.invokeDeviceService(deviceId.value, 'previousSong', {})
     
     // 本地更新状态
     currentSongIndex.value = currentSongIndex.value > 0 ? currentSongIndex.value - 1 : playlist.value.length - 1
@@ -364,7 +384,7 @@ const nextSong = async () => {
   if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
   
   try {
-    await invokeDeviceService(deviceId.value, 'nextSong', {})
+    await deviceManager.invokeDeviceService(deviceId.value, 'nextSong', {})
     
     // 本地更新状态
     currentSongIndex.value = currentSongIndex.value < playlist.value.length - 1 ? currentSongIndex.value + 1 : 0
@@ -471,60 +491,108 @@ const stopPlaybackSimulation = () => {
   }
 }
 
-// 组件挂载时订阅设备事件
-onMounted(async () => {
+// 获取设备属性的函数
+const fetchDeviceProperties = async () => {
+  // 检查设备是否在线，只有在线时才获取属性
+  if (!deviceOnline.value) {
+    console.log('设备离线，跳过获取设备属性')
+    return
+  }
+  
   try {
-    // 订阅音响设备事件
-    await subscribeDeviceEvents(deviceId.value, [
-      'sensorAlert', 
-      'statusChange', 
-      'propertyUpdate',
-      'playStatusChange',
-      'songChange',
-      'volumeChange'
+    console.log('设备在线，开始获取设备属性...')
+    const properties = await deviceManager.getDeviceProperties(deviceId.value, [
+      // 基础控制属性
+      'power',           // 电源开关状态 (true/false)
+      'volume',          // 音量 (0-100)
+      'mute',            // 静音状态 (true/false)
+      
+      // 音源和播放控制
+      'source',          // 音源类型 (bluetooth/wifi/aux/usb)
+      'playing',         // 播放状态 (true/false)
+      'track',           // 当前曲目名称
+      'artist',          // 艺术家名称
+      'album',           // 专辑名称
+      'duration',        // 歌曲时长 (秒)
+      'position',        // 播放位置 (秒)
+      
+      // 播放模式设置
+      'repeat',          // 重复模式 (none/one/all)
+      'shuffle',         // 随机播放 (true/false)
+      
+      // 音效设置
+      'equalizer',       // 均衡器模式 (normal/pop/rock/jazz/classical)
+      'bass',            // 低音调节 (-10 到 10)
+      'treble',          // 高音调节 (-10 到 10)
+      
+      // 设备状态信息
+      'battery',         // 电池电量 (0-100)
+      'wifiSignal',      // WiFi信号强度 (dBm)
+      'bluetoothConnected', // 蓝牙连接状态 (true/false)
+      'bluetoothDevice', // 连接的蓝牙设备名称
+      'firmwareVersion'  // 固件版本号
     ])
     
-    // 只有在设备在线时才获取设备属性
-    if (deviceOnline.value && wsConnected.value) {
-      const properties = await getDeviceProperties(deviceId.value, [
-        'power_state',
-        'play_status', 
-        'current_song',
-        'current_time',
-        'song_duration',
-        'volume',
-        'lyric_index'
-      ])
+    console.log('获取到的设备属性:', properties)
+    
+    // 更新本地状态
+    if (properties) {
+      // 电源状态
+      if (properties.power !== undefined) {
+        speakerPower.value = properties.power
+      }
       
-      // 更新本地状态
-      if (properties) {
-        if (properties.power_state !== undefined) {
-          speakerPower.value = properties.power_state
-        }
-        if (properties.play_status !== undefined) {
-          speakerStatus.value = properties.play_status
-        }
-        if (properties.current_song) {
-          currentSong.value = properties.current_song
-        }
-        if (properties.current_time !== undefined) {
-          currentTime.value = properties.current_time
-        }
-        if (properties.song_duration !== undefined) {
-          songDuration.value = properties.song_duration
-        }
-        if (properties.lyric_index !== undefined) {
-          currentLyricIndex.value = properties.lyric_index
+      // 播放状态
+      if (properties.playing !== undefined) {
+        speakerStatus.value = properties.playing ? 'playing' : 'paused'
+      }
+      
+      // 当前歌曲信息
+      if (properties.track || properties.artist || properties.album) {
+        currentSong.value = {
+          title: properties.track || currentSong.value.title,
+          artist: properties.artist || currentSong.value.artist,
+          album: properties.album || currentSong.value.album,
+          cover: currentSong.value.cover // 保持原有封面
         }
       }
-    } else {
-      // 设备离线时，确保开关为Off状态
-      speakerPower.value = false
-      speakerStatus.value = 'idle'
+      
+      // 播放进度
+      if (properties.position !== undefined) {
+        currentTime.value = properties.position
+      }
+      
+      if (properties.duration !== undefined) {
+        songDuration.value = properties.duration
+      }
+      
+      // 音量等其他属性可以在这里处理
+      // 例如：volume, mute, source, repeat, shuffle 等
     }
   } catch (error) {
-    console.error('初始化音响设备失败:', error)
-    // 出错时也确保开关为Off状态
+    console.error('获取设备属性失败:', error)
+    console.error('错误详情:', error.message)
+  }
+}
+
+// 组件挂载时初始化
+onMounted(async () => {
+  console.log('SpeakerCard 初始化开始')
+  console.log('设备ID:', deviceId.value)
+  console.log('WebSocket连接状态:', wsConnected.value)
+  console.log('设备在线状态:', deviceOnline.value)
+  
+  // 如果WebSocket已连接且设备在线，直接获取属性
+  if (wsConnected.value && deviceOnline.value) {
+    await fetchDeviceProperties()
+  } else {
+    if (!wsConnected.value) {
+      console.log('WebSocket未连接，等待连接建立...')
+    }
+    if (!deviceOnline.value) {
+      console.log('设备离线，等待设备上线...')
+    }
+    // 设备离线时，确保开关为Off状态
     speakerPower.value = false
     speakerStatus.value = 'idle'
   }
