@@ -141,9 +141,7 @@ const props = defineProps({
 const {
   connectionState,
   getDeviceData,
-  getDeviceStatus,
   isDeviceOnline,
-  getDevicePowerState,
   invokeDeviceService,
   subscribeDeviceEvents,
   getDeviceProperties
@@ -167,8 +165,6 @@ const deviceOnline = computed(() => isDeviceOnline(deviceId.value))
 // 实时设备数据
 const deviceData = computed(() => getDeviceData(deviceId.value))
 
-// 实时设备状态
-const deviceStatus = computed(() => getDeviceStatus(deviceId.value))
 const currentSong = ref({
   title: '夜曲',
   artist: '周杰伦',

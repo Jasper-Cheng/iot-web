@@ -119,11 +119,6 @@ export function useDeviceRealtime() {
   // 设备实时数据存储
   const deviceData = reactive(new Map())
   
-  // 设备状态存储
-  const deviceStatus = reactive(new Map())
-  
-  // 设备属性存储
-  const deviceProperties = reactive(new Map())
   
   // 连接状态
   const connectionState = ref('disconnected')
@@ -173,13 +168,6 @@ export function useDeviceRealtime() {
     
     if (!deviceId || !properties) return
 
-    // 更新设备属性
-    if (!deviceProperties.has(deviceId)) {
-      deviceProperties.set(deviceId, {})
-    }
-    
-    const currentProperties = deviceProperties.get(deviceId)
-    Object.assign(currentProperties, properties)
     
     // 更新设备数据
     if (!deviceData.has(deviceId)) {
@@ -201,18 +189,6 @@ export function useDeviceRealtime() {
     
     if (!deviceId || !eventType) return
 
-    // 更新设备状态
-    if (!deviceStatus.has(deviceId)) {
-      deviceStatus.set(deviceId, {})
-    }
-    
-    const currentStatus = deviceStatus.get(deviceId)
-    currentStatus.lastEvent = {
-      type: eventType,
-      data: eventData,
-      occurredAt,
-      timestamp: data.timestamp
-    }
     
     console.log(`设备 ${deviceId} 事件通知:`, eventType, eventData)
   }
@@ -226,17 +202,6 @@ export function useDeviceRealtime() {
     
     if (!deviceId || !serviceName) return
 
-    // 更新设备状态
-    if (!deviceStatus.has(deviceId)) {
-      deviceStatus.set(deviceId, {})
-    }
-    
-    const currentStatus = deviceStatus.get(deviceId)
-    currentStatus.lastServiceCall = {
-      serviceName,
-      result,
-      timestamp: data.timestamp
-    }
     
     console.log(`设备 ${deviceId} 服务响应:`, serviceName, result)
   }
@@ -314,24 +279,6 @@ export function useDeviceRealtime() {
   }
 
   /**
-   * 获取设备状态
-   * @param {string} deviceId - 设备ID
-   * @returns {Object} 设备状态
-   */
-  const getDeviceStatus = (deviceId) => {
-    return deviceStatus.get(deviceId) || {}
-  }
-
-  /**
-   * 获取设备属性
-   * @param {string} deviceId - 设备ID
-   * @returns {Object} 设备属性
-   */
-  const getDevicePropertiesData = (deviceId) => {
-    return deviceProperties.get(deviceId) || {}
-  }
-
-  /**
    * 检查设备是否在线
    * @param {string} deviceId - 设备ID
    * @returns {boolean} 是否在线
@@ -339,56 +286,6 @@ export function useDeviceRealtime() {
   const isDeviceOnline = (deviceId) => {
     const data = getDeviceData(deviceId)
     return data.status === 'online' || data.online === true
-  }
-
-  /**
-   * 获取设备温度
-   * @param {string} deviceId - 设备ID
-   * @returns {number|null} 温度值
-   */
-  const getDeviceTemperature = (deviceId) => {
-    const data = getDeviceData(deviceId)
-    return data.temperature || null
-  }
-
-  /**
-   * 获取设备湿度
-   * @param {string} deviceId - 设备ID
-   * @returns {number|null} 湿度值
-   */
-  const getDeviceHumidity = (deviceId) => {
-    const data = getDeviceData(deviceId)
-    return data.humidity || null
-  }
-
-  /**
-   * 获取设备功率
-   * @param {string} deviceId - 设备ID
-   * @returns {number|null} 功率值
-   */
-  const getDevicePower = (deviceId) => {
-    const data = getDeviceData(deviceId)
-    return data.power || null
-  }
-
-  /**
-   * 获取设备风扇转速
-   * @param {string} deviceId - 设备ID
-   * @returns {number|null} 风扇转速
-   */
-  const getDeviceFanSpeed = (deviceId) => {
-    const data = getDeviceData(deviceId)
-    return data.fan_speed || data.fanSpeed || null
-  }
-
-  /**
-   * 获取设备开关状态
-   * @param {string} deviceId - 设备ID
-   * @returns {boolean|null} 开关状态
-   */
-  const getDevicePowerState = (deviceId) => {
-    const data = getDeviceData(deviceId)
-    return data.power_state || data.powerState || data.on || null
   }
 
   /**
@@ -411,8 +308,6 @@ export function useDeviceRealtime() {
    */
   const clearDeviceData = (deviceId) => {
     deviceData.delete(deviceId)
-    deviceStatus.delete(deviceId)
-    deviceProperties.delete(deviceId)
     subscribedDevices.value.delete(deviceId)
   }
 
@@ -437,8 +332,6 @@ export function useDeviceRealtime() {
     // 状态
     connectionState,
     deviceData,
-    deviceStatus,
-    deviceProperties,
     subscribedDevices,
     
     // 方法
@@ -452,14 +345,7 @@ export function useDeviceRealtime() {
     
     // 数据获取方法
     getDeviceData,
-    getDeviceStatus,
-    getDevicePropertiesData,
     isDeviceOnline,
-    getDeviceTemperature,
-    getDeviceHumidity,
-    getDevicePower,
-    getDeviceFanSpeed,
-    getDevicePowerState,
     
     // 工具方法
     clearDeviceData
