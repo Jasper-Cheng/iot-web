@@ -102,7 +102,6 @@ const globalStore = useGlobalStore()
 const {
   connectionState,
   deviceData,
-  isDeviceOnline,
   invokeDeviceService,
   subscribeDeviceEvents,
   getDeviceProperties,
@@ -203,7 +202,6 @@ const filteredDevices = computed(() => {
  */
 provide('deviceManager', {
   deviceData,            // 设备实时数据存储 (Map<deviceId, data>)
-  isDeviceOnline,        // 检查指定设备是否在线
   invokeDeviceService,   // 调用设备服务 (如开关、调节等)
   getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
   subscribeDeviceEvents, // 订阅设备事件通知

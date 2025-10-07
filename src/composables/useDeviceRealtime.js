@@ -269,24 +269,6 @@ export function useDeviceRealtime() {
     }
   }
 
-  /**
-   * 获取设备实时数据
-   * @param {string} deviceId - 设备ID
-   * @returns {Object} 设备数据
-   */
-  const getDeviceData = (deviceId) => {
-    return deviceData.get(deviceId) || {}
-  }
-
-  /**
-   * 检查设备是否在线
-   * @param {string} deviceId - 设备ID
-   * @returns {boolean} 是否在线
-   */
-  const isDeviceOnline = (deviceId) => {
-    const data = getDeviceData(deviceId)
-    return data.status === 'online' || data.online === true
-  }
 
 
   /**
@@ -329,9 +311,6 @@ export function useDeviceRealtime() {
     subscribeDeviceEvents,
     unsubscribeDeviceEvents,
     
-    // 数据获取方法
-    getDeviceData,
-    isDeviceOnline,
     
     // 工具方法
     clearDeviceData
