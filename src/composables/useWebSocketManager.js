@@ -323,7 +323,7 @@ export function useWebSocketManager() {
     const messageHandlers = {
       device_status_change: (data) => {
         console.log('📱 设备状态变更:', data)
-        handleDeviceStatusChange(data)
+        handleDeviceOnlineChange(data)
       },
       system_notification: (data) => {
         console.log('🔔 系统通知:', data)
@@ -356,10 +356,10 @@ export function useWebSocketManager() {
   }
 
   /**
-   * 处理设备状态变更
-   * @param {Object} data - 设备状态变更数据
+   * 处理设备在线状态变更
+   * @param {Object} data - 设备在线状态变更数据
    */
-  const handleDeviceStatusChange = (data) => {
+  const handleDeviceOnlineChange = (data) => {
     const { deviceId, deviceName, oldStatus, newStatus, timestamp } = data
     if (globalStore.devices) {
       const device = globalStore.devices.find(d => d.id === deviceId)
@@ -508,21 +508,37 @@ export function useWebSocketManager() {
   })
 
   return {
-    // 状态
+    // === WebSocket 连接状态 ===
     connectionState,
+    
+    // === 设备数据管理 ===
     deviceData,
     subscribedDevices,
     
-    // 方法
+    // === WebSocket 连接管理 ===
     initConnection,
     disconnect,
+    
+    // === 设备属性管理 ===
     getDeviceProperties,
+    
+    // === 设备服务调用 ===
     invokeDeviceService,
+    
+    // === 设备事件订阅 ===
     subscribeDeviceEvents,
     unsubscribeDeviceEvents,
     
+    // === 系统消息处理 ===
+    handleSystemMessage,
+    handleDeviceOnlineChange,
+    handleSystemNotification,
+    handlePromotion,
+    handleMallNewProduct,
+    handleUserMessage,
+    handleSystemUpdate,
     
-    // 工具方法
+    // === 工具方法 ===
     clearDeviceData
   }
 }
