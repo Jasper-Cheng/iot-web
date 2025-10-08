@@ -528,38 +528,4 @@ export function useWebSocketManager() {
     disconnect()
   })
 
-  return {
-    // === WebSocket 连接状态 ===
-    connectionState,
-    
-    // === 设备数据管理 ===
-    deviceData,
-    subscribedDevices,
-    
-    // === WebSocket 连接管理 ===
-    initConnection,
-    disconnect,
-    
-    // === 设备属性管理 ===
-    getDeviceProperties,
-    
-    // === 设备服务调用 ===
-    invokeDeviceService,
-    
-    // === 设备事件订阅 ===
-    subscribeDeviceEvents,
-    unsubscribeDeviceEvents,
-    
-    // === 系统消息处理 ===
-    handleSystemMessage,
-    handleDeviceOnlineChange,
-    handleSystemNotification,
-    handlePromotion,
-    handleMallNewProduct,
-    handleUserMessage,
-    handleSystemUpdate,
-    
-    // === 工具方法 ===
-    clearDeviceData
-  }
 }
