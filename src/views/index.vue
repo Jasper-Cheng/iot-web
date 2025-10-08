@@ -553,7 +553,7 @@ import { deleteUser, deleteFamilyMember, markAllMessagesAsRead } from '../api/us
 import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
 import { getPointsBalance, getPointsHistory } from '../api/points'
 import { ElMessage } from 'element-plus'
-import { useDeviceRealtime } from '../composables/useDeviceRealtime'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
 
@@ -569,7 +569,7 @@ const {
   subscribeDeviceEvents,
   getDeviceProperties,
   unsubscribeDeviceEvents
-} = useDeviceRealtime()
+} = useWebSocketManager()
 
 // 提供设备管理方法给所有子组件
 provide('deviceManager', {

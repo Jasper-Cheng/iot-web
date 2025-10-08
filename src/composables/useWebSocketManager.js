@@ -197,7 +197,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
 
-export function useDeviceRealtime() {
+export function useWebSocketManager() {
   // 全局状态
   const globalStore = useGlobalStore()
   
