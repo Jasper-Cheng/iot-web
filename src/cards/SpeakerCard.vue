@@ -549,11 +549,14 @@ const handleDeviceServiceResponse = (data) => {
 // 监听设备在线状态
 watch(deviceOnline, async (isOnline) => {
   if (isOnline) {
-    // 只有在WebSocket连接时才能获取属性
+    // 只有在WebSocket连接时才能获取属性和订阅
     if (wsConnected.value) {
       await fetchDeviceProperties()
+      await subscribeToDeviceProperties()
     }
   } else {
+    // 设备离线时，取消订阅并重置状态
+    await unsubscribeFromDeviceProperties()
     deviceProperties.value.power = false
     deviceProperties.value.playing = false
   }
@@ -562,11 +565,14 @@ watch(deviceOnline, async (isOnline) => {
 // 监听WebSocket连接状态
 watch(wsConnected, async (isConnected) => {
   if (isConnected) {
-    // 只有在设备在线时才获取属性
+    // 只有在设备在线时才获取属性和订阅
     if (deviceOnline.value) {
       await fetchDeviceProperties()
+      await subscribeToDeviceProperties()
     }
   } else {
+    // WebSocket断开时，取消订阅并重置状态
+    await unsubscribeFromDeviceProperties()
     deviceProperties.value.power = false
     deviceProperties.value.playing = false
   }
@@ -784,6 +790,32 @@ const fetchDeviceProperties = async () => {
   }
 }
 
+// 订阅设备属性更新
+const subscribeToDeviceProperties = async () => {
+  if (!deviceOnline.value || !wsConnected.value) {
+    return
+  }
+  
+  try {
+    // 订阅设备属性更新和通知事件
+    await deviceManager.subscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
+    console.log(`已订阅设备 ${deviceId.value} 的属性更新,事件通知`)
+  } catch (error) {
+    console.error('订阅设备属性更新失败:', error)
+  }
+}
+
+// 取消订阅设备属性更新
+const unsubscribeFromDeviceProperties = async () => {
+  try {
+    // 取消订阅设备属性更新和通知事件，订阅了propertyUpdate则devicePropertyUpdate会接受到通知，不订阅则属性改变接受不到通知，订阅了eventNotification则deviceEventNotification会接受到通知，不订阅则事件改变接受不到通知
+    await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
+    console.log(`已取消订阅设备 ${deviceId.value} 的属性更新,事件通知`)
+  } catch (error) {
+    console.error('取消订阅设备属性更新失败:', error)
+  }
+}
+
 // 组件挂载时初始化
 onMounted(async () => {
   // 使用事件发射器监听设备相关事件
@@ -793,9 +825,10 @@ onMounted(async () => {
     deviceManager.eventEmitter.on('deviceServiceResponse', handleDeviceServiceResponse)
   }
   
-  // 如果WebSocket已连接且设备在线，直接获取属性
+  // 如果WebSocket已连接且设备在线，直接获取属性并订阅更新
   if (wsConnected.value && deviceOnline.value) {
     await fetchDeviceProperties()
+    await subscribeToDeviceProperties()
   } else {
     // 设备离线时，确保开关为Off状态
     deviceProperties.value.power = false
@@ -938,7 +971,10 @@ onMounted(() => {
   document.addEventListener('click', handleGlobalClick, true)
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(async () => {
+  // 取消订阅设备属性更新
+  await unsubscribeFromDeviceProperties()
+  
   // 清理事件监听器
   document.removeEventListener('click', handleGlobalClick, true)
   if (deviceManager.eventEmitter) {
