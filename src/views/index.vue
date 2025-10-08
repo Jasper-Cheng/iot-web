@@ -545,7 +545,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, provide } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, provide, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
@@ -562,23 +562,17 @@ const route = useRoute()
 const globalStore = useGlobalStore()
 
 // 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
-const {
-  connectionState,
-  deviceData,
-  invokeDeviceService,
-  subscribeDeviceEvents,
-  getDeviceProperties,
-  unsubscribeDeviceEvents
-} = useWebSocketManager()
+useWebSocketManager()
 
-// 提供设备管理方法给所有子组件
-provide('deviceManager', {
-  deviceData,            // 设备实时数据存储 (Map<deviceId, data>)
-  invokeDeviceService,   // 调用设备服务 (如开关、调节等)
-  getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
-  subscribeDeviceEvents, // 订阅设备事件通知
-  unsubscribeDeviceEvents, // 取消订阅设备事件
-  connectionState: computed(() => connectionState.value) // WebSocket 连接状态
+// 注入系统消息管理
+const systemMessage = inject('systemMessage', {
+  handleSystemMessage: () => console.warn('System message manager not available'),
+  handleDeviceOnlineChange: () => console.warn('System message manager not available'),
+  handleSystemNotification: () => console.warn('System message manager not available'),
+  handlePromotion: () => console.warn('System message manager not available'),
+  handleMallNewProduct: () => console.warn('System message manager not available'),
+  handleUserMessage: () => console.warn('System message manager not available'),
+  handleSystemUpdate: () => console.warn('System message manager not available')
 })
 
 

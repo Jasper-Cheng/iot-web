@@ -193,7 +193,7 @@
  *   "timestamp": 1620000000000
  * }
  */
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, provide } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
 
@@ -496,6 +496,27 @@ export function useWebSocketManager() {
   const disconnect = () => {
     wsManager.disconnect()
   }
+
+  // 提供设备管理方法给所有子组件
+  provide('deviceManager', {
+    deviceData,            // 设备实时数据存储 (Map<deviceId, data>)
+    invokeDeviceService,   // 调用设备服务 (如开关、调节等)
+    getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
+    subscribeDeviceEvents, // 订阅设备事件通知
+    unsubscribeDeviceEvents, // 取消订阅设备事件
+    connectionState: computed(() => connectionState.value) // WebSocket 连接状态
+  })
+
+  // 提供系统消息管理方法给所有子组件
+  provide('systemMessage', {
+    handleSystemMessage,
+    handleDeviceOnlineChange,
+    handleSystemNotification,
+    handlePromotion,
+    handleMallNewProduct,
+    handleUserMessage,
+    handleSystemUpdate
+  })
 
   // 组件挂载时初始化连接
   onMounted(() => {
