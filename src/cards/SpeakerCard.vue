@@ -253,7 +253,6 @@ const props = defineProps({
 
 // 注入设备管理器
 const deviceManager = inject('deviceManager', {
-  deviceData: new Map(),
   invokeDeviceService: () => Promise.reject('Device manager not available'),
   getDeviceProperties: () => Promise.reject('Device manager not available'),
   subscribeDeviceEvents: () => Promise.reject('Device manager not available'),
@@ -265,8 +264,6 @@ const deviceManager = inject('deviceManager', {
 // 设备ID - 从props中获取
 const deviceId = computed(() => props.device?.id || 'speaker_001')
 
-// 设备数据
-const deviceData = computed(() => deviceManager.deviceData.get(deviceId.value) || {})
 
 // 设备在线状态 - 基于传入的device中的status判断
 // 设备状态：unconfigured/configured/unbound/bound/online/offline/fault
@@ -283,19 +280,19 @@ const wsConnected = computed(() => deviceManager.connectionState.value === 'conn
 const speakerPower = ref(false)
 const speakerStatus = ref('idle') // idle, playing, paused
 
-// 音量和音效控制 - 从 deviceData 中获取，支持拖动时实时更新
-const volume = computed(() => deviceData.value.volume || 50)
-const mute = computed(() => deviceData.value.mute || false)
-const equalizer = computed(() => deviceData.value.equalizer || 'normal')
-const bass = computed(() => deviceData.value.bass || 0)
-const treble = computed(() => deviceData.value.treble || 0)
+// 音量和音效控制 - 使用本地状态，支持拖动时实时更新
+const volume = ref(50)
+const mute = ref(false)
+const equalizer = ref('normal')
+const bass = ref(0)
+const treble = ref(0)
 
 // 拖动时的临时值，用于实时显示
 const tempVolume = ref(50)
 const tempBass = ref(0)
 const tempTreble = ref(0)
 
-// 显示用的值，优先使用临时值（拖动时），否则使用 deviceData 中的值
+// 显示用的值，优先使用临时值（拖动时），否则使用本地状态的值
 const displayVolume = computed(() => {
   return tempVolume.value !== null ? tempVolume.value : volume.value
 })
@@ -543,53 +540,6 @@ const handleDeviceServiceResponse = (data) => {
   }
 }
 
-// 监听设备数据变化，更新音响状态
-watch(deviceData, (newData) => {
-  if (newData && Object.keys(newData).length > 0) {
-    // 更新音响开关状态
-    if (newData.power !== undefined) {
-      speakerPower.value = newData.power
-    }
-    
-    // 更新播放状态
-    if (newData.playing !== undefined) {
-      speakerStatus.value = newData.playing ? 'playing' : 'paused'
-    }
-    
-    // 更新当前歌曲信息
-    if (newData.track || newData.artist || newData.album) {
-      currentSong.value = {
-        title: newData.track || currentSong.value.title,
-        artist: newData.artist || currentSong.value.artist,
-        album: newData.album || currentSong.value.album,
-        cover: currentSong.value.cover // 保持原有封面
-      }
-    }
-    
-    // 更新播放进度
-    if (newData.position !== undefined) {
-      currentTime.value = newData.position
-    }
-    
-    if (newData.duration !== undefined) {
-      songDuration.value = newData.duration
-    }
-    
-    // 同步临时值，确保显示一致性
-    if (tempVolume.value === null) {
-      tempVolume.value = newData.volume || 50
-    }
-    if (tempBass.value === null) {
-      tempBass.value = newData.bass || 0
-    }
-    if (tempTreble.value === null) {
-      tempTreble.value = newData.treble || 0
-    }
-    
-    // 其他属性可以在这里处理
-    // 例如：volume, mute, source, repeat, shuffle, equalizer, bass, treble 等
-  }
-}, { deep: true })
 
 // 监听设备在线状态
 watch(deviceOnline, async (isOnline) => {
@@ -965,7 +915,7 @@ const updateVolumeDisplay = (event) => {
 // 更新音量（手指抬起时）
 const updateVolume = (event) => {
   const newVolume = parseInt(event.target.value)
-  // 清除临时值，使用 deviceData 中的值
+  // 清除临时值，使用本地状态的值
   tempVolume.value = null
   // 调用设备服务更新音量
   deviceManager.invokeDeviceService(deviceId.value, 'setVolume', { volume: newVolume })
@@ -995,7 +945,7 @@ const updateBassDisplay = (event) => {
 // 更新低音（手指抬起时）
 const updateBass = (event) => {
   const newBass = parseInt(event.target.value)
-  // 清除临时值，使用 deviceData 中的值
+  // 清除临时值，使用本地状态的值
   tempBass.value = null
   // 调用设备服务更新低音
   deviceManager.invokeDeviceService(deviceId.value, 'setBass', { level: newBass })
@@ -1011,7 +961,7 @@ const updateTrebleDisplay = (event) => {
 // 更新高音（手指抬起时）
 const updateTreble = (event) => {
   const newTreble = parseInt(event.target.value)
-  // 清除临时值，使用 deviceData 中的值
+  // 清除临时值，使用本地状态的值
   tempTreble.value = null
   // 调用设备服务更新高音
   deviceManager.invokeDeviceService(deviceId.value, 'setTreble', { level: newTreble })

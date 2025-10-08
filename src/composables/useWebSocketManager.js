@@ -238,8 +238,6 @@ export function useWebSocketManager() {
     heartbeatInterval: 30000
   })
 
-  // 设备实时数据存储
-  const deviceData = reactive(new Map())
   
   // 事件发射器
   const eventEmitter = new EventEmitter()
@@ -297,15 +295,6 @@ export function useWebSocketManager() {
     
     if (!deviceId || !properties) return
 
-    
-    // 更新设备数据
-    if (!deviceData.has(deviceId)) {
-      deviceData.set(deviceId, {})
-    }
-    
-    const currentData = deviceData.get(deviceId)
-    Object.assign(currentData, properties)
-    
     console.log(`设备 ${deviceId} 属性更新:`, properties)
     
     // 发射属性更新事件
@@ -516,14 +505,6 @@ export function useWebSocketManager() {
 
 
 
-  /**
-   * 清理设备数据
-   * @param {string} deviceId - 设备ID
-   */
-  const clearDeviceData = (deviceId) => {
-    deviceData.delete(deviceId)
-    subscribedDevices.value.delete(deviceId)
-  }
 
   /**
    * 断开连接
@@ -534,7 +515,6 @@ export function useWebSocketManager() {
 
   // 提供设备管理方法给所有子组件
   provide('deviceManager', {
-    deviceData,            // 设备实时数据存储 (Map<deviceId, data>)
     invokeDeviceService,   // 调用设备服务 (如开关、调节等)
     getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
     subscribeDeviceEvents, // 订阅设备事件通知
