@@ -197,6 +197,30 @@ import { ref, reactive, computed, onMounted, onUnmounted, provide } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
 
+// 创建事件发射器
+class EventEmitter {
+  constructor() {
+    this.events = {}
+  }
+
+  on(event, callback) {
+    if (!this.events[event]) {
+      this.events[event] = []
+    }
+    this.events[event].push(callback)
+  }
+
+  off(event, callback) {
+    if (!this.events[event]) return
+    this.events[event] = this.events[event].filter(cb => cb !== callback)
+  }
+
+  emit(event, data) {
+    if (!this.events[event]) return
+    this.events[event].forEach(callback => callback(data))
+  }
+}
+
 export function useWebSocketManager() {
   // 全局状态
   const globalStore = useGlobalStore()
@@ -217,6 +241,8 @@ export function useWebSocketManager() {
   // 设备实时数据存储
   const deviceData = reactive(new Map())
   
+  // 事件发射器
+  const eventEmitter = new EventEmitter()
   
   // 连接状态
   const connectionState = ref('disconnected')
@@ -281,6 +307,9 @@ export function useWebSocketManager() {
     Object.assign(currentData, properties)
     
     console.log(`设备 ${deviceId} 属性更新:`, properties)
+    
+    // 发射属性更新事件
+    eventEmitter.emit('devicePropertyUpdate', { deviceId, properties })
   }
 
   /**
@@ -294,6 +323,9 @@ export function useWebSocketManager() {
 
     
     console.log(`设备 ${deviceId} 事件通知:`, eventType, eventData)
+    
+    // 发射设备事件通知
+    eventEmitter.emit('deviceEventNotification', { deviceId, eventType, eventData, occurredAt })
   }
 
   /**
@@ -307,6 +339,9 @@ export function useWebSocketManager() {
 
     
     console.log(`设备 ${deviceId} 服务响应:`, serviceName, result)
+    
+    // 发射设备服务响应
+    eventEmitter.emit('deviceServiceResponse', { deviceId, serviceName, result })
   }
 
   /**
@@ -504,7 +539,10 @@ export function useWebSocketManager() {
     getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
     subscribeDeviceEvents, // 订阅设备事件通知
     unsubscribeDeviceEvents, // 取消订阅设备事件
-    connectionState: computed(() => connectionState.value) // WebSocket 连接状态
+    connectionState: computed(() => connectionState.value), // WebSocket 连接状态
+    
+    // 事件发射器
+    eventEmitter           // 事件发射器，用于监听设备属性更新等事件
   })
 
   // 提供系统消息管理方法给所有子组件

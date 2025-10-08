@@ -258,7 +258,8 @@ const deviceManager = inject('deviceManager', {
   getDeviceProperties: () => Promise.reject('Device manager not available'),
   subscribeDeviceEvents: () => Promise.reject('Device manager not available'),
   unsubscribeDeviceEvents: () => Promise.reject('Device manager not available'),
-  connectionState: { value: 'disconnected' }
+  connectionState: { value: 'disconnected' },
+  eventEmitter: null
 })
 
 // 设备ID - 从props中获取
@@ -374,6 +375,173 @@ const effectiveSpeakerPower = computed(() => {
   }
   return speakerPower.value
 })
+
+// 处理设备属性更新
+const handlePropertyUpdate = (data) => {
+  const { deviceId: updatedDeviceId, properties } = data.params
+  
+  // 只处理当前设备的属性更新
+  if (updatedDeviceId !== deviceId.value) {
+    return
+  }
+  
+  if (!properties) return
+  
+  console.log(`SpeakerCard 收到设备 ${deviceId.value} 属性更新:`, properties)
+  
+  // 更新音响开关状态
+  if (properties.power !== undefined) {
+    speakerPower.value = properties.power
+  }
+  
+  // 更新播放状态
+  if (properties.playing !== undefined) {
+    speakerStatus.value = properties.playing ? 'playing' : 'paused'
+  }
+  
+  // 更新当前歌曲信息
+  if (properties.track || properties.artist || properties.album) {
+    currentSong.value = {
+      title: properties.track || currentSong.value.title,
+      artist: properties.artist || currentSong.value.artist,
+      album: properties.album || currentSong.value.album,
+      cover: currentSong.value.cover // 保持原有封面
+    }
+  }
+  
+  // 更新播放进度
+  if (properties.position !== undefined) {
+    currentTime.value = properties.position
+  }
+  
+  if (properties.duration !== undefined) {
+    songDuration.value = properties.duration
+  }
+  
+  // 同步临时值，确保显示一致性
+  if (tempVolume.value === null && properties.volume !== undefined) {
+    tempVolume.value = properties.volume
+  }
+  if (tempBass.value === null && properties.bass !== undefined) {
+    tempBass.value = properties.bass
+  }
+  if (tempTreble.value === null && properties.treble !== undefined) {
+    tempTreble.value = properties.treble
+  }
+  
+  // 处理其他属性
+  // 例如：volume, mute, source, repeat, shuffle, equalizer, bass, treble 等
+}
+
+// 监听设备属性更新事件
+const handleDevicePropertyUpdate = (data) => {
+  const { deviceId: updatedDeviceId, properties } = data
+  
+  // 只处理当前设备的属性更新
+  if (updatedDeviceId !== deviceId.value) {
+    return
+  }
+  
+  handlePropertyUpdate({ params: { deviceId: updatedDeviceId, properties } })
+}
+
+// 监听设备事件通知
+const handleDeviceEventNotification = (data) => {
+  const { deviceId: updatedDeviceId, eventType, eventData, occurredAt } = data
+  
+  // 只处理当前设备的事件通知
+  if (updatedDeviceId !== deviceId.value) {
+    return
+  }
+  
+  console.log(`SpeakerCard 收到设备 ${deviceId.value} 事件通知:`, eventType, eventData)
+  
+  // 根据事件类型处理不同的逻辑
+  switch (eventType) {
+    case 'playbackStarted':
+      speakerStatus.value = 'playing'
+      break
+    case 'playbackPaused':
+      speakerStatus.value = 'paused'
+      break
+    case 'playbackStopped':
+      speakerStatus.value = 'idle'
+      currentTime.value = 0
+      break
+    case 'trackChanged':
+      if (eventData.track) {
+        currentSong.value = {
+          title: eventData.track.title || currentSong.value.title,
+          artist: eventData.track.artist || currentSong.value.artist,
+          album: eventData.track.album || currentSong.value.album,
+          cover: eventData.track.cover || currentSong.value.cover
+        }
+      }
+      break
+    case 'volumeChanged':
+      if (eventData.volume !== undefined) {
+        tempVolume.value = eventData.volume
+      }
+      break
+    case 'muteToggled':
+      if (eventData.muted !== undefined) {
+        // 处理静音状态变化
+        console.log('静音状态变化:', eventData.muted)
+      }
+      break
+    default:
+      console.log('未处理的事件类型:', eventType)
+  }
+}
+
+// 监听设备服务响应
+const handleDeviceServiceResponse = (data) => {
+  const { deviceId: updatedDeviceId, serviceName, result } = data
+  
+  // 只处理当前设备的服务响应
+  if (updatedDeviceId !== deviceId.value) {
+    return
+  }
+  
+  console.log(`SpeakerCard 收到设备 ${deviceId.value} 服务响应:`, serviceName, result)
+  
+  // 根据服务名称处理不同的响应
+  switch (serviceName) {
+    case 'setPower':
+      if (result.status === 'success') {
+        speakerPower.value = result.power
+      }
+      break
+    case 'setPlayStatus':
+      if (result.status === 'success') {
+        speakerStatus.value = result.status
+      }
+      break
+    case 'setVolume':
+      if (result.status === 'success') {
+        tempVolume.value = null // 清除临时值，使用实际值
+      }
+      break
+    case 'setBass':
+      if (result.status === 'success') {
+        tempBass.value = null // 清除临时值，使用实际值
+      }
+      break
+    case 'setTreble':
+      if (result.status === 'success') {
+        tempTreble.value = null // 清除临时值，使用实际值
+      }
+      break
+    case 'setEqualizer':
+      if (result.status === 'success') {
+        // 均衡器设置成功
+        console.log('均衡器设置成功:', result.mode)
+      }
+      break
+    default:
+      console.log('未处理的服务响应:', serviceName)
+  }
+}
 
 // 监听设备数据变化，更新音响状态
 watch(deviceData, (newData) => {
@@ -713,6 +881,13 @@ const fetchDeviceProperties = async () => {
 
 // 组件挂载时初始化
 onMounted(async () => {
+  // 使用事件发射器监听设备相关事件
+  if (deviceManager.eventEmitter) {
+    deviceManager.eventEmitter.on('devicePropertyUpdate', handleDevicePropertyUpdate)
+    deviceManager.eventEmitter.on('deviceEventNotification', handleDeviceEventNotification)
+    deviceManager.eventEmitter.on('deviceServiceResponse', handleDeviceServiceResponse)
+  }
+  
   // 如果WebSocket已连接且设备在线，直接获取属性
   if (wsConnected.value && deviceOnline.value) {
     await fetchDeviceProperties()
@@ -849,7 +1024,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  // 清理事件监听器
   document.removeEventListener('click', handleGlobalClick, true)
+  if (deviceManager.eventEmitter) {
+    deviceManager.eventEmitter.off('devicePropertyUpdate', handleDevicePropertyUpdate)
+    deviceManager.eventEmitter.off('deviceEventNotification', handleDeviceEventNotification)
+    deviceManager.eventEmitter.off('deviceServiceResponse', handleDeviceServiceResponse)
+  }
   stopPlaybackSimulation()
 })
 </script>
