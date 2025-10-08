@@ -509,8 +509,36 @@ export function useWebSocketManager() {
   /**
    * 断开连接
    */
-  const disconnect = () => {
-    wsManager.disconnect()
+  const disconnect = async () => {
+    try {
+      // 先取消所有设备的订阅
+      if (subscribedDevices.value.size > 0) {
+        console.log('断开连接前，先取消所有设备订阅...')
+        
+        // 并行取消所有设备的订阅
+        const unsubscribePromises = Array.from(subscribedDevices.value).map(async (deviceId) => {
+          try {
+            await wsManager.unsubscribeDeviceEvents(deviceId, ['propertyUpdate', 'eventNotification'])
+            console.log(`已取消设备 ${deviceId} 的订阅`)
+          } catch (error) {
+            // 如果取消订阅失败，记录警告但不阻止断开连接
+            console.warn(`取消设备 ${deviceId} 订阅失败:`, error.message)
+          }
+        })
+        
+        // 等待所有取消订阅操作完成（最多等待3秒）
+        await Promise.allSettled(unsubscribePromises)
+        
+        // 清空订阅列表
+        subscribedDevices.value.clear()
+        console.log('所有设备订阅已取消')
+      }
+    } catch (error) {
+      console.warn('取消订阅过程中出现错误:', error)
+    } finally {
+      // 无论取消订阅是否成功，都断开连接
+      wsManager.disconnect()
+    }
   }
 
   // 提供设备管理方法给所有子组件
@@ -542,8 +570,8 @@ export function useWebSocketManager() {
   })
 
   // 组件卸载时断开连接
-  onUnmounted(() => {
-    disconnect()
+  onUnmounted(async () => {
+    await disconnect()
   })
 
 }

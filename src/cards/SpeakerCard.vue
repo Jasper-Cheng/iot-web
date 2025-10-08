@@ -571,8 +571,7 @@ watch(wsConnected, async (isConnected) => {
       await subscribeToDeviceProperties()
     }
   } else {
-    // WebSocket断开时，取消订阅并重置状态
-    await unsubscribeFromDeviceProperties()
+    // WebSocket断开时，重置状态（不需要取消订阅，因为连接已断开）
     deviceProperties.value.power = false
     deviceProperties.value.playing = false
   }
@@ -807,12 +806,23 @@ const subscribeToDeviceProperties = async () => {
 
 // 取消订阅设备属性更新
 const unsubscribeFromDeviceProperties = async () => {
+  // 如果WebSocket未连接，直接返回，避免发送消息到已关闭的连接
+  if (!wsConnected.value) {
+    console.log(`WebSocket未连接，跳过取消订阅设备 ${deviceId.value}`)
+    return
+  }
+  
   try {
     // 取消订阅设备属性更新和通知事件
     await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
     console.log(`已取消订阅设备 ${deviceId.value} 的属性更新,事件通知`)
   } catch (error) {
-    console.error('取消订阅设备属性更新失败:', error)
+    // 如果是连接关闭错误，只记录警告而不是错误
+    if (error.message === 'Connection closed') {
+      console.warn(`WebSocket连接已关闭，跳过取消订阅设备 ${deviceId.value}`)
+    } else {
+      console.error('取消订阅设备属性更新失败:', error)
+    }
   }
 }
 
@@ -971,10 +981,7 @@ onMounted(() => {
   document.addEventListener('click', handleGlobalClick, true)
 })
 
-onBeforeUnmount(async () => {
-  // 取消订阅设备属性更新
-  await unsubscribeFromDeviceProperties()
-  
+onBeforeUnmount(() => {
   // 清理事件监听器
   document.removeEventListener('click', handleGlobalClick, true)
   if (deviceManager.eventEmitter) {
@@ -983,6 +990,8 @@ onBeforeUnmount(async () => {
     deviceManager.eventEmitter.off('deviceServiceResponse', handleDeviceServiceResponse)
   }
   stopPlaybackSimulation()
+  
+  // 注意：设备订阅的取消现在由 useWebSocketManager 在断开连接时自动处理
 })
 </script>
 
