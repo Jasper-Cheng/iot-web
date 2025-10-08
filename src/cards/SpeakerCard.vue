@@ -275,17 +275,48 @@ const deviceOnline = computed(() => {
 const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
 // =========================
-// Speaker state and modes
+// 设备属性统一管理
 // =========================
-const speakerPower = ref(false)
-const speakerStatus = ref('idle') // idle, playing, paused
+const deviceProperties = ref({
+  // 基础控制属性
+  power: false,           // 电源开关状态 (true/false)
+  volume: 50,             // 音量 (0-100)
+  mute: false,            // 静音状态 (true/false)
+  
+  // 音源和播放控制
+  source: 'bluetooth',    // 音源类型 (bluetooth/wifi/aux/usb)
+  playing: false,         // 播放状态 (true/false)
+  track: '夜曲',          // 当前曲目名称
+  artist: '周杰伦',       // 艺术家名称
+  album: '十一月的萧邦',  // 专辑名称
+  duration: 210,          // 歌曲时长 (秒)
+  position: 0,            // 播放位置 (秒)
+  
+  // 播放模式设置
+  repeat: 'none',         // 重复模式 (none/one/all)
+  shuffle: false,         // 随机播放 (true/false)
+  
+  // 音效设置
+  equalizer: 'normal',    // 均衡器模式 (normal/pop/rock/jazz/classical)
+  bass: 0,                // 低音调节 (-10 到 10)
+  treble: 0,              // 高音调节 (-10 到 10)
+  
+  // 设备状态信息
+  battery: 85,            // 电池电量 (0-100)
+  wifiSignal: -35,        // WiFi信号强度 (dBm)
+  bluetoothConnected: true, // 蓝牙连接状态 (true/false)
+  bluetoothDevice: 'iPhone 15', // 连接的蓝牙设备名称
+  firmwareVersion: '2.1.3' // 固件版本号
+})
 
-// 音量和音效控制 - 使用本地状态，支持拖动时实时更新
-const volume = ref(50)
-const mute = ref(false)
-const equalizer = ref('normal')
-const bass = ref(0)
-const treble = ref(0)
+// 兼容性：保持原有的计算属性
+const speakerPower = computed(() => deviceProperties.value.power)
+const speakerStatus = computed(() => deviceProperties.value.playing ? 'playing' : 'paused')
+const volume = computed(() => deviceProperties.value.volume)
+const mute = computed(() => deviceProperties.value.mute)
+const equalizer = computed(() => deviceProperties.value.equalizer)
+const bass = computed(() => deviceProperties.value.bass)
+const treble = computed(() => deviceProperties.value.treble)
 
 // 拖动时的临时值，用于实时显示
 const tempVolume = ref(50)
@@ -309,15 +340,16 @@ const displayTreble = computed(() => {
 const showVolumePanel = ref(false) // 音量面板显示状态
 const showEqualizerPanel = ref(false) // 均衡器面板显示状态
 
-const currentSong = ref({
-  title: '夜曲',
-  artist: '周杰伦',
-  album: '十一月的萧邦',
+// 从设备属性中获取播放信息
+const currentSong = computed(() => ({
+  title: deviceProperties.value.track,
+  artist: deviceProperties.value.artist,
+  album: deviceProperties.value.album,
   cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop'
-})
+}))
 
-const currentTime = ref(0)
-const songDuration = ref(210) // 3分30秒
+const currentTime = computed(() => deviceProperties.value.position)
+const songDuration = computed(() => deviceProperties.value.duration)
 const currentLyricIndex = ref(0)
 
 // 歌词数据
@@ -386,34 +418,12 @@ const handlePropertyUpdate = (data) => {
   
   console.log(`SpeakerCard 收到设备 ${deviceId.value} 属性更新:`, properties)
   
-  // 更新音响开关状态
-  if (properties.power !== undefined) {
-    speakerPower.value = properties.power
-  }
-  
-  // 更新播放状态
-  if (properties.playing !== undefined) {
-    speakerStatus.value = properties.playing ? 'playing' : 'paused'
-  }
-  
-  // 更新当前歌曲信息
-  if (properties.track || properties.artist || properties.album) {
-    currentSong.value = {
-      title: properties.track || currentSong.value.title,
-      artist: properties.artist || currentSong.value.artist,
-      album: properties.album || currentSong.value.album,
-      cover: currentSong.value.cover // 保持原有封面
+  // 统一更新设备属性
+  Object.keys(properties).forEach(key => {
+    if (properties[key] !== undefined) {
+      deviceProperties.value[key] = properties[key]
     }
-  }
-  
-  // 更新播放进度
-  if (properties.position !== undefined) {
-    currentTime.value = properties.position
-  }
-  
-  if (properties.duration !== undefined) {
-    songDuration.value = properties.duration
-  }
+  })
   
   // 同步临时值，确保显示一致性
   if (tempVolume.value === null && properties.volume !== undefined) {
@@ -425,9 +435,6 @@ const handlePropertyUpdate = (data) => {
   if (tempTreble.value === null && properties.treble !== undefined) {
     tempTreble.value = properties.treble
   }
-  
-  // 处理其他属性
-  // 例如：volume, mute, source, repeat, shuffle, equalizer, bass, treble 等
 }
 
 // 监听设备属性更新事件
@@ -456,33 +463,31 @@ const handleDeviceEventNotification = (data) => {
   // 根据事件类型处理不同的逻辑
   switch (eventType) {
     case 'playbackStarted':
-      speakerStatus.value = 'playing'
+      deviceProperties.value.playing = true
       break
     case 'playbackPaused':
-      speakerStatus.value = 'paused'
+      deviceProperties.value.playing = false
       break
     case 'playbackStopped':
-      speakerStatus.value = 'idle'
-      currentTime.value = 0
+      deviceProperties.value.playing = false
+      deviceProperties.value.position = 0
       break
     case 'trackChanged':
       if (eventData.track) {
-        currentSong.value = {
-          title: eventData.track.title || currentSong.value.title,
-          artist: eventData.track.artist || currentSong.value.artist,
-          album: eventData.track.album || currentSong.value.album,
-          cover: eventData.track.cover || currentSong.value.cover
-        }
+        deviceProperties.value.track = eventData.track.title || deviceProperties.value.track
+        deviceProperties.value.artist = eventData.track.artist || deviceProperties.value.artist
+        deviceProperties.value.album = eventData.track.album || deviceProperties.value.album
       }
       break
     case 'volumeChanged':
       if (eventData.volume !== undefined) {
+        deviceProperties.value.volume = eventData.volume
         tempVolume.value = eventData.volume
       }
       break
     case 'muteToggled':
       if (eventData.muted !== undefined) {
-        // 处理静音状态变化
+        deviceProperties.value.mute = eventData.muted
         console.log('静音状态变化:', eventData.muted)
       }
       break
@@ -506,12 +511,12 @@ const handleDeviceServiceResponse = (data) => {
   switch (serviceName) {
     case 'setPower':
       if (result.status === 'success') {
-        speakerPower.value = result.power
+        deviceProperties.value.power = result.power
       }
       break
     case 'setPlayStatus':
       if (result.status === 'success') {
-        speakerStatus.value = result.status
+        deviceProperties.value.playing = result.status === 'playing'
       }
       break
     case 'setVolume':
@@ -531,7 +536,7 @@ const handleDeviceServiceResponse = (data) => {
       break
     case 'setEqualizer':
       if (result.status === 'success') {
-        // 均衡器设置成功
+        deviceProperties.value.equalizer = result.mode
         console.log('均衡器设置成功:', result.mode)
       }
       break
@@ -549,8 +554,8 @@ watch(deviceOnline, async (isOnline) => {
       await fetchDeviceProperties()
     }
   } else {
-    speakerPower.value = false
-    speakerStatus.value = 'idle'
+    deviceProperties.value.power = false
+    deviceProperties.value.playing = false
   }
 })
 
@@ -562,8 +567,8 @@ watch(wsConnected, async (isConnected) => {
       await fetchDeviceProperties()
     }
   } else {
-    speakerPower.value = false
-    speakerStatus.value = 'idle'
+    deviceProperties.value.power = false
+    deviceProperties.value.playing = false
   }
 })
 
@@ -585,17 +590,17 @@ const toggleSpeaker = async () => {
   }
   
   try {
-    const newPowerState = !speakerPower.value
+    const newPowerState = !deviceProperties.value.power
     await deviceManager.invokeDeviceService(deviceId.value, 'setPower', { power: newPowerState })
     
     // 本地更新状态
-    speakerPower.value = newPowerState
-    if (!speakerPower.value) {
-      speakerStatus.value = 'idle'
-      currentTime.value = 0
+    deviceProperties.value.power = newPowerState
+    if (!deviceProperties.value.power) {
+      deviceProperties.value.playing = false
+      deviceProperties.value.position = 0
       currentLyricIndex.value = 0
     } else {
-      speakerStatus.value = 'paused'
+      deviceProperties.value.playing = false
     }
   } catch (error) {
     console.error('控制音响开关失败:', error)
@@ -604,15 +609,15 @@ const toggleSpeaker = async () => {
 
 // 切换播放/暂停
 const togglePlayPause = async () => {
-  if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
+  if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
   
   try {
-    const newStatus = speakerStatus.value === 'playing' ? 'paused' : 'playing'
+    const newStatus = deviceProperties.value.playing ? 'paused' : 'playing'
     await deviceManager.invokeDeviceService(deviceId.value, 'setPlayStatus', { status: newStatus })
     
     // 本地更新状态
-    speakerStatus.value = newStatus
-    if (speakerStatus.value === 'playing') {
+    deviceProperties.value.playing = newStatus === 'playing'
+    if (deviceProperties.value.playing) {
       startPlaybackSimulation()
     } else {
       stopPlaybackSimulation()
@@ -624,7 +629,7 @@ const togglePlayPause = async () => {
 
 // 上一曲
 const previousSong = async () => {
-  if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
+  if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
   
   try {
     await deviceManager.invokeDeviceService(deviceId.value, 'previousSong', {})
@@ -639,7 +644,7 @@ const previousSong = async () => {
 
 // 下一曲
 const nextSong = async () => {
-  if (!speakerPower.value || !deviceOnline.value || !wsConnected.value) return
+  if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
   
   try {
     await deviceManager.invokeDeviceService(deviceId.value, 'nextSong', {})
@@ -655,11 +660,14 @@ const nextSong = async () => {
 // 加载歌曲
 const loadSong = (index) => {
   const song = playlist.value[index]
-  currentSong.value = song
-  songDuration.value = song.duration
-  currentTime.value = 0
+  // 更新设备属性中的歌曲信息
+  deviceProperties.value.track = song.title
+  deviceProperties.value.artist = song.artist
+  deviceProperties.value.album = song.album
+  deviceProperties.value.duration = song.duration
+  deviceProperties.value.position = 0
+  deviceProperties.value.playing = false
   currentLyricIndex.value = 0
-  speakerStatus.value = 'paused'
   imageError.value = false // 重置图片错误状态
 }
 
@@ -677,19 +685,19 @@ const handleImageError = () => {
 
 // 处理进度条点击
 const handleProgressClick = (event) => {
-  if (!speakerPower.value || !progressBar.value) return
+  if (!deviceProperties.value.power || !progressBar.value) return
   
   const rect = progressBar.value.getBoundingClientRect()
   const clickX = event.clientX - rect.left
   const percentage = clickX / rect.width
-  const newTime = Math.floor(percentage * songDuration.value)
+  const newTime = Math.floor(percentage * deviceProperties.value.duration)
   
-  currentTime.value = Math.max(0, Math.min(newTime, songDuration.value))
+  deviceProperties.value.position = Math.max(0, Math.min(newTime, deviceProperties.value.duration))
 }
 
 // 处理进度条拖拽
 const handleProgressMouseDown = (event) => {
-  if (!speakerPower.value) return
+  if (!deviceProperties.value.power) return
   isDragging.value = true
   
   const handleMouseMove = (e) => {
@@ -698,9 +706,9 @@ const handleProgressMouseDown = (event) => {
     const rect = progressBar.value.getBoundingClientRect()
     const moveX = e.clientX - rect.left
     const percentage = moveX / rect.width
-    const newTime = Math.floor(percentage * songDuration.value)
+    const newTime = Math.floor(percentage * deviceProperties.value.duration)
     
-    currentTime.value = Math.max(0, Math.min(newTime, songDuration.value))
+    deviceProperties.value.position = Math.max(0, Math.min(newTime, deviceProperties.value.duration))
   }
   
   const handleMouseUp = () => {
@@ -722,19 +730,19 @@ const startPlaybackSimulation = () => {
   }
   
   playbackInterval = setInterval(() => {
-    if (speakerStatus.value === 'playing' && currentTime.value < songDuration.value) {
-      currentTime.value += 1
+    if (deviceProperties.value.playing && deviceProperties.value.position < deviceProperties.value.duration) {
+      deviceProperties.value.position += 1
       
       // 更新歌词索引（每10秒换一行）
-      const newLyricIndex = Math.floor(currentTime.value / 10)
+      const newLyricIndex = Math.floor(deviceProperties.value.position / 10)
       if (newLyricIndex < lyrics.value.length) {
         currentLyricIndex.value = newLyricIndex
       }
-    } else if (currentTime.value >= songDuration.value) {
+    } else if (deviceProperties.value.position >= deviceProperties.value.duration) {
       // 歌曲播放完毕，自动下一曲
       nextSong()
-      if (speakerStatus.value === 'playing') {
-        speakerStatus.value = 'playing'
+      if (deviceProperties.value.playing) {
+        deviceProperties.value.playing = true
         startPlaybackSimulation()
       }
     }
@@ -757,71 +765,18 @@ const fetchDeviceProperties = async () => {
   }
   
   try {
-    const properties = await deviceManager.getDeviceProperties(deviceId.value, [
-      // 基础控制属性
-      'power',           // 电源开关状态 (true/false)
-      'volume',          // 音量 (0-100)
-      'mute',            // 静音状态 (true/false)
-      
-      // 音源和播放控制
-      'source',          // 音源类型 (bluetooth/wifi/aux/usb)
-      'playing',         // 播放状态 (true/false)
-      'track',           // 当前曲目名称
-      'artist',          // 艺术家名称
-      'album',           // 专辑名称
-      'duration',        // 歌曲时长 (秒)
-      'position',        // 播放位置 (秒)
-      
-      // 播放模式设置
-      'repeat',          // 重复模式 (none/one/all)
-      'shuffle',         // 随机播放 (true/false)
-      
-      // 音效设置
-      'equalizer',       // 均衡器模式 (normal/pop/rock/jazz/classical)
-      'bass',            // 低音调节 (-10 到 10)
-      'treble',          // 高音调节 (-10 到 10)
-      
-      // 设备状态信息
-      'battery',         // 电池电量 (0-100)
-      'wifiSignal',      // WiFi信号强度 (dBm)
-      'bluetoothConnected', // 蓝牙连接状态 (true/false)
-      'bluetoothDevice', // 连接的蓝牙设备名称
-      'firmwareVersion'  // 固件版本号
-    ])
+    // 使用 deviceProperties 中的属性名作为参数传入
+    const requestedProperties = Object.keys(deviceProperties.value)
     
-    // 更新本地状态
+    const properties = await deviceManager.getDeviceProperties(deviceId.value, requestedProperties)
+    
+    // 统一更新设备属性
     if (properties) {
-      // 电源状态
-      if (properties.power !== undefined) {
-        speakerPower.value = properties.power
-      }
-      
-      // 播放状态
-      if (properties.playing !== undefined) {
-        speakerStatus.value = properties.playing ? 'playing' : 'paused'
-      }
-      
-      // 当前歌曲信息
-      if (properties.track || properties.artist || properties.album) {
-        currentSong.value = {
-          title: properties.track || currentSong.value.title,
-          artist: properties.artist || currentSong.value.artist,
-          album: properties.album || currentSong.value.album,
-          cover: currentSong.value.cover // 保持原有封面
+      Object.keys(properties).forEach(key => {
+        if (properties[key] !== undefined) {
+          deviceProperties.value[key] = properties[key]
         }
-      }
-      
-      // 播放进度
-      if (properties.position !== undefined) {
-        currentTime.value = properties.position
-      }
-      
-      if (properties.duration !== undefined) {
-        songDuration.value = properties.duration
-      }
-      
-      // 音量等其他属性可以在这里处理
-      // 例如：volume, mute, source, repeat, shuffle 等
+      })
     }
   } catch (error) {
     console.error('获取设备属性失败:', error)
@@ -843,8 +798,8 @@ onMounted(async () => {
     await fetchDeviceProperties()
   } else {
     // 设备离线时，确保开关为Off状态
-    speakerPower.value = false
-    speakerStatus.value = 'idle'
+    deviceProperties.value.power = false
+    deviceProperties.value.playing = false
   }
 })
 
@@ -917,13 +872,17 @@ const updateVolume = (event) => {
   const newVolume = parseInt(event.target.value)
   // 清除临时值，使用本地状态的值
   tempVolume.value = null
+  // 更新设备属性
+  deviceProperties.value.volume = newVolume
   // 调用设备服务更新音量
   deviceManager.invokeDeviceService(deviceId.value, 'setVolume', { volume: newVolume })
 }
 
 // 切换静音
 const toggleMute = () => {
-  const newMuteState = !mute.value
+  const newMuteState = !deviceProperties.value.mute
+  // 更新设备属性
+  deviceProperties.value.mute = newMuteState
   // 调用设备服务切换静音
   deviceManager.invokeDeviceService(deviceId.value, 'setMute', { mute: newMuteState })
 }
@@ -931,6 +890,8 @@ const toggleMute = () => {
 // 更新均衡器模式
 const updateEqualizer = (event) => {
   const newEqualizer = event.target.value
+  // 更新设备属性
+  deviceProperties.value.equalizer = newEqualizer
   // 调用设备服务更新均衡器
   deviceManager.invokeDeviceService(deviceId.value, 'setEqualizer', { mode: newEqualizer })
 }
@@ -947,6 +908,8 @@ const updateBass = (event) => {
   const newBass = parseInt(event.target.value)
   // 清除临时值，使用本地状态的值
   tempBass.value = null
+  // 更新设备属性
+  deviceProperties.value.bass = newBass
   // 调用设备服务更新低音
   deviceManager.invokeDeviceService(deviceId.value, 'setBass', { level: newBass })
 }
@@ -963,6 +926,8 @@ const updateTreble = (event) => {
   const newTreble = parseInt(event.target.value)
   // 清除临时值，使用本地状态的值
   tempTreble.value = null
+  // 更新设备属性
+  deviceProperties.value.treble = newTreble
   // 调用设备服务更新高音
   deviceManager.invokeDeviceService(deviceId.value, 'setTreble', { level: newTreble })
 }
