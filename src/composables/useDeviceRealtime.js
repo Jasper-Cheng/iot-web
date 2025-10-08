@@ -108,7 +108,7 @@ export function useDeviceRealtime() {
   
   // WebSocket管理器实例
   const wsManager = getWebSocketManager({
-    url: `ws://localhost:8000/api/v1/ws/user/4?token=${globalStore.token}`,
+    url: `ws://localhost:8000/api/v1/ws/user/${userId}?token=${globalStore.token}`,
     userId: userId,
     debug: true,
     reconnectInterval: 3000,
