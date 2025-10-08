@@ -240,6 +240,8 @@ class WebSocketManager {
           this.emit('serviceResponse', data)
         } else if (data.method.startsWith('event.')) {
           this.emit('eventNotification', data)
+        } else if (data.method === 'systemMessage') {
+          this.emit('systemMessage', data)
         }
       }
 

@@ -94,6 +94,104 @@
  *   "method": "ping",
  *   "timestamp": 1620000000000
  * }
+ * 
+ * 8. 系统消息（通用消息）：
+ * {
+ *   "id": "sys_001",
+ *   "method": "systemMessage",
+ *   "params": {
+ *     "type": "device_status_change",
+ *     "data": {
+ *       "deviceId": "device_123",
+ *       "deviceName": "智能音箱",
+ *       "oldStatus": "online",
+ *       "newStatus": "offline",
+ *       "timestamp": 1620000000000
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
+ * 
+ * 9. 系统通知消息：
+ * {
+ *   "id": "sys_002",
+ *   "method": "systemMessage",
+ *   "params": {
+ *     "type": "system_notification",
+ *     "data": {
+ *       "title": "系统维护通知",
+ *       "message": "系统将于今晚22:00-24:00进行维护",
+ *       "level": "info",
+ *       "timestamp": 1620000000000
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
+ * 
+ * 10. 优惠活动消息：
+ * {
+ *   "id": "sys_003",
+ *   "method": "systemMessage",
+ *   "params": {
+ *     "type": "promotion",
+ *     "data": {
+ *       "title": "限时优惠",
+ *       "message": "智能设备8折优惠，仅限今日",
+ *       "actionUrl": "/mall/promotion/123",
+ *       "timestamp": 1620000000000
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
+ * 
+ * 11. 商场上新消息：
+ * {
+ *   "id": "sys_004",
+ *   "method": "systemMessage",
+ *   "params": {
+ *     "type": "mall_new_product",
+ *     "data": {
+ *       "productName": "智能空调",
+ *       "price": 2999,
+ *       "category": "家电",
+ *       "timestamp": 1620000000000
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
+ * 
+ * 12. 用户消息：
+ * {
+ *   "id": "sys_005",
+ *   "method": "systemMessage",
+ *   "params": {
+ *     "type": "user_message",
+ *     "data": {
+ *       "title": "设备异常提醒",
+ *       "content": "您的智能门锁电量不足，请及时更换电池",
+ *       "priority": "high",
+ *       "deviceId": "device_456",
+ *       "timestamp": 1620000000000
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
+ * 
+ * 13. 系统更新消息：
+ * {
+ *   "id": "sys_006",
+ *   "method": "systemMessage",
+ *   "params": {
+ *     "type": "system_update",
+ *     "data": {
+ *       "version": "2.1.0",
+ *       "features": ["新增语音控制", "优化设备连接"],
+ *       "updateUrl": "/system/update",
+ *       "timestamp": 1620000000000
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
  */
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
@@ -151,6 +249,11 @@ export function useDeviceRealtime() {
         handleServiceResponse(data)
       })
 
+      // 监听系统消息
+      wsManager.on('systemMessage', (data) => {
+        handleSystemMessage(data)
+      })
+
       // 连接WebSocket
       await wsManager.connect()
       // console.log('WebSocket连接成功')
@@ -204,6 +307,113 @@ export function useDeviceRealtime() {
 
     
     console.log(`设备 ${deviceId} 服务响应:`, serviceName, result)
+  }
+
+  /**
+   * 处理系统消息
+   * @param {Object} data - 系统消息数据
+   * @param {string} data.type - 消息类型
+   * @param {Object} data.data - 消息内容
+   */
+  const handleSystemMessage = (data) => {
+    const { type, data: messageData } = data
+    if (!type || !messageData) return
+
+    // 消息类型处理器映射表
+    const messageHandlers = {
+      device_status_change: (data) => {
+        console.log('📱 设备状态变更:', data)
+        handleDeviceStatusChange(data)
+      },
+      system_notification: (data) => {
+        console.log('🔔 系统通知:', data)
+        handleSystemNotification(data)
+      },
+      promotion: (data) => {
+        console.log('🎯 广告/优惠:', data)
+        handlePromotion(data)
+      },
+      mall_new_product: (data) => {
+        console.log('🛒 商场上新:', data)
+        handleMallNewProduct(data)
+      },
+      user_message: (data) => {
+        console.log('💬 用户消息:', data)
+        handleUserMessage(data)
+      },
+      system_update: (data) => {
+        console.log('🔄 系统更新:', data)
+        handleSystemUpdate(data)
+      }
+    }
+
+    const handler = messageHandlers[type]
+    if (handler) {
+      handler(messageData)
+    } else {
+      console.warn('未知的系统消息类型:', type)
+    }
+  }
+
+  /**
+   * 处理设备状态变更
+   * @param {Object} data - 设备状态变更数据
+   */
+  const handleDeviceStatusChange = (data) => {
+    const { deviceId, deviceName, oldStatus, newStatus, timestamp } = data
+    if (globalStore.devices) {
+      const device = globalStore.devices.find(d => d.id === deviceId)
+      if (device) {
+        device.status = newStatus
+        device.lastSeen = timestamp
+      }
+    }
+    console.log(`设备 ${deviceName} 状态从 ${oldStatus} 变更为 ${newStatus}`)
+  }
+
+  /**
+   * 处理系统通知
+   * @param {Object} data - 系统通知数据
+   */
+  const handleSystemNotification = (data) => {
+    const { title, message, level } = data
+    console.log(`系统通知 [${level}]: ${title} - ${message}`)
+  }
+
+  /**
+   * 处理优惠活动
+   * @param {Object} data - 优惠活动数据
+   */
+  const handlePromotion = (data) => {
+    const { title, message, actionUrl } = data
+    console.log(`优惠活动: ${title} - ${message}`)
+  }
+
+  /**
+   * 处理商场上新
+   * @param {Object} data - 商场上新数据
+   */
+  const handleMallNewProduct = (data) => {
+    const { productName, price, category } = data
+    console.log(`商场上新: ${productName} - ¥${price} (${category})`)
+  }
+
+  /**
+   * 处理用户消息
+   * @param {Object} data - 用户消息数据
+   */
+  const handleUserMessage = (data) => {
+    const { title, content, priority, deviceId } = data
+    console.log(`用户消息 [${priority}]: ${title} - ${content}`)
+  }
+
+  /**
+   * 处理系统更新
+   * @param {Object} data - 系统更新数据
+   */
+  const handleSystemUpdate = (data) => {
+    const { version, features, updateUrl } = data
+    console.log(`系统更新: 版本 ${version} - ${features}`)
   }
 
   /**
