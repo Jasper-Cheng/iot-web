@@ -545,15 +545,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import Login from './Login.vue'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
 import { deleteUser, deleteFamilyMember, markAllMessagesAsRead } from '../api/users'
 import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
 import { getPointsBalance, getPointsHistory } from '../api/points'
 import { ElMessage } from 'element-plus'
+import { useDeviceRealtime } from '../composables/useDeviceRealtime'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
 
@@ -561,8 +561,26 @@ const router = useRouter()
 const route = useRoute()
 const globalStore = useGlobalStore()
 
-// 控制登录弹窗显示（预留）
-const showLogin = ref(false)
+// 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
+const {
+  connectionState,
+  deviceData,
+  invokeDeviceService,
+  subscribeDeviceEvents,
+  getDeviceProperties,
+  unsubscribeDeviceEvents
+} = useDeviceRealtime()
+
+// 提供设备管理方法给所有子组件
+provide('deviceManager', {
+  deviceData,            // 设备实时数据存储 (Map<deviceId, data>)
+  invokeDeviceService,   // 调用设备服务 (如开关、调节等)
+  getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
+  subscribeDeviceEvents, // 订阅设备事件通知
+  unsubscribeDeviceEvents, // 取消订阅设备事件
+  connectionState: computed(() => connectionState.value) // WebSocket 连接状态
+})
+
 
 // 控制用户下拉菜单显示
 const showUserMenu = ref(false)
