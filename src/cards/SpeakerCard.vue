@@ -798,7 +798,6 @@ const subscribeToDeviceProperties = async () => {
   try {
     // 订阅设备属性更新和通知事件，订阅了propertyUpdate则devicePropertyUpdate会接受到通知，不订阅则属性改变接受不到通知，订阅了eventNotification则deviceEventNotification会接受到通知，不订阅则事件改变接受不到通知
     await deviceManager.subscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
-    console.log(`已订阅设备 ${deviceId.value} 的属性更新,事件通知`)
   } catch (error) {
     console.error('订阅设备属性更新失败:', error)
   }
@@ -815,7 +814,6 @@ const unsubscribeFromDeviceProperties = async () => {
   try {
     // 取消订阅设备属性更新和通知事件
     await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
-    console.log(`已取消订阅设备 ${deviceId.value} 的属性更新,事件通知`)
   } catch (error) {
     // 如果是连接关闭错误，只记录警告而不是错误
     if (error.message === 'Connection closed') {
