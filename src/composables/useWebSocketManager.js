@@ -88,14 +88,25 @@
  *   "timestamp": 1620000000006
  * }
  * 
- * 7. 心跳包：
+ * 7. 取消订阅设备事件请求：
+ * {
+ *   "id": "req_005",
+ *   "method": "event.unsubscribe",
+ *   "params": {
+ *     "deviceId": "device_123", 
+ *     "eventTypes": ["sensorAlert", "statusChange"]
+ *   },
+ *   "timestamp": 1620000000007
+ * }
+ * 
+ * 8. 心跳包：
  * {
  *   "id": "ping_001",
  *   "method": "ping",
  *   "timestamp": 1620000000000
  * }
  * 
- * 8. 系统消息（通用消息）：
+ * 9. 系统消息（设备状态变更）：
  * {
  *   "id": "sys_001",
  *   "method": "system.message",
@@ -112,7 +123,7 @@
  *   "timestamp": 1620000000000
  * }
  * 
- * 9. 系统通知消息：
+ * 10. 系统消息（系统通知）：
  * {
  *   "id": "sys_002",
  *   "method": "system.message",
@@ -122,71 +133,6 @@
  *       "title": "系统维护通知",
  *       "message": "系统将于今晚22:00-24:00进行维护",
  *       "level": "info",
- *       "timestamp": 1620000000000
- *     }
- *   },
- *   "timestamp": 1620000000000
- * }
- * 
- * 10. 优惠活动消息：
- * {
- *   "id": "sys_003",
- *   "method": "system.message",
- *   "params": {
- *     "type": "promotion",
- *     "data": {
- *       "title": "限时优惠",
- *       "message": "智能设备8折优惠，仅限今日",
- *       "actionUrl": "/mall/promotion/123",
- *       "timestamp": 1620000000000
- *     }
- *   },
- *   "timestamp": 1620000000000
- * }
- * 
- * 11. 商场上新消息：
- * {
- *   "id": "sys_004",
- *   "method": "system.message",
- *   "params": {
- *     "type": "mall_new_product",
- *     "data": {
- *       "productName": "智能空调",
- *       "price": 2999,
- *       "category": "家电",
- *       "timestamp": 1620000000000
- *     }
- *   },
- *   "timestamp": 1620000000000
- * }
- * 
- * 12. 用户消息：
- * {
- *   "id": "sys_005",
- *   "method": "system.message",
- *   "params": {
- *     "type": "user_message",
- *     "data": {
- *       "title": "设备异常提醒",
- *       "content": "您的智能门锁电量不足，请及时更换电池",
- *       "priority": "high",
- *       "deviceId": "device_456",
- *       "timestamp": 1620000000000
- *     }
- *   },
- *   "timestamp": 1620000000000
- * }
- * 
- * 13. 系统更新消息：
- * {
- *   "id": "sys_006",
- *   "method": "system.message",
- *   "params": {
- *     "type": "system_update",
- *     "data": {
- *       "version": "2.1.0",
- *       "features": ["新增语音控制", "优化设备连接"],
- *       "updateUrl": "/system/update",
  *       "timestamp": 1620000000000
  *     }
  *   },
