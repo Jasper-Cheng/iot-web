@@ -257,7 +257,8 @@ const deviceManager = inject('deviceManager', {
   getDeviceProperties: () => Promise.reject('Device manager not available'),
   subscribeDeviceEvents: () => Promise.reject('Device manager not available'),
   unsubscribeDeviceEvents: () => Promise.reject('Device manager not available'),
-  handleEventNotification: () => {},
+  setEventNotificationHandler: () => {},
+  clearEventNotificationHandler: () => {},
   connectionState: { value: 'disconnected' }
 })
 
@@ -405,49 +406,6 @@ const effectiveSpeakerPower = computed(() => {
   return speakerPower.value
 })
 
-// 处理设备属性更新
-const handlePropertyUpdate = (data) => {
-  const { deviceId: updatedDeviceId, properties } = data.params
-  
-  // 只处理当前设备的属性更新
-  if (updatedDeviceId !== deviceId.value) {
-    return
-  }
-  
-  if (!properties) return
-  
-  console.log(`SpeakerCard 收到设备 ${deviceId.value} 属性更新:`, properties)
-  
-  // 统一更新设备属性
-  Object.keys(properties).forEach(key => {
-    if (properties[key] !== undefined) {
-      deviceProperties.value[key] = properties[key]
-    }
-  })
-  
-  // 同步临时值，确保显示一致性
-  if (tempVolume.value === null && properties.volume !== undefined) {
-    tempVolume.value = properties.volume
-  }
-  if (tempBass.value === null && properties.bass !== undefined) {
-    tempBass.value = properties.bass
-  }
-  if (tempTreble.value === null && properties.treble !== undefined) {
-    tempTreble.value = properties.treble
-  }
-}
-
-// 监听设备属性更新事件
-const handleDevicePropertyUpdate = (data) => {
-  const { deviceId: updatedDeviceId, properties } = data
-  
-  // 只处理当前设备的属性更新
-  if (updatedDeviceId !== deviceId.value) {
-    return
-  }
-  
-  handlePropertyUpdate({ params: { deviceId: updatedDeviceId, properties } })
-}
 
 // 监听设备事件通知
 const handleDeviceEventNotification = (data) => {
@@ -461,39 +419,31 @@ const handleDeviceEventNotification = (data) => {
   
   console.log(`SpeakerCard 收到设备 ${deviceId.value} 事件通知:`, eventType, eventData)
   
-  // 根据事件类型处理不同的逻辑
-  switch (eventType) {
-    case 'playbackStarted':
-      deviceProperties.value.playing = true
-      break
-    case 'playbackPaused':
-      deviceProperties.value.playing = false
-      break
-    case 'playbackStopped':
-      deviceProperties.value.playing = false
-      deviceProperties.value.position = 0
-      break
-    case 'trackChanged':
-      if (eventData.track) {
-        deviceProperties.value.track = eventData.track.title || deviceProperties.value.track
-        deviceProperties.value.artist = eventData.track.artist || deviceProperties.value.artist
-        deviceProperties.value.album = eventData.track.album || deviceProperties.value.album
-      }
-      break
-    case 'volumeChanged':
-      if (eventData.volume !== undefined) {
-        deviceProperties.value.volume = eventData.volume
+  // 处理属性更新事件
+  if (eventType === 'propertyUpdate') {
+    if (eventData) {
+      console.log(`设备 ${deviceId.value} 属性更新:`, eventData)
+      
+      // 统一更新设备属性
+      Object.keys(eventData).forEach(key => {
+        if (eventData[key] !== undefined) {
+          deviceProperties.value[key] = eventData[key]
+        }
+      })
+      
+      // 同步临时值，确保显示一致性
+      if (tempVolume.value === null && eventData.volume !== undefined) {
         tempVolume.value = eventData.volume
       }
-      break
-    case 'muteToggled':
-      if (eventData.muted !== undefined) {
-        deviceProperties.value.mute = eventData.muted
-        console.log('静音状态变化:', eventData.muted)
+      if (tempBass.value === null && eventData.bass !== undefined) {
+        tempBass.value = eventData.bass
       }
-      break
-    default:
-      console.log('未处理的事件类型:', eventType)
+      if (tempTreble.value === null && eventData.treble !== undefined) {
+        tempTreble.value = eventData.treble
+      }
+    }
+  } else {
+    console.log(`设备 ${deviceId.value} 收到其他事件类型:`, eventType, eventData)
   }
 }
 
@@ -748,12 +698,10 @@ const subscribeToDeviceProperties = async () => {
   
   try {
     // 订阅设备属性更新和通知事件，订阅了propertyUpdate则devicePropertyUpdate会接受到通知，不订阅则属性改变接受不到通知，订阅了eventNotification则deviceEventNotification会接受到通知，不订阅则事件改变接受不到通知
-    await deviceManager.subscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
+    await deviceManager.subscribeDeviceEvents(deviceId.value, ['propertyUpdate'])
     
     // 设置事件通知处理器
-    deviceManager.handleEventNotification = (data) => {
-      handleDeviceEventNotification(data)
-    }
+    deviceManager.setEventNotificationHandler(deviceId.value, handleDeviceEventNotification)
   } catch (error) {
     console.error('订阅设备属性更新失败:', error)
   }
@@ -769,10 +717,10 @@ const unsubscribeFromDeviceProperties = async () => {
   
   try {
     // 取消订阅设备属性更新和通知事件
-    await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
+    await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate'])
     
     // 清理事件通知处理器
-    deviceManager.handleEventNotification = () => {}
+    deviceManager.clearEventNotificationHandler(deviceId.value)
   } catch (error) {
     // 如果是连接关闭错误，只记录警告而不是错误
     if (error.message === 'Connection closed') {
@@ -869,15 +817,6 @@ const updateVolume = (event) => {
   deviceProperties.value.volume = newVolume
   // 调用设备服务更新音量
   deviceManager.invokeDeviceService(deviceId.value, 'setVolume', { volume: newVolume })
-}
-
-// 切换静音
-const toggleMute = () => {
-  const newMuteState = !deviceProperties.value.mute
-  // 更新设备属性
-  deviceProperties.value.mute = newMuteState
-  // 调用设备服务切换静音
-  deviceManager.invokeDeviceService(deviceId.value, 'setMute', { mute: newMuteState })
 }
 
 // 更新均衡器模式

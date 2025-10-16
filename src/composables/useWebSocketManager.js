@@ -181,6 +181,9 @@ export function useWebSocketManager() {
   
   // 订阅的设备列表
   const subscribedDevices = ref(new Set())
+  
+  // 事件通知处理器映射表（支持多个设备）
+  const eventNotificationHandlers = new Map()//{deviceId: handler}
 
   /**
    * 初始化WebSocket连接
@@ -246,8 +249,15 @@ export function useWebSocketManager() {
     
     if (!deviceId || !eventType) return
 
-    
     console.log(`设备 ${deviceId} 事件通知:`, eventType, eventData)
+    
+    // 查找该设备的事件处理器
+    const handler = eventNotificationHandlers.get(deviceId)
+    if (handler) {
+      handler({ deviceId, eventType, eventData, occurredAt })
+    } else {
+      console.log(`设备 ${deviceId} 没有设置事件处理器`)
+    }
   }
 
   /**
@@ -494,6 +504,33 @@ export function useWebSocketManager() {
     }
   }
 
+  /**
+   * 设置事件通知处理器
+   * @param {string} deviceId - 设备ID
+   * @param {Function} handler - 事件处理器函数
+   */
+  const setEventNotificationHandler = (deviceId, handler) => {
+    eventNotificationHandlers.set(deviceId, handler)
+    console.log(`为设备 ${deviceId} 设置事件处理器`)
+  }
+
+  /**
+   * 清除事件通知处理器
+   * @param {string} deviceId - 设备ID
+   */
+  const clearEventNotificationHandler = (deviceId) => {
+    eventNotificationHandlers.delete(deviceId)
+    console.log(`清除设备 ${deviceId} 的事件处理器`)
+  }
+
+  /**
+   * 清除所有事件通知处理器
+   */
+  const clearAllEventNotificationHandlers = () => {
+    eventNotificationHandlers.clear()
+    console.log('清除所有设备的事件处理器')
+  }
+
 
 
 
@@ -524,6 +561,9 @@ export function useWebSocketManager() {
         subscribedDevices.value.clear()
         console.log('所有设备订阅已取消')
       }
+      
+      // 清除所有事件处理器
+      clearAllEventNotificationHandlers()
     } catch (error) {
       console.warn('取消订阅过程中出现错误:', error)
     } finally {
@@ -538,7 +578,8 @@ export function useWebSocketManager() {
     getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
     subscribeDeviceEvents, // 订阅设备事件通知
     unsubscribeDeviceEvents, // 取消订阅设备事件
-    handleEventNotification, // 处理设备事件通知
+    setEventNotificationHandler, // 设置事件通知处理器
+    clearEventNotificationHandler, // 清除事件通知处理器
     connectionState: computed(() => connectionState.value), // WebSocket 连接状态
   })
 
