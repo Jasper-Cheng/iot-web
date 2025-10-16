@@ -257,8 +257,8 @@ const deviceManager = inject('deviceManager', {
   getDeviceProperties: () => Promise.reject('Device manager not available'),
   subscribeDeviceEvents: () => Promise.reject('Device manager not available'),
   unsubscribeDeviceEvents: () => Promise.reject('Device manager not available'),
-  connectionState: { value: 'disconnected' },
-  eventEmitter: null
+  handleEventNotification: () => {},
+  connectionState: { value: 'disconnected' }
 })
 
 // 设备ID - 从props中获取
@@ -453,6 +453,7 @@ const handleDevicePropertyUpdate = (data) => {
 const handleDeviceEventNotification = (data) => {
   const { deviceId: updatedDeviceId, eventType, eventData, occurredAt } = data
   
+  console.log('SpeakerCard 收到设备事件通知:', data)
   // 只处理当前设备的事件通知
   if (updatedDeviceId !== deviceId.value) {
     return
@@ -495,56 +496,6 @@ const handleDeviceEventNotification = (data) => {
       console.log('未处理的事件类型:', eventType)
   }
 }
-
-// 监听设备服务响应
-const handleDeviceServiceResponse = (data) => {
-  const { deviceId: updatedDeviceId, serviceName, result } = data
-  
-  // 只处理当前设备的服务响应
-  if (updatedDeviceId !== deviceId.value) {
-    return
-  }
-  
-  console.log(`SpeakerCard 收到设备 ${deviceId.value} 服务响应:`, serviceName, result)
-  
-  // 根据服务名称处理不同的响应
-  switch (serviceName) {
-    case 'setPower':
-      if (result.status === 'success') {
-        deviceProperties.value.power = result.power
-      }
-      break
-    case 'setPlayStatus':
-      if (result.status === 'success') {
-        deviceProperties.value.playing = result.status === 'playing'
-      }
-      break
-    case 'setVolume':
-      if (result.status === 'success') {
-        tempVolume.value = null // 清除临时值，使用实际值
-      }
-      break
-    case 'setBass':
-      if (result.status === 'success') {
-        tempBass.value = null // 清除临时值，使用实际值
-      }
-      break
-    case 'setTreble':
-      if (result.status === 'success') {
-        tempTreble.value = null // 清除临时值，使用实际值
-      }
-      break
-    case 'setEqualizer':
-      if (result.status === 'success') {
-        deviceProperties.value.equalizer = result.mode
-        console.log('均衡器设置成功:', result.mode)
-      }
-      break
-    default:
-      console.log('未处理的服务响应:', serviceName)
-  }
-}
-
 
 // 监听设备在线状态
 watch(deviceOnline, async (isOnline) => {
@@ -798,6 +749,11 @@ const subscribeToDeviceProperties = async () => {
   try {
     // 订阅设备属性更新和通知事件，订阅了propertyUpdate则devicePropertyUpdate会接受到通知，不订阅则属性改变接受不到通知，订阅了eventNotification则deviceEventNotification会接受到通知，不订阅则事件改变接受不到通知
     await deviceManager.subscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
+    
+    // 设置事件通知处理器
+    deviceManager.handleEventNotification = (data) => {
+      handleDeviceEventNotification(data)
+    }
   } catch (error) {
     console.error('订阅设备属性更新失败:', error)
   }
@@ -814,6 +770,9 @@ const unsubscribeFromDeviceProperties = async () => {
   try {
     // 取消订阅设备属性更新和通知事件
     await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate','eventNotification'])
+    
+    // 清理事件通知处理器
+    deviceManager.handleEventNotification = () => {}
   } catch (error) {
     // 如果是连接关闭错误，只记录警告而不是错误
     if (error.message === 'Connection closed') {
@@ -826,13 +785,6 @@ const unsubscribeFromDeviceProperties = async () => {
 
 // 组件挂载时初始化
 onMounted(async () => {
-  // 使用事件发射器监听设备相关事件
-  if (deviceManager.eventEmitter) {
-    deviceManager.eventEmitter.on('devicePropertyUpdate', handleDevicePropertyUpdate)
-    deviceManager.eventEmitter.on('deviceEventNotification', handleDeviceEventNotification)
-    deviceManager.eventEmitter.on('deviceServiceResponse', handleDeviceServiceResponse)
-  }
-  
   // 如果WebSocket已连接且设备在线，直接获取属性并订阅更新
   if (wsConnected.value && deviceOnline.value) {
     await fetchDeviceProperties()
@@ -982,11 +934,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // 清理事件监听器
   document.removeEventListener('click', handleGlobalClick, true)
-  if (deviceManager.eventEmitter) {
-    deviceManager.eventEmitter.off('devicePropertyUpdate', handleDevicePropertyUpdate)
-    deviceManager.eventEmitter.off('deviceEventNotification', handleDeviceEventNotification)
-    deviceManager.eventEmitter.off('deviceServiceResponse', handleDeviceServiceResponse)
-  }
   stopPlaybackSimulation()
   
   // 注意：设备订阅的取消现在由 useWebSocketManager 在断开连接时自动处理
