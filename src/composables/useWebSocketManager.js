@@ -98,7 +98,7 @@
  * 8. 系统消息（通用消息）：
  * {
  *   "id": "sys_001",
- *   "method": "systemMessage",
+ *   "method": "system.message",
  *   "params": {
  *     "type": "device_status_change",
  *     "data": {
@@ -115,7 +115,7 @@
  * 9. 系统通知消息：
  * {
  *   "id": "sys_002",
- *   "method": "systemMessage",
+ *   "method": "system.message",
  *   "params": {
  *     "type": "system_notification",
  *     "data": {
@@ -131,7 +131,7 @@
  * 10. 优惠活动消息：
  * {
  *   "id": "sys_003",
- *   "method": "systemMessage",
+ *   "method": "system.message",
  *   "params": {
  *     "type": "promotion",
  *     "data": {
@@ -147,7 +147,7 @@
  * 11. 商场上新消息：
  * {
  *   "id": "sys_004",
- *   "method": "systemMessage",
+ *   "method": "system.message",
  *   "params": {
  *     "type": "mall_new_product",
  *     "data": {
@@ -163,7 +163,7 @@
  * 12. 用户消息：
  * {
  *   "id": "sys_005",
- *   "method": "systemMessage",
+ *   "method": "system.message",
  *   "params": {
  *     "type": "user_message",
  *     "data": {
@@ -180,7 +180,7 @@
  * 13. 系统更新消息：
  * {
  *   "id": "sys_006",
- *   "method": "systemMessage",
+ *   "method": "system.message",
  *   "params": {
  *     "type": "system_update",
  *     "data": {
