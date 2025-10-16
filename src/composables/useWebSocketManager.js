@@ -138,6 +138,21 @@
  *   },
  *   "timestamp": 1620000000000
  * }
+ * 
+ * 11. 家庭消息：
+ * {
+ *   "id": "fam_002",
+ *   "method": "family.message",
+ *   "params": {
+ *     "type": "update.permission",
+ *     "data": {
+ *       "title": "删除成员",
+ *       "message": "成员xx被用户xx删除，请更新",
+ *       "level": "urgent"
+ *     }
+ *   },
+ *   "timestamp": 1620000000000
+ * }
  */
 import { ref, reactive, computed, onMounted, onUnmounted, provide } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
@@ -222,6 +237,11 @@ export function useWebSocketManager() {
       // 监听系统消息
       wsManager.on('systemMessage', (data) => {
         handleSystemMessage(data)
+      })
+
+      // 监听家庭消息
+      wsManager.on('familyMessage', (data) => {
+        handleFamilyMessage(data)
       })
 
       // 连接WebSocket
@@ -326,6 +346,40 @@ export function useWebSocketManager() {
   }
 
   /**
+   * 处理家庭消息
+   * @param {Object} data - 家庭消息数据
+   * @param {string} data.type - 消息类型
+   * @param {Object} data.data - 消息内容
+   */
+  const handleFamilyMessage = (data) => {
+    const { type, data: messageData } = data
+    if (!type || !messageData) return
+
+    // 家庭消息类型处理器映射表
+    const messageHandlers = {
+      'update.permission': (data) => {
+        console.log('👥 权限更新:', data)
+        handleFamilyPermissionUpdate(data)
+      },
+      'update.message': (data) => {
+        console.log('💬 消息更新:', data)
+        handleFamilyMessageUpdate(data)
+      },
+      'update.member': (data) => {
+        console.log('👤 成员更新:', data)
+        handleFamilyMemberUpdate(data)
+      }
+    }
+
+    const handler = messageHandlers[type]
+    if (handler) {
+      handler(messageData)
+    } else {
+      console.warn('未知的家庭消息类型:', type)
+    }
+  }
+
+  /**
    * 处理设备在线状态变更
    * @param {Object} data - 设备在线状态变更数据
    */
@@ -384,6 +438,33 @@ export function useWebSocketManager() {
   const handleSystemUpdate = (data) => {
     const { version, features, updateUrl } = data
     console.log(`系统更新: 版本 ${version} - ${features}`)
+  }
+
+  /**
+   * 处理家庭权限更新
+   * @param {Object} data - 家庭权限更新数据
+   */
+  const handleFamilyPermissionUpdate = (data) => {
+    const { title, message, level } = data
+    console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
+  }
+
+  /**
+   * 处理家庭消息更新
+   * @param {Object} data - 家庭消息更新数据
+   */
+  const handleFamilyMessageUpdate = (data) => {
+    const { title, message, level } = data
+    console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
+  }
+
+  /**
+   * 处理家庭成员更新
+   * @param {Object} data - 家庭成员更新数据
+   */
+  const handleFamilyMemberUpdate = (data) => {
+    const { title, message, level } = data
+    console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
   }
 
   /**
@@ -508,6 +589,14 @@ export function useWebSocketManager() {
     handleMallNewProduct,
     handleUserMessage,
     handleSystemUpdate
+  })
+
+  // 提供家庭消息管理方法给所有子组件
+  provide('familyMessage', {
+    handleFamilyMessage,
+    handleFamilyPermissionUpdate,
+    handleFamilyMessageUpdate,
+    handleFamilyMemberUpdate
   })
 
   // 组件挂载时初始化连接

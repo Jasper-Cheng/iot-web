@@ -242,6 +242,8 @@ class WebSocketManager {
           this.emit('eventNotification', data)
         } else if (data.method.startsWith('system.')) {
           this.emit('systemMessage', data)
+        } else if (data.method.startsWith('family.')) {
+          this.emit('familyMessage', data)
         }
       }
 
