@@ -226,7 +226,7 @@ export function useWebSocketManager() {
   const globalStore = useGlobalStore()
   
   // 获取用户ID
-  const userId = globalStore.user?.user_id || globalStore.user?.id
+  const userId = globalStore.user?.user_id
   
   // WebSocket管理器实例
   const wsManager = getWebSocketManager({

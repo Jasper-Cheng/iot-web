@@ -912,7 +912,7 @@ const markAllAsRead = async () => {
     console.log('标记所有消息为已读')
     
     // 调用API标记所有消息为已读
-    await markAllMessagesAsRead(globalStore.user?.id)
+    await markAllMessagesAsRead(globalStore.user?.user_id)
     
     // 清空未读消息列表
     unreadMessages.value = []
@@ -1023,7 +1023,7 @@ const submitAddDevice = async () => {
   isAddingDevice.value = true
   
   try {
-    const response = await bindDeviceBySN(deviceForm.value.sn.trim(), globalStore.user?.id)
+    const response = await bindDeviceBySN(deviceForm.value.sn.trim(), globalStore.user?.user_id)
     
     if (response) {
       ElMessage.success('设备添加成功')
@@ -1064,7 +1064,7 @@ const confirmDelete = async () => {
     // 根据用户角色调用不同的API
     if (globalStore.user?.account?.role === 'member') {
       // 成员调用删除家庭成员API
-      response = await deleteFamilyMember(globalStore.user?.id)
+      response = await deleteFamilyMember(globalStore.user?.user_id)
     } else {
       // 拥有者调用删除用户API
       response = await deleteUser(globalStore.user?.user_id)

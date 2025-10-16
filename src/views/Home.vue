@@ -116,7 +116,7 @@ const canControlDevice = (deviceId) => {
   // Member只能控制自己有权限的设备
   if (isMember.value) {
     const currentUser = globalStore.members?.find(member => 
-      member.id === globalStore.user?.id || member.user_id === globalStore.user?.id
+      member.isOwner || member.user_id === globalStore.user?.user_id
     )
     return currentUser?.deviceIds?.includes(deviceId) || false
   }
