@@ -511,7 +511,7 @@ export function useWebSocketManager() {
    */
   const setEventNotificationHandler = (deviceId, handler) => {
     eventNotificationHandlers.set(deviceId, handler)
-    console.log(`为设备 ${deviceId} 设置事件处理器`)
+    console.log(`已为设备 ${deviceId} 设置了事件处理器`)
   }
 
   /**

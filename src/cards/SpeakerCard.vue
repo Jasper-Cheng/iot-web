@@ -411,18 +411,15 @@ const effectiveSpeakerPower = computed(() => {
 const handleDeviceEventNotification = (data) => {
   const { deviceId: updatedDeviceId, eventType, eventData, occurredAt } = data
   
-  console.log('SpeakerCard 收到设备事件通知:', data)
   // 只处理当前设备的事件通知
   if (updatedDeviceId !== deviceId.value) {
     return
   }
   
-  console.log(`SpeakerCard 收到设备 ${deviceId.value} 事件通知:`, eventType, eventData)
   
   // 处理属性更新事件
   if (eventType === 'propertyUpdate') {
     if (eventData) {
-      console.log(`设备 ${deviceId.value} 属性更新:`, eventData)
       
       // 统一更新设备属性
       Object.keys(eventData).forEach(key => {
@@ -443,7 +440,6 @@ const handleDeviceEventNotification = (data) => {
       }
     }
   } else {
-    console.log(`设备 ${deviceId.value} 收到其他事件类型:`, eventType, eventData)
   }
 }
 
@@ -711,7 +707,6 @@ const subscribeToDeviceProperties = async () => {
 const unsubscribeFromDeviceProperties = async () => {
   // 如果WebSocket未连接，直接返回，避免发送消息到已关闭的连接
   if (!wsConnected.value) {
-    console.log(`WebSocket未连接，跳过取消订阅设备 ${deviceId.value}`)
     return
   }
   
