@@ -17,17 +17,20 @@
         </div>
 
         <div class="room-content">
-          <!-- 动态渲染设备卡片 -->
+          <!-- 使用v-show避免重新创建组件 -->
           <div 
-            v-for="device in filteredDevices" 
+            v-for="device in allDevices" 
             :key="device.id"
+            v-show="isDeviceVisible(device.id)"
             :class="['device-wrapper', { disabled: !canControlDevice(device.id) }]"
             :title="!canControlDevice(device.id) ? '您没有权限控制此设备' : ''"
           >
-            <component 
-              :is="getDeviceComponent(device.cardName)"
-              :device="device"
-            />
+            <keep-alive>
+              <component 
+                :is="getDeviceComponent(device.cardName)"
+                :device="device"
+              />
+            </keep-alive>
             <!-- 修改设备名称按钮 -->
             <button 
               v-if="canControlDevice(device.id)"
@@ -156,7 +159,28 @@ const handleCheckinSuccess = (response) => {
 const isEditingName = ref(false)
 
 
-// 过滤后的设备列表（包含实时数据）
+// 所有设备列表（用于v-for渲染）
+const allDevices = computed(() => {
+  const devices = globalStore.devices || []
+  return devices.filter(device => device.cardName).sort((a, b) => a.id - b.id)
+})
+
+// 判断设备是否应该显示
+const isDeviceVisible = (deviceId) => {
+  if (activeRoom.value === 'all') {
+    return true
+  }
+  
+  const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
+  if (!selectedRoom) {
+    return false
+  }
+  
+  const roomDevices = selectedRoom.devices || []
+  return roomDevices.some(roomDevice => roomDevice.device_id === deviceId)
+}
+
+// 过滤后的设备列表（包含实时数据）- 保留用于兼容性
 const filteredDevices = computed(() => {
   const allDevices = globalStore.devices || []
   let devices = []
