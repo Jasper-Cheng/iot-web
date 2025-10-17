@@ -176,8 +176,8 @@ const allDevices = computed(() => {
     
     const roomDevices = selectedRoom.devices || []
     
-    // 根据房间中的 sort_order 排序
-    const sortedRoomDevices = roomDevices.sort((a, b) => {
+    // 根据房间中的 sort_order 排序（使用拷贝，避免修改全局状态）
+    const sortedRoomDevices = [...roomDevices].sort((a, b) => {
       const sortOrderA = a.sort_order ?? 999999
       const sortOrderB = b.sort_order ?? 999999
       return sortOrderA - sortOrderB
@@ -235,8 +235,8 @@ const filteredDevices = computed(() => {
     
     const roomDevices = selectedRoom.devices || []
     
-    // 根据房间中的 sort_order 排序
-    const sortedRoomDevices = roomDevices.sort((a, b) => {
+    // 根据房间中的 sort_order 排序（使用拷贝，避免修改全局状态）
+    const sortedRoomDevices = [...roomDevices].sort((a, b) => {
       const sortOrderA = a.sort_order ?? 999999
       const sortOrderB = b.sort_order ?? 999999
       return sortOrderA - sortOrderB
