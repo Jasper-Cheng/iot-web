@@ -353,7 +353,6 @@ export const useGlobalStore = defineStore('global', {
 						room.devices = response.data
 					}
 				}
-				console.log('批量更新房间设备排序成功:', response)
 				
 				return response
 			} catch (error) {

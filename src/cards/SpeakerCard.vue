@@ -726,19 +726,6 @@ const unsubscribeFromDeviceProperties = async () => {
   }
 }
 
-// 组件挂载时初始化
-onMounted(async () => {
-  // 如果WebSocket已连接且设备在线，直接获取属性并订阅更新
-  if (wsConnected.value && deviceOnline.value) {
-    await fetchDeviceProperties()
-    await subscribeToDeviceProperties()
-  } else {
-    // 设备离线时，确保开关为Off状态
-    deviceProperties.value.power = false
-    deviceProperties.value.playing = false
-  }
-})
-
 // =========================
 // 音量和音效控制方法
 // =========================
