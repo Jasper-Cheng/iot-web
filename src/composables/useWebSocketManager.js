@@ -497,16 +497,26 @@ export function useWebSocketManager() {
 
   // 返回消息管理器对象，供直接使用
   return {
+    deviceManager: {
+      invokeDeviceService,   // 调用设备服务 (如开关、调节等)
+      getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
+      subscribeDeviceEvents, // 订阅设备事件通知
+      unsubscribeDeviceEvents, // 取消订阅设备事件
+      setEventNotificationHandler, // 设置事件通知处理器
+      clearEventNotificationHandler, // 清除事件通知处理器
+      eventNotificationHandlers, // 事件通知处理器映射表
+      connectionState: computed(() => connectionState.value), // WebSocket 连接状态
+    },
     systemMessage: {
-      setSystemMessageHandler,
-      clearSystemMessageHandler,
-      connectionState: computed(() => connectionState.value)
+      setSystemMessageHandler,   // 设置系统消息处理器
+      clearSystemMessageHandler, // 清除系统消息处理器
+      connectionState: computed(() => connectionState.value) // WebSocket 连接状态
     },
     familyMessage: {
-      setFamilyMessageHandler,
-      clearFamilyMessageHandler,
-      sendFamilyMessage,
-      connectionState: computed(() => connectionState.value)
+      setFamilyMessageHandler,   // 设置家庭消息处理器
+      clearFamilyMessageHandler, // 清除家庭消息处理器
+      sendFamilyMessage,         // 发送家庭消息
+      connectionState: computed(() => connectionState.value) // WebSocket 连接状态
     }
   }
 }

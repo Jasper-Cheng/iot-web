@@ -240,7 +240,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount, onMounted, watch, inject } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -250,17 +251,8 @@ const props = defineProps({
   }
 })
 
-
-// 注入设备管理器
-const deviceManager = inject('deviceManager', {
-  invokeDeviceService: () => Promise.reject('Device manager not available'),
-  getDeviceProperties: () => Promise.reject('Device manager not available'),
-  subscribeDeviceEvents: () => Promise.reject('Device manager not available'),
-  unsubscribeDeviceEvents: () => Promise.reject('Device manager not available'),
-  setEventNotificationHandler: () => {},
-  clearEventNotificationHandler: () => {},
-  connectionState: { value: 'disconnected' }
-})
+// 使用设备管理器
+const { deviceManager } = useWebSocketManager()
 
 // 设备ID - 从props中获取
 const deviceId = computed(() => props.device?.id || 'speaker_001')
