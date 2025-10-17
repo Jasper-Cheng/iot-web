@@ -162,8 +162,9 @@ const filteredDevices = computed(() => {
   let devices = []
   
   if (activeRoom.value === 'all') {
-    // 显示所有设备
+    // 显示所有设备，按设备ID排序
     devices = allDevices.filter(device => device.cardName)
+    return devices.sort((a, b) => a.id - b.id)
   } else {
     // 显示选中房间的设备
     const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
@@ -172,14 +173,24 @@ const filteredDevices = computed(() => {
       return []
     }
     
-    const roomDeviceIds = selectedRoom.devices?.map(rd => rd.device_id) || []
+    const roomDevices = selectedRoom.devices || []
     
-    devices = allDevices.filter(device => 
-      roomDeviceIds.includes(device.id) && device.cardName
-    )
+    // 根据房间中的 sort_order 排序
+    const sortedRoomDevices = roomDevices.sort((a, b) => {
+      const sortOrderA = a.sort_order ?? 999999
+      const sortOrderB = b.sort_order ?? 999999
+      return sortOrderA - sortOrderB
+    })
+    
+    // 根据排序后的房间设备顺序，获取对应的设备信息
+    devices = sortedRoomDevices.map(roomDevice => {
+      return allDevices.find(device => 
+        device.id === roomDevice.device_id && device.cardName
+      )
+    }).filter(Boolean) // 过滤掉未找到的设备
+    
+    return devices
   }
-  
-  return devices
 })
 
 
