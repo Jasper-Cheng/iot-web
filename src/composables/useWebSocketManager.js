@@ -197,7 +197,7 @@ export function useWebSocketManager() {
 
       // 监听设备属性更新
       wsManager.on('propertyUpdate', (data) => {
-        handlePropertyUpdate(data)
+        console.log('设备属性更新:', data)
       })
 
       // 监听设备事件通知
@@ -207,7 +207,7 @@ export function useWebSocketManager() {
 
       // 监听服务响应
       wsManager.on('serviceResponse', (data) => {
-        handleServiceResponse(data)
+        console.log('设备服务响应:', data)
       })
 
       // 监听系统消息
@@ -228,17 +228,6 @@ export function useWebSocketManager() {
     }
   }
 
-  /**
-   * 处理设备属性更新
-   * @param {Object} data - 属性更新数据
-   */
-  const handlePropertyUpdate = (data) => {
-    const { deviceId, properties } = data.params
-    
-    if (!deviceId || !properties) return
-
-    console.log(`设备 ${deviceId} 属性更新:`, properties)
-  }
 
   /**
    * 处理设备事件通知
@@ -260,18 +249,9 @@ export function useWebSocketManager() {
     }
   }
 
-  /**
-   * 处理服务响应
-   * @param {Object} data - 服务响应数据
-   */
-  const handleServiceResponse = (data) => {
-    const { deviceId, serviceName, result } = data.params
-    
-    if (!deviceId || !serviceName) return
 
-    
-    console.log(`设备 ${deviceId} 服务响应:`, serviceName, result)
-  }
+  // 系统消息处理器
+  let systemMessageHandler = null
 
   /**
    * 处理系统消息
@@ -280,44 +260,32 @@ export function useWebSocketManager() {
    * @param {Object} data.data - 消息内容
    */
   const handleSystemMessage = (data) => {
-    const { type, data: messageData } = data
-    if (!type || !messageData) return
-
-    // 消息类型处理器映射表
-    const messageHandlers = {
-      device_status_change: (data) => {
-        console.log('📱 设备状态变更:', data)
-        handleDeviceOnlineChange(data)
-      },
-      system_notification: (data) => {
-        console.log('🔔 系统通知:', data)
-        handleSystemNotification(data)
-      },
-      promotion: (data) => {
-        console.log('🎯 广告/优惠:', data)
-        handlePromotion(data)
-      },
-      mall_new_product: (data) => {
-        console.log('🛒 商场上新:', data)
-        handleMallNewProduct(data)
-      },
-      user_message: (data) => {
-        console.log('💬 用户消息:', data)
-        handleUserMessage(data)
-      },
-      system_update: (data) => {
-        console.log('🔄 系统更新:', data)
-        handleSystemUpdate(data)
-      }
-    }
-
-    const handler = messageHandlers[type]
-    if (handler) {
-      handler(messageData)
+    if (systemMessageHandler) {
+      systemMessageHandler(data)
     } else {
-      console.warn('未知的系统消息类型:', type)
+      console.log('收到系统消息，但没有设置处理器:', data)
     }
   }
+
+  /**
+   * 设置系统消息处理器
+   * @param {Function} handler - 系统消息处理器函数
+   */
+  const setSystemMessageHandler = (handler) => {
+    systemMessageHandler = handler
+    console.log('已设置系统消息处理器')
+  }
+
+  /**
+   * 清除系统消息处理器
+   */
+  const clearSystemMessageHandler = () => {
+    systemMessageHandler = null
+    console.log('已清除系统消息处理器')
+  }
+
+  // 家庭消息处理器
+  let familyMessageHandler = null
 
   /**
    * 处理家庭消息
@@ -326,120 +294,31 @@ export function useWebSocketManager() {
    * @param {Object} data.data - 消息内容
    */
   const handleFamilyMessage = (data) => {
-    const { type, data: messageData } = data
-    if (!type || !messageData) return
-
-    // 家庭消息类型处理器映射表
-    const messageHandlers = {
-      'update.permission': (data) => {
-        console.log('👥 权限更新:', data)
-        handleFamilyPermissionUpdate(data)
-      },
-      'update.message': (data) => {
-        console.log('💬 消息更新:', data)
-        handleFamilyMessageUpdate(data)
-      },
-      'update.member': (data) => {
-        console.log('👤 成员更新:', data)
-        handleFamilyMemberUpdate(data)
-      }
-    }
-
-    const handler = messageHandlers[type]
-    if (handler) {
-      handler(messageData)
+    if (familyMessageHandler) {
+      familyMessageHandler(data)
     } else {
-      console.warn('未知的家庭消息类型:', type)
+      console.log('收到家庭消息，但没有设置处理器:', data)
     }
   }
 
   /**
-   * 处理设备在线状态变更
-   * @param {Object} data - 设备在线状态变更数据
+   * 设置家庭消息处理器
+   * @param {Function} handler - 家庭消息处理器函数
    */
-  const handleDeviceOnlineChange = (data) => {
-    const { deviceId, deviceName, oldStatus, newStatus, timestamp } = data
-    if (globalStore.devices) {
-      const device = globalStore.devices.find(d => d.id === deviceId)
-      if (device) {
-        device.status = newStatus
-        device.lastSeen = timestamp
-      }
-    }
-    console.log(`设备 ${deviceName} 状态从 ${oldStatus} 变更为 ${newStatus}`)
+  const setFamilyMessageHandler = (handler) => {
+    familyMessageHandler = handler
+    console.log('已设置家庭消息处理器')
   }
 
   /**
-   * 处理系统通知
-   * @param {Object} data - 系统通知数据
+   * 清除家庭消息处理器
    */
-  const handleSystemNotification = (data) => {
-    const { title, message, level } = data
-    console.log(`系统通知 [${level}]: ${title} - ${message}`)
+  const clearFamilyMessageHandler = () => {
+    familyMessageHandler = null
+    console.log('已清除家庭消息处理器')
   }
 
-  /**
-   * 处理优惠活动
-   * @param {Object} data - 优惠活动数据
-   */
-  const handlePromotion = (data) => {
-    const { title, message, actionUrl } = data
-    console.log(`优惠活动: ${title} - ${message}`)
-  }
 
-  /**
-   * 处理商场上新
-   * @param {Object} data - 商场上新数据
-   */
-  const handleMallNewProduct = (data) => {
-    const { productName, price, category } = data
-    console.log(`商场上新: ${productName} - ¥${price} (${category})`)
-  }
-
-  /**
-   * 处理用户消息
-   * @param {Object} data - 用户消息数据
-   */
-  const handleUserMessage = (data) => {
-    const { title, content, priority, deviceId } = data
-    console.log(`用户消息 [${priority}]: ${title} - ${content}`)
-  }
-
-  /**
-   * 处理系统更新
-   * @param {Object} data - 系统更新数据
-   */
-  const handleSystemUpdate = (data) => {
-    const { version, features, updateUrl } = data
-    console.log(`系统更新: 版本 ${version} - ${features}`)
-  }
-
-  /**
-   * 处理家庭权限更新
-   * @param {Object} data - 家庭权限更新数据
-   */
-  const handleFamilyPermissionUpdate = (data) => {
-    const { title, message, level } = data
-    console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
-  }
-
-  /**
-   * 处理家庭消息更新
-   * @param {Object} data - 家庭消息更新数据
-   */
-  const handleFamilyMessageUpdate = (data) => {
-    const { title, message, level } = data
-    console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
-  }
-
-  /**
-   * 处理家庭成员更新
-   * @param {Object} data - 家庭成员更新数据
-   */
-  const handleFamilyMemberUpdate = (data) => {
-    const { title, message, level } = data
-    console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
-  }
 
   /**
    * 获取设备属性
@@ -572,6 +451,14 @@ export function useWebSocketManager() {
     }
   }
 
+  // 发送家庭消息的方法
+  const sendFamilyMessage = async (type, data) => {
+    if (!wsManager) {
+      throw new Error('WebSocket 未连接')
+    }
+    return await wsManager.sendFamilyMessage(type, data)
+  }
+
   // 提供设备管理方法给所有子组件
   provide('deviceManager', {
     invokeDeviceService,   // 调用设备服务 (如开关、调节等)
@@ -585,21 +472,17 @@ export function useWebSocketManager() {
 
   // 提供系统消息管理方法给所有子组件
   provide('systemMessage', {
-    handleSystemMessage,
-    handleDeviceOnlineChange,
-    handleSystemNotification,
-    handlePromotion,
-    handleMallNewProduct,
-    handleUserMessage,
-    handleSystemUpdate
+    setSystemMessageHandler,
+    clearSystemMessageHandler,
+    connectionState: computed(() => connectionState.value)
   })
 
   // 提供家庭消息管理方法给所有子组件
   provide('familyMessage', {
-    handleFamilyMessage,
-    handleFamilyPermissionUpdate,
-    handleFamilyMessageUpdate,
-    handleFamilyMemberUpdate
+    setFamilyMessageHandler,
+    clearFamilyMessageHandler,
+    sendFamilyMessage,
+    connectionState: computed(() => connectionState.value)
   })
 
   // 组件挂载时初始化连接

@@ -566,13 +566,17 @@ useWebSocketManager()
 
 // 注入系统消息管理
 const systemMessage = inject('systemMessage', {
-  handleSystemMessage: () => console.warn('System message manager not available'),
-  handleDeviceOnlineChange: () => console.warn('System message manager not available'),
-  handleSystemNotification: () => console.warn('System message manager not available'),
-  handlePromotion: () => console.warn('System message manager not available'),
-  handleMallNewProduct: () => console.warn('System message manager not available'),
-  handleUserMessage: () => console.warn('System message manager not available'),
-  handleSystemUpdate: () => console.warn('System message manager not available')
+  setSystemMessageHandler: () => console.warn('System message manager not available'),
+  clearSystemMessageHandler: () => console.warn('System message manager not available'),
+  connectionState: ref('disconnected')
+})
+
+// 注入家庭消息管理
+const familyMessage = inject('familyMessage', {
+  setFamilyMessageHandler: () => console.warn('Family message manager not available'),
+  clearFamilyMessageHandler: () => console.warn('Family message manager not available'),
+  sendFamilyMessage: () => console.warn('Family message manager not available'),
+  connectionState: ref('disconnected')
 })
 
 
@@ -614,6 +618,108 @@ const hasMorePointsHistory = ref(true)
 
 // 当前主题
 const currentTheme = ref('dark')
+
+// 系统消息处理
+const handleSystemMessage = (data) => {
+  console.log('收到系统消息:', data)
+  // 根据消息类型调用相应的处理函数
+  switch (data.type) {
+    case 'device_status_change':
+      handleDeviceOnlineChange(data.data)
+      break
+    case 'system_notification':
+      handleSystemNotification(data.data)
+      break
+    case 'promotion':
+      handlePromotion(data.data)
+      break
+    case 'mall_new_product':
+      handleMallNewProduct(data.data)
+      break
+    case 'user_message':
+      handleUserMessage(data.data)
+      break
+    case 'system_update':
+      handleSystemUpdate(data.data)
+      break
+    default:
+      console.warn('未知的系统消息类型:', data.type)
+  }
+}
+
+// 具体的系统消息处理方法
+const handleDeviceOnlineChange = (data) => {
+  const { deviceId, deviceName, oldStatus, newStatus, timestamp } = data
+  if (globalStore.devices) {
+    const device = globalStore.devices.find(d => d.id === deviceId)
+    if (device) {
+      device.status = newStatus
+      device.lastSeen = timestamp
+    }
+  }
+  console.log(`设备 ${deviceName} 状态从 ${oldStatus} 变更为 ${newStatus}`)
+}
+
+const handleSystemNotification = (data) => {
+  const { title, message, level } = data
+  console.log(`系统通知 [${level}]: ${title} - ${message}`)
+}
+
+const handlePromotion = (data) => {
+  const { title, message, actionUrl } = data
+  console.log(`优惠活动: ${title} - ${message}`)
+}
+
+const handleMallNewProduct = (data) => {
+  const { productName, price, category } = data
+  console.log(`商场上新: ${productName} - ¥${price} (${category})`)
+}
+
+const handleUserMessage = (data) => {
+  const { title, content, priority, deviceId } = data
+  console.log(`用户消息 [${priority}]: ${title} - ${content}`)
+}
+
+const handleSystemUpdate = (data) => {
+  const { version, features, updateUrl } = data
+  console.log(`系统更新: 版本 ${version} - ${features}`)
+}
+
+// 家庭消息处理
+const handleFamilyMessage = (data) => {
+  console.log('收到家庭消息:', data)
+  // 根据消息类型调用相应的处理函数
+  switch (data.type) {
+    case 'update.permission':
+      handleFamilyPermissionUpdate(data.data)
+      break
+    case 'update.message':
+      handleFamilyMessageUpdate(data.data)
+      break
+    case 'update.member':
+      handleFamilyMemberUpdate(data.data)
+      break
+    default:
+      console.warn('未知的家庭消息类型:', data.type)
+  }
+}
+
+// 具体的家庭消息处理方法
+const handleFamilyPermissionUpdate = (data) => {
+  const { title, message, level } = data
+  console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
+}
+
+const handleFamilyMessageUpdate = (data) => {
+  const { title, message, level } = data
+  console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
+}
+
+const handleFamilyMemberUpdate = (data) => {
+  const { title, message, level } = data
+  console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
+}
+
 
 // Index.vue 现在只作为布局容器，不需要房间和设备数据
 
@@ -1114,11 +1220,47 @@ onMounted(() => {
   
   // 加载积分数据
   loadUserPoints()
+  
 })
+
+// 监听WebSocket连接状态
+watch(() => systemMessage.connectionState?.value, (newState, oldState) => {
+  console.log('WebSocket连接状态变化:', oldState, '->', newState)
+  
+  switch (newState) {
+    case 'connected':
+      console.log('WebSocket已连接，设置消息处理器')
+      // 连接成功时设置处理器
+      systemMessage.setSystemMessageHandler(handleSystemMessage)
+      familyMessage.setFamilyMessageHandler(handleFamilyMessage)
+      break
+    case 'connecting':
+      console.log('WebSocket正在连接...')
+      break
+    case 'disconnected':
+      console.log('WebSocket已断开连接，清除消息处理器')
+      // 断开连接时清除处理器
+      systemMessage.clearSystemMessageHandler()
+      familyMessage.clearFamilyMessageHandler()
+      break
+    case 'error':
+      console.log('WebSocket连接出错，清除消息处理器')
+      // 连接错误时清除处理器
+      systemMessage.clearSystemMessageHandler()
+      familyMessage.clearFamilyMessageHandler()
+      break
+    default:
+      console.log('未知的连接状态:', newState)
+  }
+}, { immediate: true })
 
 // 组件销毁时移除事件监听
 onUnmounted(() => {
   document.removeEventListener('click', closeUserMenu)
+  
+  // 清除消息处理器
+  systemMessage.clearSystemMessageHandler()
+  familyMessage.clearFamilyMessageHandler()
 })
 </script>
 
