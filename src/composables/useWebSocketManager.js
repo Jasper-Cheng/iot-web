@@ -154,74 +154,76 @@
  *   "timestamp": 1620000000000
  * }
  */
-import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
+import { ref, computed, onMounted, provide } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
 
+
+// 单例：共享一个 WebSocket 管理器与连接状态，避免多处实例不同步
+let wsManagerSingleton = null
+const connectionStateSingleton = ref('disconnected')
+const subscribedDevicesSingleton = new Set()
+const eventNotificationHandlersSingleton = new Map() // { deviceId: handler }
+let listenersAttachedSingleton = false
+let systemMessageHandlerSingleton = null
+let familyMessageHandlerSingleton = null
 
 export function useWebSocketManager() {
   // 全局状态
   const globalStore = useGlobalStore()
   
-  // 获取用户ID
-  const userId = globalStore.user?.user_id
+  // 连接状态（指向单例）
+  const connectionState = connectionStateSingleton
   
-  // WebSocket管理器实例
-  const wsManager = getWebSocketManager({
-    url: `ws://localhost:8000/api/v1/ws/user/${userId}?token=${globalStore.token}`,
-    userId: userId,
-    debug: true,
-    reconnectInterval: 3000,
-    maxReconnectAttempts: 5,
-    heartbeatInterval: 30000
-  })
-
-  // 连接状态
-  const connectionState = ref('disconnected')
-  
-  // 订阅的设备列表
-  const subscribedDevices = ref(new Set())
-  
-  // 事件通知处理器映射表（支持多个设备）
-  const eventNotificationHandlers = new Map()//{deviceId: handler}
+  // 事件处理器映射（指向单例）
+  const eventNotificationHandlers = eventNotificationHandlersSingleton
 
   /**
    * 初始化WebSocket连接
    */
   const initConnection = async () => {
     try {
-      // 监听连接状态变化
-      wsManager.on('stateChange', (state) => {
-        connectionState.value = state
-      })
+      const userId = globalStore.user?.user_id
+      const token = globalStore.token
+      if (!userId || !token) return
 
-      // 监听设备属性更新
-      wsManager.on('propertyUpdate', (data) => {
-        console.log('设备属性更新:', data)
-      })
+      if (!wsManagerSingleton) {
+        wsManagerSingleton = getWebSocketManager({
+          url: `ws://localhost:8000/api/v1/ws/user/${userId}?token=${token}`,
+          userId: userId,
+          debug: true,
+          reconnectInterval: 3000,
+          maxReconnectAttempts: 5,
+          heartbeatInterval: 30000
+        })
+      }
 
-      // 监听设备事件通知
-      wsManager.on('eventNotification', (data) => {
-        handleEventNotification(data)
-      })
+      if (!listenersAttachedSingleton) {
+        // 监听连接状态变化
+        wsManagerSingleton.on('stateChange', (state) => {
+          connectionStateSingleton.value = state
+        })
 
-      // 监听服务响应
-      wsManager.on('serviceResponse', (data) => {
-        console.log('设备服务响应:', data)
-      })
+        // 监听设备事件通知
+        wsManagerSingleton.on('eventNotification', (data) => {
+          handleEventNotification(data)
+        })
 
-      // 监听系统消息
-      wsManager.on('systemMessage', (data) => {
-        handleSystemMessage(data)
-      })
+        // 监听系统消息
+        wsManagerSingleton.on('systemMessage', (data) => {
+          handleSystemMessage(data)
+        })
 
-      // 监听家庭消息
-      wsManager.on('familyMessage', (data) => {
-        handleFamilyMessage(data)
-      })
+        // 监听家庭消息
+        wsManagerSingleton.on('familyMessage', (data) => {
+          handleFamilyMessage(data)
+        })
 
-      // 连接WebSocket
-      await wsManager.connect()
+        listenersAttachedSingleton = true
+      }
+
+      // 连接WebSocket（若已连接/连接中，内部会忽略）
+      await wsManagerSingleton.connect()
       // console.log('WebSocket连接成功')
     } catch (error) {
       console.error('WebSocket连接失败:', error)
@@ -238,20 +240,18 @@ export function useWebSocketManager() {
     
     if (!deviceId || !eventType) return
 
-    console.log(`设备 ${deviceId} 事件通知:`, eventType, eventData)
-    
     // 查找该设备的事件处理器
-    const handler = eventNotificationHandlers.get(deviceId)
+    const handler = eventNotificationHandlersSingleton.get(deviceId)
     if (handler) {
       handler({ deviceId, eventType, eventData, occurredAt })
     } else {
-      console.log(`设备 ${deviceId} 没有设置事件处理器`)
+      // no handler
     }
   }
 
 
   // 系统消息处理器
-  let systemMessageHandler = null
+  let systemMessageHandler = systemMessageHandlerSingleton
 
   /**
    * 处理系统消息
@@ -273,6 +273,7 @@ export function useWebSocketManager() {
    */
   const setSystemMessageHandler = (handler) => {
     systemMessageHandler = handler
+    systemMessageHandlerSingleton = handler
     console.log('已设置系统消息处理器')
   }
 
@@ -281,11 +282,12 @@ export function useWebSocketManager() {
    */
   const clearSystemMessageHandler = () => {
     systemMessageHandler = null
+    systemMessageHandlerSingleton = null
     console.log('已清除系统消息处理器')
   }
 
   // 家庭消息处理器
-  let familyMessageHandler = null
+  let familyMessageHandler = familyMessageHandlerSingleton
 
   /**
    * 处理家庭消息
@@ -307,6 +309,7 @@ export function useWebSocketManager() {
    */
   const setFamilyMessageHandler = (handler) => {
     familyMessageHandler = handler
+    familyMessageHandlerSingleton = handler
     console.log('已设置家庭消息处理器')
   }
 
@@ -315,6 +318,7 @@ export function useWebSocketManager() {
    */
   const clearFamilyMessageHandler = () => {
     familyMessageHandler = null
+    familyMessageHandlerSingleton = null
     console.log('已清除家庭消息处理器')
   }
 
@@ -327,7 +331,7 @@ export function useWebSocketManager() {
    */
   const getDeviceProperties = async (deviceId, propertyNames) => {
     try {
-      const response = await wsManager.getDeviceProperties(deviceId, propertyNames)
+      const response = await wsManagerSingleton.getDeviceProperties(deviceId, propertyNames)
       return response.params.properties
     } catch (error) {
       console.error(`获取设备 ${deviceId} 属性失败:`, error)
@@ -343,7 +347,7 @@ export function useWebSocketManager() {
    */
   const invokeDeviceService = async (deviceId, serviceName, serviceArgs = {}) => {
     try {
-      const response = await wsManager.invokeDeviceService(deviceId, serviceName, serviceArgs)
+      const response = await wsManagerSingleton.invokeDeviceService(deviceId, serviceName, serviceArgs)
       return response.params.result
     } catch (error) {
       console.error(`调用设备 ${deviceId} 服务失败:`, error)
@@ -358,8 +362,8 @@ export function useWebSocketManager() {
    */
   const subscribeDeviceEvents = async (deviceId, eventTypes) => {
     try {
-      await wsManager.subscribeDeviceEvents(deviceId, eventTypes)
-      subscribedDevices.value.add(deviceId)
+      await wsManagerSingleton.subscribeDeviceEvents(deviceId, eventTypes)
+      subscribedDevicesSingleton.add(deviceId)
       console.log(`订阅设备 ${deviceId} 事件:`, eventTypes)
     } catch (error) {
       console.error(`订阅设备 ${deviceId} 事件失败:`, error)
@@ -374,8 +378,8 @@ export function useWebSocketManager() {
    */
   const unsubscribeDeviceEvents = async (deviceId, eventTypes) => {
     try {
-      await wsManager.unsubscribeDeviceEvents(deviceId, eventTypes)
-      subscribedDevices.value.delete(deviceId)
+      await wsManagerSingleton.unsubscribeDeviceEvents(deviceId, eventTypes)
+      subscribedDevicesSingleton.delete(deviceId)
       console.log(`取消订阅设备 ${deviceId} 事件:`, eventTypes)
     } catch (error) {
       console.error(`取消订阅设备 ${deviceId} 事件失败:`, error)
@@ -389,7 +393,7 @@ export function useWebSocketManager() {
    * @param {Function} handler - 事件处理器函数
    */
   const setEventNotificationHandler = (deviceId, handler) => {
-    eventNotificationHandlers.set(deviceId, handler)
+    eventNotificationHandlersSingleton.set(deviceId, handler)
     console.log(`已为设备 ${deviceId} 设置了事件处理器`)
   }
 
@@ -398,7 +402,7 @@ export function useWebSocketManager() {
    * @param {string} deviceId - 设备ID
    */
   const clearEventNotificationHandler = (deviceId) => {
-    eventNotificationHandlers.delete(deviceId)
+    eventNotificationHandlersSingleton.delete(deviceId)
     console.log(`清除设备 ${deviceId} 的事件处理器`)
   }
 
@@ -406,7 +410,7 @@ export function useWebSocketManager() {
    * 清除所有事件通知处理器
    */
   const clearAllEventNotificationHandlers = () => {
-    eventNotificationHandlers.clear()
+    eventNotificationHandlersSingleton.clear()
     console.log('清除所有设备的事件处理器')
   }
 
@@ -419,13 +423,13 @@ export function useWebSocketManager() {
   const disconnect = async () => {
     try {
       // 先取消所有设备的订阅
-      if (subscribedDevices.value.size > 0) {
+      if (subscribedDevicesSingleton.size > 0) {
         console.log('断开连接前，先取消所有设备订阅...')
         
         // 并行取消所有设备的订阅
-        const unsubscribePromises = Array.from(subscribedDevices.value).map(async (deviceId) => {
+        const unsubscribePromises = Array.from(subscribedDevicesSingleton).map(async (deviceId) => {
           try {
-            await wsManager.unsubscribeDeviceEvents(deviceId, ['propertyUpdate', 'eventNotification'])
+            await wsManagerSingleton.unsubscribeDeviceEvents(deviceId, ['propertyUpdate', 'eventNotification'])
             console.log(`已取消设备 ${deviceId} 的订阅`)
           } catch (error) {
             // 如果取消订阅失败，记录警告但不阻止断开连接
@@ -437,7 +441,7 @@ export function useWebSocketManager() {
         await Promise.allSettled(unsubscribePromises)
         
         // 清空订阅列表
-        subscribedDevices.value.clear()
+        subscribedDevicesSingleton.clear()
         console.log('所有设备订阅已取消')
       }
       
@@ -447,16 +451,16 @@ export function useWebSocketManager() {
       console.warn('取消订阅过程中出现错误:', error)
     } finally {
       // 无论取消订阅是否成功，都断开连接
-      wsManager.disconnect()
+      wsManagerSingleton && wsManagerSingleton.disconnect()
     }
   }
 
   // 发送家庭消息的方法
   const sendFamilyMessage = async (type, data) => {
-    if (!wsManager) {
+    if (!wsManagerSingleton) {
       throw new Error('WebSocket 未连接')
     }
-    return await wsManager.sendFamilyMessage(type, data)
+    return await wsManagerSingleton.sendFamilyMessage(type, data)
   }
 
   // 提供设备管理方法给所有子组件

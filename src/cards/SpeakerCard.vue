@@ -451,8 +451,8 @@ watch(deviceOnline, async (isOnline) => {
   }
 })
 
-// 监听WebSocket连接状态
 watch(wsConnected, async (isConnected) => {
+  console.log('wsConnected', isConnected)
   if (isConnected) {
     // 只有在设备在线时才获取属性和订阅
     if (deviceOnline.value) {
@@ -840,6 +840,9 @@ const updateTreble = (event) => {
 
 // 添加全局点击事件监听器
 onMounted(() => {
+  console.log('onMounted', wsConnected.value, deviceOnline.value)
+  fetchDeviceProperties()
+  subscribeToDeviceProperties()
   // 使用 capture 模式确保能捕获到所有点击事件
   document.addEventListener('click', handleGlobalClick, true)
 })
