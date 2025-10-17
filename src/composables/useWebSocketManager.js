@@ -490,10 +490,8 @@ export function useWebSocketManager() {
     initConnection()
   })
 
-  // 组件卸载时断开连接
-  onUnmounted(async () => {
-    await disconnect()
-  })
+  // 注意：不在组件卸载时断开连接，因为WebSocket连接是全局的
+  // 应该由应用级别管理连接的生命周期
 
   // 返回消息管理器对象，供直接使用
   return {

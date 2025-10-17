@@ -227,24 +227,18 @@ import { getDeviceComponent } from '../utils/deviceComponents'
 import { getThumbnailByCardName } from '../utils/deviceMapping'
 import { unbindDeviceBySN } from '../api/devices'
 import { createRoom, deleteRoom } from '../api/rooms'
-// 导入实际的widget组件
-import SmartLightCard from '../cards/SmartLightCard.vue'
-import SmartTvCard from '../cards/SmartTvCard.vue'
-import AirCoolerCard from '../cards/AirCoolerCard.vue'
-import SpeakerCard from '../cards/SpeakerCard.vue'
-import CameraCard from '../cards/CameraCard.vue'
-import WashingMachineCard from '../cards/WashingMachineCard.vue'
-import RefrigeratorCard from '../cards/RefrigeratorCard.vue'
-import VacuumCard from '../cards/VacuumCard.vue'
-import AirPurifierCard from '../cards/AirPurifierCard.vue'
-import FallDetectionCard from '../cards/FallDetectionCard.vue'
-import SmartSocketCard from '../cards/SmartSocketCard.vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
+import { ElMessage } from 'element-plus'
+
 
 // 页面容器引用用于滚动
 const widgetsPage = ref(null)
 
 // 全局状态
 const globalStore = useGlobalStore()
+
+// 使用设备实时数据管理
+const { familyMessage } = useWebSocketManager()
 
 // 权限检查方法
 const isOwner = computed(() => {
@@ -414,6 +408,18 @@ const confirmDeleteDevice = async () => {
     const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
     if (globalIndex > -1) {
       globalStore.devices.splice(globalIndex, 1)
+    }
+    
+    // 发送家庭消息通知设备删除
+    try {
+      await familyMessage.sendFamilyMessage('update.device', {
+        title: '设备删除',
+        message: `设备"${device.name}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"删除`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+      // 不影响设备删除的主要流程
     }
     
     // 关闭设备详情弹窗和确认弹窗
