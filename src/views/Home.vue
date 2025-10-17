@@ -162,7 +162,43 @@ const isEditingName = ref(false)
 // 所有设备列表（用于v-for渲染）
 const allDevices = computed(() => {
   const devices = globalStore.devices || []
-  return devices.filter(device => device.cardName).sort((a, b) => a.id - b.id)
+  const filteredDevices = devices.filter(device => device.cardName)
+  
+  if (activeRoom.value === 'all') {
+    // All Devices 按设备ID排序
+    return filteredDevices.sort((a, b) => a.id - b.id)
+  } else {
+    // 房间设备按 sort_order 排序
+    const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
+    if (!selectedRoom) {
+      return filteredDevices.sort((a, b) => a.id - b.id)
+    }
+    
+    const roomDevices = selectedRoom.devices || []
+    
+    // 根据房间中的 sort_order 排序
+    const sortedRoomDevices = roomDevices.sort((a, b) => {
+      const sortOrderA = a.sort_order ?? 999999
+      const sortOrderB = b.sort_order ?? 999999
+      return sortOrderA - sortOrderB
+    })
+    
+    // 按照房间设备的排序顺序重新排列设备
+    const sortedDevices = []
+    sortedRoomDevices.forEach(roomDevice => {
+      const device = filteredDevices.find(d => d.id === roomDevice.device_id)
+      if (device) {
+        sortedDevices.push(device)
+      }
+    })
+    
+    // 添加不在房间中的设备（按设备ID排序）
+    const roomDeviceIds = new Set(roomDevices.map(rd => rd.device_id))
+    const remainingDevices = filteredDevices.filter(device => !roomDeviceIds.has(device.id))
+      .sort((a, b) => a.id - b.id)
+    
+    return [...sortedDevices, ...remainingDevices]
+  }
 })
 
 // 判断设备是否应该显示
