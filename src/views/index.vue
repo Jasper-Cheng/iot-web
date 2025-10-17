@@ -545,7 +545,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, provide, inject } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
@@ -562,22 +562,13 @@ const route = useRoute()
 const globalStore = useGlobalStore()
 
 // 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
-useWebSocketManager()
+const { systemMessage, familyMessage } = useWebSocketManager()
 
-// 注入系统消息管理
-const systemMessage = inject('systemMessage', {
-  setSystemMessageHandler: () => console.warn('System message manager not available'),
-  clearSystemMessageHandler: () => console.warn('System message manager not available'),
-  connectionState: ref('disconnected')
-})
+// 检查注入是否成功
+if (!systemMessage || !familyMessage) {
+  console.error('消息管理器注入失败，请检查 useWebSocketManager 是否正确初始化')
+}
 
-// 注入家庭消息管理
-const familyMessage = inject('familyMessage', {
-  setFamilyMessageHandler: () => console.warn('Family message manager not available'),
-  clearFamilyMessageHandler: () => console.warn('Family message manager not available'),
-  sendFamilyMessage: () => console.warn('Family message manager not available'),
-  connectionState: ref('disconnected')
-})
 
 
 // 控制用户下拉菜单显示
@@ -1220,12 +1211,16 @@ onMounted(() => {
   
   // 加载积分数据
   loadUserPoints()
-  
 })
 
 // 监听WebSocket连接状态
-watch(() => systemMessage.connectionState?.value, (newState, oldState) => {
-  console.log('WebSocket连接状态变化:', oldState, '->', newState)
+watch(() => systemMessage?.connectionState?.value, (newState, oldState) => {
+  
+  // 检查是否获取到了正确的 manager 对象
+  if (!systemMessage || !familyMessage || !systemMessage.setSystemMessageHandler || !familyMessage.setFamilyMessageHandler) {
+    console.warn('消息管理器未正确初始化，跳过状态处理')
+    return
+  }
   
   switch (newState) {
     case 'connected':
@@ -1252,7 +1247,7 @@ watch(() => systemMessage.connectionState?.value, (newState, oldState) => {
     default:
       console.log('未知的连接状态:', newState)
   }
-}, { immediate: true })
+})
 
 // 组件销毁时移除事件监听
 onUnmounted(() => {

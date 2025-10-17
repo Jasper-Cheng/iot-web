@@ -154,7 +154,7 @@
  *   "timestamp": 1620000000000
  * }
  */
-import { ref, reactive, computed, onMounted, onUnmounted, provide } from 'vue'
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
 import { getWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
 
@@ -495,4 +495,18 @@ export function useWebSocketManager() {
     await disconnect()
   })
 
+  // 返回消息管理器对象，供直接使用
+  return {
+    systemMessage: {
+      setSystemMessageHandler,
+      clearSystemMessageHandler,
+      connectionState: computed(() => connectionState.value)
+    },
+    familyMessage: {
+      setFamilyMessageHandler,
+      clearFamilyMessageHandler,
+      sendFamilyMessage,
+      connectionState: computed(() => connectionState.value)
+    }
+  }
 }
