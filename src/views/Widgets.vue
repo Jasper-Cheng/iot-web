@@ -326,7 +326,9 @@ const dragOriginalRoom = ref(null)
 
 // 计算属性：未分配的设备
 const unassignedDevices = computed(() => {
-  return localDevices.value.filter(device => device.roomId === 'unassigned')
+  return localDevices.value
+    .filter(device => device.roomId === 'unassigned')
+    .sort((a, b) => a.id - b.id) // 按设备ID排序
 })
 
 // 获取指定房间的设备
