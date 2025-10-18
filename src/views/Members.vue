@@ -699,6 +699,19 @@ const addNewMember = async () => {
     await addFamilyMember(memberData)
     // 重新从服务器加载成员数据，watch会自动调用loadData()
     await globalStore.loadMembers(globalStore.user?.user_id)
+    
+    // 发送家庭消息通知成员添加
+    try {
+      const memberName = newMember.value.name || newMember.value.username || '新成员'
+      await familyMessage.sendFamilyMessage('update.member', {
+        title: '成员添加',
+        message: `新成员"${memberName}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"添加到家庭`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
+    
     ElMessage.success('添加成员成功')
     closeModal()
     resetNewMemberForm()
@@ -732,6 +745,19 @@ const editMember = async () => {
     
     // 直接更新本地状态，不重新调用接口
     globalStore.updateMemberInfo(editingMember.value.id, updateData)
+    
+    // 发送家庭消息通知成员信息更新
+    try {
+      const memberName = editingMember.value.account?.name || editingMember.value.account?.account || '未知成员'
+      const action = isEditingOwner.value ? '更新了个人信息' : '成员信息已被更新'
+      await familyMessage.sendFamilyMessage('update.member', {
+        title: '成员信息更新',
+        message: `"${memberName}"的${action}，操作者："${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
     
     ElMessage.success('更新成功')
     closeModal()
@@ -787,6 +813,19 @@ const confirmDeleteMember = async () => {
     
     // 直接更新本地状态，不重新调用接口
     globalStore.removeMemberInfo(member.id)
+    
+    // 发送家庭消息通知成员删除
+    try {
+      const memberName = member.account?.name || member.account?.account || '未知成员'
+      await familyMessage.sendFamilyMessage('update.member', {
+        title: '成员删除',
+        message: `成员"${memberName}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"从家庭中移除`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
+    
     closeDeleteConfirm()
     ElMessage.success('删除成员成功')
   } catch (error) {

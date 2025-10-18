@@ -720,8 +720,9 @@ const handleFamilyMessageUpdate = (data) => {
   console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
 }
 
-const handleFamilyMemberUpdate = (data) => {
+const handleFamilyMemberUpdate = async (data) => {
   const { title, message, level } = data
+  await globalStore.loadMembers(globalStore.user?.user_id)
   console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
 }
 
@@ -729,6 +730,7 @@ const handleFamilyDeviceUpdate = async (data) => {
   const { title, message, level } = data
   console.log(`家庭设备更新 [${level}]: ${title} - ${message}`)
   await globalStore.loadDevices(globalStore.user?.user_id)
+  await globalStore.loadMembers(globalStore.user?.user_id)
 }
 
 const handleFamilyRoomUpdate = async (data) => {
