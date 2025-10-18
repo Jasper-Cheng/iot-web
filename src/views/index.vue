@@ -715,8 +715,9 @@ const handleFamilyPermissionUpdate = async (data) => {
   console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
 }
 
-const handleFamilyMessageUpdate = (data) => {
+const handleFamilyMessageUpdate = async (data) => {
   const { title, message, level } = data
+  await globalStore.loadMessages(globalStore.user?.user_id)
   console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
 }
 
@@ -1055,6 +1056,17 @@ const markAllAsRead = async () => {
       }
     })
     
+    // 发送家庭消息通知一键已读
+    try {
+      await familyMessage.sendFamilyMessage('update.message', {
+        title: '消息已读',
+        message: `用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"已将所有消息标记为已读`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
+    
     ElMessage.success('所有消息已标记为已读')
     closeNotificationMenu()
   } catch (error) {
@@ -1081,6 +1093,18 @@ const markMessageAsRead = async (message) => {
     const globalMessage = globalStore.messages.find(m => m.id === message.id)
     if (globalMessage) {
       globalMessage.status = 'read'
+    }
+    
+    // 发送家庭消息通知单条消息已读
+    try {
+      const deviceName = message.device_name || '未知设备'
+      await familyMessage.sendFamilyMessage('update.message', {
+        title: '消息已读',
+        message: `用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"已标记设备"${deviceName}"的消息为已读`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
     }
     
     console.log('消息已成功标记为已读')
