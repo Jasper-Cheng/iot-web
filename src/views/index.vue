@@ -792,7 +792,19 @@ const getGenderText = (gender) => {
 }
 
 // 退出登录
-const logout = () => {
+const logout = async () => {
+  // 发送家庭消息通知退出登录
+  try {
+    const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
+    await familyMessage.sendFamilyMessage('update.member', {
+      title: '成员退出',
+      message: `用户"${userName}"已退出登录`,
+      level: 'normal'
+    })
+  } catch (messageError) {
+    console.warn('发送家庭消息失败:', messageError)
+  }
+  
   // 清除认证状态
   globalStore.clearAuth()
   showUserMenu.value = false
@@ -1223,6 +1235,19 @@ const closeDeleteConfirm = () => {
 const confirmDelete = async () => {
   try {
     let response
+    
+    // 发送家庭消息通知注销
+    try {
+      const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
+      const action = globalStore.user?.account?.role === 'member' ? '退出家庭' : '注销账户'
+      await familyMessage.sendFamilyMessage('update.member', {
+        title: '成员注销',
+        message: `用户"${userName}"已${action}`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
     
     // 根据用户角色调用不同的API
     if (globalStore.user?.account?.role === 'member') {
