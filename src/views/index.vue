@@ -694,6 +694,9 @@ const handleFamilyMessage = (data) => {
     case 'update.member':
       handleFamilyMemberUpdate(data.data)
       break
+   case 'update.device':
+      handleFamilyDeviceUpdate(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -713,6 +716,12 @@ const handleFamilyMessageUpdate = (data) => {
 const handleFamilyMemberUpdate = (data) => {
   const { title, message, level } = data
   console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
+}
+
+const handleFamilyDeviceUpdate = async (data) => {
+  const { title, message, level } = data
+  console.log(`家庭设备更新 [${level}]: ${title} - ${message}`)
+  await globalStore.loadDevices(globalStore.user?.user_id)
 }
 
 
@@ -1130,8 +1139,16 @@ const submitAddDevice = async () => {
       ElMessage.success('设备添加成功')
       closeAddDeviceModal()
       
-      // 刷新设备列表
-      await globalStore.loadAll()
+      // 发送家庭消息通知设备添加
+      try {
+        await familyMessage.sendFamilyMessage('update.device', {
+          title: '设备添加',
+          message: `设备"${response.name || deviceForm.value.sn}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"添加`,
+          level: 'normal'
+        })
+      } catch (messageError) {
+        console.warn('发送家庭消息失败:', messageError)
+      }
     }
   } catch (error) {
     console.error('添加设备失败:', error)

@@ -250,9 +250,6 @@ export function useWebSocketManager() {
   }
 
 
-  // 系统消息处理器
-  let systemMessageHandler = systemMessageHandlerSingleton
-
   /**
    * 处理系统消息
    * @param {Object} data - 系统消息数据
@@ -260,8 +257,8 @@ export function useWebSocketManager() {
    * @param {Object} data.data - 消息内容
    */
   const handleSystemMessage = (data) => {
-    if (systemMessageHandler) {
-      systemMessageHandler(data)
+    if (systemMessageHandlerSingleton) {
+      systemMessageHandlerSingleton(data.params)
     } else {
       console.log('收到系统消息，但没有设置处理器:', data)
     }
@@ -272,7 +269,6 @@ export function useWebSocketManager() {
    * @param {Function} handler - 系统消息处理器函数
    */
   const setSystemMessageHandler = (handler) => {
-    systemMessageHandler = handler
     systemMessageHandlerSingleton = handler
     console.log('已设置系统消息处理器')
   }
@@ -281,13 +277,9 @@ export function useWebSocketManager() {
    * 清除系统消息处理器
    */
   const clearSystemMessageHandler = () => {
-    systemMessageHandler = null
     systemMessageHandlerSingleton = null
     console.log('已清除系统消息处理器')
   }
-
-  // 家庭消息处理器
-  let familyMessageHandler = familyMessageHandlerSingleton
 
   /**
    * 处理家庭消息
@@ -296,8 +288,8 @@ export function useWebSocketManager() {
    * @param {Object} data.data - 消息内容
    */
   const handleFamilyMessage = (data) => {
-    if (familyMessageHandler) {
-      familyMessageHandler(data)
+    if (familyMessageHandlerSingleton) {
+      familyMessageHandlerSingleton(data.params)
     } else {
       console.log('收到家庭消息，但没有设置处理器:', data)
     }
@@ -308,7 +300,6 @@ export function useWebSocketManager() {
    * @param {Function} handler - 家庭消息处理器函数
    */
   const setFamilyMessageHandler = (handler) => {
-    familyMessageHandler = handler
     familyMessageHandlerSingleton = handler
     console.log('已设置家庭消息处理器')
   }
@@ -317,7 +308,6 @@ export function useWebSocketManager() {
    * 清除家庭消息处理器
    */
   const clearFamilyMessageHandler = () => {
-    familyMessageHandler = null
     familyMessageHandlerSingleton = null
     console.log('已清除家庭消息处理器')
   }
