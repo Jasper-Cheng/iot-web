@@ -1252,10 +1252,10 @@ const confirmDelete = async () => {
     // 根据用户角色调用不同的API
     if (globalStore.user?.account?.role === 'member') {
       // 成员调用删除家庭成员API
-      response = await deleteFamilyMember(globalStore.user?.user_id)
+      response = await deleteFamilyMember(globalStore.user?.id)
     } else {
       // 拥有者调用删除用户API
-      response = await deleteUser(globalStore.user?.user_id)
+      response = await deleteUser(globalStore.user?.id)
     }
     
     if (response.message) {
