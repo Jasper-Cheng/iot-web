@@ -272,9 +272,13 @@ import { getThumbnailByCardName, getIconByCardName } from '../utils/deviceMappin
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { ElMessage } from 'element-plus'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 全局状态
 const globalStore = useGlobalStore()
+
+// 使用设备实时数据管理
+const { familyMessage } = useWebSocketManager()
 
 // 响应式数据
 const familyMembers = ref([])
@@ -545,6 +549,21 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
     if (globalMember) {
       globalMember.deviceIds = [...member.deviceIds]
     }
+    
+    // 发送家庭消息通知权限更新
+    try {
+      const device = devices.value.find(d => d.id === deviceId)
+      const deviceName = device ? device.name : '未知设备'
+      const action = hasPermission ? '授予' : '撤销'
+      
+      await familyMessage.sendFamilyMessage('update.permission', {
+        title: '成员权限更新',
+        message: `成员"${member.account?.name || member.account?.account || '未知成员'}"的设备权限已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"${action}，设备："${deviceName}"`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
   } catch (error) {
     console.error('更新权限失败:', error)
     ElMessage.error('更新权限失败，请重试')
@@ -581,6 +600,18 @@ const selectAllDevices = async (memberId) => {
         if (globalMember) {
           globalMember.deviceIds = [...allDeviceIds]
         }
+        
+        // 发送家庭消息通知权限更新
+        try {
+          await familyMessage.sendFamilyMessage('update.permission', {
+            title: '成员权限更新',
+            message: `成员"${member.account?.name || member.account?.account || '未知成员'}"的所有设备权限已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"授予`,
+            level: 'normal'
+          })
+        } catch (messageError) {
+          console.warn('发送家庭消息失败:', messageError)
+        }
+        
         ElMessage.success('全选设备权限成功')
       } else {
         ElMessage.error('全选设备权限失败')
@@ -619,6 +650,18 @@ const deselectAllDevices = async (memberId) => {
         if (globalMember) {
           globalMember.deviceIds = []
         }
+        
+        // 发送家庭消息通知权限更新
+        try {
+          await familyMessage.sendFamilyMessage('update.permission', {
+            title: '成员权限更新',
+            message: `成员"${member.account?.name || member.account?.account || '未知成员'}"的所有设备权限已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"撤销`,
+            level: 'normal'
+          })
+        } catch (messageError) {
+          console.warn('发送家庭消息失败:', messageError)
+        }
+        
         ElMessage.success('取消所有设备权限成功')
       } else {
         ElMessage.error('取消所有设备权限失败')

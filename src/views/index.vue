@@ -709,8 +709,9 @@ const handleFamilyMessage = (data) => {
 }
 
 // 具体的家庭消息处理方法
-const handleFamilyPermissionUpdate = (data) => {
+const handleFamilyPermissionUpdate = async (data) => {
   const { title, message, level } = data
+  await globalStore.loadMembers(globalStore.user?.user_id)
   console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
 }
 
