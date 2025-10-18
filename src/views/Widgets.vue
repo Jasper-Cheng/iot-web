@@ -659,6 +659,18 @@ const updateRoomDevicesSort = async (roomId) => {
     
     // 调用全局状态管理中的批量更新方法
     const response = await globalStore.updateRoomDevicesSort(roomId, roomDevices)
+    
+    // 发送家庭消息通知房间设备更新
+    try {
+      const roomName = getRoomName(roomId)
+      await familyMessage.sendFamilyMessage('update.roomDevices', {
+        title: '房间设备更新',
+        message: `房间"${roomName}"的设备配置已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"更新`,
+        level: 'normal'
+      })
+    } catch (messageError) {
+      console.warn('发送家庭消息失败:', messageError)
+    }
   } catch (error) {
     console.error('更新房间设备排序失败:', error)
   }
@@ -759,7 +771,7 @@ const confirmAddRoom = async () => {
     }
     
     // 添加到 globalStore.rooms 中
-    globalStore.rooms.push(newRoom)
+    // globalStore.rooms.push(newRoom)
     
     // 发送家庭消息通知房间添加
     try {

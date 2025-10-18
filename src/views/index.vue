@@ -700,6 +700,9 @@ const handleFamilyMessage = (data) => {
     case 'update.room':
       handleFamilyRoomUpdate(data.data)
       break
+    case 'update.roomDevices':
+      handleFamilyRoomDevicesUpdate(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -730,6 +733,12 @@ const handleFamilyDeviceUpdate = async (data) => {
 const handleFamilyRoomUpdate = async (data) => {
   const { title, message, level } = data
   console.log(`家庭房间更新 [${level}]: ${title} - ${message}`)
+  await globalStore.loadRooms(globalStore.user?.user_id)
+}
+
+const handleFamilyRoomDevicesUpdate = async (data) => {
+  const { title, message, level } = data
+  console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
   await globalStore.loadRooms(globalStore.user?.user_id)
 }
 
