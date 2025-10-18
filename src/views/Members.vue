@@ -341,7 +341,6 @@ const canEditMember = (member) => {
   }
   // Member只能编辑自己
   if (isMember.value) {
-    console.log(member.user_id, globalStore.user?.id)
     return member.id === globalStore.user?.id
   }
   return false
