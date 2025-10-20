@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { fetchDeviceStatuses, getDeviceMessages } from '../api/devices'
 import { getMembers, getUserDetail, getMemberDevicePermissions } from '../api/users'
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
+import { getSystemMessages } from '../api/systemMessages'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 
 export const useGlobalStore = defineStore('global', {
@@ -113,7 +114,7 @@ export const useGlobalStore = defineStore('global', {
 		// ]
 		rooms: [],
 		
-		// 设备消息数据
+		// 设备消息数据，已读消息
 		// 消息列表数据结构：
 		// [
 		//   {
@@ -134,11 +135,29 @@ export const useGlobalStore = defineStore('global', {
 		// 注意：界面只显示设备名字，不显示detail中的字段
 		messages: [],
 		
+		// 系统消息数据
+		// 系统消息列表数据结构：
+		// [
+		//   {
+		//     id: 1,                              // 消息ID
+		//     title: "系统维护通知",               // 消息标题
+		//     content: "详细内容",                // 消息内容
+		//     type: "maintenance",                // 消息类型：announcement/maintenance/update/alert/notification
+		//     priority: "high",                   // 优先级：low/normal/high/urgent
+		//     platforms: ["web"],                 // 支持的平台
+		//     extra: {},                          // 额外信息
+		//     created_at: "2025-09-26T02:17:08", // 创建时间
+		//     updated_at: "2025-09-26T02:17:08"  // 更新时间
+		//   }
+		// ]
+		systemMessages: [],
+		
 		loading: {
 			devices: false,
 			members: false,
 			rooms: false,
 			messages: false,
+			systemMessages: false,
 			auth: false
 		},
 		errors: {
@@ -146,6 +165,7 @@ export const useGlobalStore = defineStore('global', {
 			members: null,
 			rooms: null,
 			messages: null,
+			systemMessages: null,
 			auth: null
 		},
 		// 用户积分
@@ -366,6 +386,28 @@ export const useGlobalStore = defineStore('global', {
 			}
 		},
 		
+		// 加载系统消息（支持分页）
+		async loadSystemMessages(userId, params = {}) {
+			this.loading.systemMessages = true
+			this.errors.systemMessages = null
+			try {
+				const res = await getSystemMessages({
+					skip: params.skip || 0,
+					limit: params.limit || 20
+				})
+				
+				// 返回系统消息数组
+				return Array.isArray(res) ? res : []
+				
+			} catch (err) {
+				this.errors.systemMessages = err
+				console.error('系统消息加载失败:', err)
+				return []
+			} finally {
+				this.loading.systemMessages = false
+			}
+		},
+		
 		async loadAll() {
 			// 检查认证状态和用户ID
 			if (!this.isAuthenticated || !this.user?.user_id) {
@@ -379,7 +421,8 @@ export const useGlobalStore = defineStore('global', {
 				this.loadDevices(userId),
 				this.loadRooms(userId),
 				this.loadMembers(userId),
-				this.loadMessages(userId)
+				this.loadMessages(userId),
+				this.loadSystemMessages(userId)
 			])
 		},
 		

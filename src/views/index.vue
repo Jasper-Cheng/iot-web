@@ -140,6 +140,19 @@
                   <h4>消息通知</h4>
                   <p class="notification-count">{{ unreadMessages.length }} 条未读消息</p>
                 </div>
+                <div class="notification-actions">
+                  <button 
+                    class="system-message-btn" 
+                    @click="openSystemMessageModal"
+                    title="查看系统消息"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    系统消息
+                  </button>
+                </div>
               </div>
               
               <div class="dropdown-divider"></div>
@@ -546,6 +559,84 @@
       </div>
     </div>
   </div>
+
+  <!-- 系统消息弹窗 -->
+  <div v-if="showSystemMessageModal" class="device-modal" @click="closeSystemMessageModal">
+    <div class="message-log-modal-content" @click.stop>
+      <div class="message-log-header">
+        <h3>系统消息</h3>
+        <button class="delete-close-btn" @click="closeSystemMessageModal">X</button>
+      </div>
+      <div class="message-log-body">
+        <div v-if="isLoadingSystemMessages && globalStore.systemMessages.length === 0" class="loading-messages">
+          加载中...
+        </div>
+        <div v-else-if="globalStore.systemMessages.length === 0" class="no-messages">
+          暂无系统消息
+        </div>
+        <div v-else class="message-log-list">
+          <div 
+            v-for="message in globalStore.systemMessages" 
+            :key="message.id" 
+            class="message-log-item"
+          >
+            <div class="message-icon" :class="`level-${message.priority}`">
+              <!-- 根据消息类型显示不同图标 -->
+              <svg v-if="message.type === 'announcement'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <svg v-else-if="message.type === 'maintenance'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <svg v-else-if="message.type === 'update'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M8 12h8" stroke="currentColor" stroke-width="2"/>
+                <path d="M8 16h8" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <svg v-else-if="message.type === 'alert'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2"/>
+                <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </div>
+            <div class="message-content">
+              <div class="message-text">{{ message.title }}</div>
+              <div class="message-footer">
+                <div class="message-meta">
+                  <span class="message-level" :class="`level-${message.priority}`">{{ message.priority }}</span>
+                  <span class="message-time">{{ new Date(message.created_at).toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 加载更多按钮或没有更多提示 -->
+        <div class="load-more-container">
+          <button 
+            v-if="hasMoreSystemMessages"
+            class="load-more-btn" 
+            @click="loadMoreSystemMessages"
+            :disabled="isLoadingSystemMessages"
+          >
+            {{ isLoadingSystemMessages ? '加载中...' : '加载更多' }}
+          </button>
+          <div v-else-if="globalStore.systemMessages.length > 0" class="no-more-messages">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <span>没有更多消息了</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -609,6 +700,13 @@ const isLoadingPointsHistory = ref(false)
 const pointsHistoryPage = ref(1)
 const pointsHistoryLimit = ref(20)
 const hasMorePointsHistory = ref(true)
+
+// 系统消息相关
+const showSystemMessageModal = ref(false)
+const isLoadingSystemMessages = ref(false)
+const systemMessagesPage = ref(1)
+const systemMessagesLimit = ref(20)
+const hasMoreSystemMessages = ref(true)
 
 // 当前主题
 const currentTheme = ref('dark')
@@ -1012,6 +1110,55 @@ const loadMorePointsHistory = () => {
     const nextLimit = currentSkip + 20  // limit = skip + 20
     
     loadMorePointsHistoryDirect(currentSkip, nextLimit)
+  }
+}
+
+// 系统消息相关方法
+const loadSystemMessages = async (page = 1, append = false) => {
+  if (!globalStore.user?.user_id) return
+  
+  isLoadingSystemMessages.value = true
+  try {
+    const messages = await globalStore.loadSystemMessages(globalStore.user.user_id, {
+      limit: systemMessagesLimit.value,
+      skip: (page - 1) * systemMessagesLimit.value
+    })
+    
+    if (append) {
+      globalStore.systemMessages = [...globalStore.systemMessages, ...messages]
+    } else {
+      globalStore.systemMessages = messages
+    }
+    
+    // 判断是否还有更多数据
+    hasMoreSystemMessages.value = messages.length === systemMessagesLimit.value
+    systemMessagesPage.value = page
+    
+  } catch (error) {
+    console.error('加载系统消息失败:', error)
+  } finally {
+    isLoadingSystemMessages.value = false
+  }
+}
+
+const openSystemMessageModal = () => {
+  showSystemMessageModal.value = true
+  showNotificationMenu.value = false
+  // 重置分页状态并加载第一页
+  systemMessagesPage.value = 1
+  hasMoreSystemMessages.value = true
+  loadSystemMessages(1, false)
+}
+
+const closeSystemMessageModal = () => {
+  showSystemMessageModal.value = false
+  // 清空系统消息列表
+  globalStore.systemMessages = []
+}
+
+const loadMoreSystemMessages = () => {
+  if (!isLoadingSystemMessages.value && hasMoreSystemMessages.value) {
+    loadSystemMessages(systemMessagesPage.value + 1, true)
   }
 }
 
@@ -1727,6 +1874,37 @@ body, html {
   margin: 0;
   font-size: 11px;
   color: var(--color-text-secondary);
+}
+
+.notification-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.system-message-btn {
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.system-message-btn:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.system-message-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .notification-content {
@@ -2676,12 +2854,34 @@ body, html {
   font-size: 14px;
 }
 
+
 .confirm-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--color-border);
+}
+
+/* 系统消息优先级样式 */
+.message-level.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.message-level.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.message-level.level-high {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.message-level.level-urgent {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
 }
 
 .btn-cancel,
