@@ -1352,10 +1352,6 @@ watch(() => systemMessage?.connectionState?.value, (newState, oldState) => {
 // 组件销毁时移除事件监听
 onUnmounted(() => {
   document.removeEventListener('click', closeUserMenu)
-  
-  // 清除消息处理器
-  systemMessage.clearSystemMessageHandler()
-  familyMessage.clearFamilyMessageHandler()
 })
 </script>
 
