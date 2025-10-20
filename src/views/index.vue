@@ -794,8 +794,8 @@ const getGenderText = (gender) => {
 const logout = async () => {
   // 发送家庭消息通知退出登录（不等待结果）
   const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
-  familyMessage.sendFamilyMessage('update.member', {
-    title: '成员退出',
+  familyMessage.sendFamilyMessage('user.logout', {
+    title: '用户登出',
     message: `用户"${userName}"已退出登录`,
     level: 'normal'
   }).catch(messageError => {
@@ -1301,7 +1301,7 @@ watch(() => globalStore.messages, () => {
 }, { deep: true })
 
 // 初始化主题
-onMounted(() => {
+onMounted(async () => {
   const theme = initTheme()
   currentTheme.value = theme
   
@@ -1310,6 +1310,17 @@ onMounted(() => {
   
   // 加载积分数据
   loadUserPoints()
+  
+  // 发送登录成功的家庭消息
+  try {
+    await familyMessage.sendFamilyMessage('user.login', {
+      title: '用户登录',
+      message: `用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"已登录系统`,
+      level: 'normal'
+    })
+  } catch (error) {
+    console.warn('发送登录消息失败:', error)
+  }
 })
 
 // 监听WebSocket连接状态
