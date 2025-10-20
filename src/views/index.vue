@@ -566,7 +566,7 @@ const route = useRoute()
 const globalStore = useGlobalStore()
 
 // 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
-const { systemMessage, familyMessage } = useWebSocketManager()
+const { systemMessage, familyMessage, disconnect } = useWebSocketManager()
 
 // 检查注入是否成功
 if (!systemMessage || !familyMessage) {
@@ -803,6 +803,14 @@ const logout = async () => {
     })
   } catch (messageError) {
     console.warn('发送家庭消息失败:', messageError)
+  }
+  
+  // 断开 WebSocket 连接
+  try {
+    await disconnect()
+    console.log('WebSocket 连接已断开')
+  } catch (disconnectError) {
+    console.warn('断开 WebSocket 连接失败:', disconnectError)
   }
   
   // 清除认证状态
@@ -1249,6 +1257,7 @@ const confirmDelete = async () => {
     try {
       const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
       const action = globalStore.user?.account?.role === 'member' ? '退出家庭' : '注销账户'
+      console.log('发送家庭消息通知注销', userName, action)
       await familyMessage.sendFamilyMessage('update.member', {
         title: '成员注销',
         message: `用户"${userName}"已${action}`,
@@ -1262,6 +1271,14 @@ const confirmDelete = async () => {
       ElMessage.success(response.message)
     } else {
       ElMessage.success('账户注销成功')
+    }
+    
+    // 断开 WebSocket 连接
+    try {
+      await disconnect()
+      console.log('WebSocket 连接已断开')
+    } catch (disconnectError) {
+      console.warn('断开 WebSocket 连接失败:', disconnectError)
     }
     
     // 清除认证状态并跳转到登录页

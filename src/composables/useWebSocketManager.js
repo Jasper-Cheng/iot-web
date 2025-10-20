@@ -509,6 +509,7 @@ export function useWebSocketManager() {
       clearFamilyMessageHandler, // 清除家庭消息处理器
       sendFamilyMessage,         // 发送家庭消息
       connectionState: computed(() => connectionState.value) // WebSocket 连接状态
-    }
+    },
+    disconnect  // 导出断开连接方法
   }
 }
