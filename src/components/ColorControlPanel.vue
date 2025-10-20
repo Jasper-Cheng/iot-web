@@ -2,13 +2,6 @@
   <div class="color-control-card">
     <div class="card-header">
       <h3>Color Control</h3>
-      <div class="power-switch">
-        <span class="switch-label">{{ colorControlOn ? 'On' : 'Off' }}</span>
-        <div 
-          :class="['switch-button', { active: colorControlOn }]"
-          @click="toggleColorControl"
-        ></div>
-      </div>
     </div>
 
     <div class="preset-buttons">
@@ -19,10 +12,8 @@
           :class="['segmented-btn', { 
             active: activePreset === preset.id,
             'first': index === 0,
-            'last': index === colorPresets.length - 1,
-            disabled: !colorControlOn
+            'last': index === colorPresets.length - 1
           }]"
-          :disabled="!colorControlOn"
           @click="setActivePreset(preset.id)"
         >
           {{ preset.name }}
@@ -60,11 +51,10 @@
           max="100" 
           v-model="brightness" 
           class="slider"
-          :disabled="!colorControlOn"
           @input="updateBrightness"
         />
       </div>
-      <button class="reset-button" :disabled="!colorControlOn" @click="clearStorage">恢复默认</button>
+      <button class="reset-button" @click="clearStorage">恢复默认</button>
     </div>
   </div>
 </template>
@@ -76,7 +66,6 @@ import { getCurrentTheme, readThemeDefaults, readColorControlFromStorage, writeC
 export default {
   name: 'ColorControlCard',
   setup() {
-    const colorControlOn = ref(true)
     const activePreset = ref('primary')
     const colorIntensity = ref(55)
     const brightness = ref(55)
@@ -264,7 +253,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
 
     const applyCurrentColorToTheme = () => {
-      if (!colorControlOn.value) return
       if (isBootstrapping.value) return
       const root = document.documentElement
       const colorValue = selectedColorForSlider.value
@@ -365,8 +353,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
 
 
     const clearStorage = () => {
-      if (!colorControlOn.value) return
-      
       // 使用 theme.js 中的清除存储方法
       clearColorControlStorage()
       
@@ -374,14 +360,7 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       initializeColorControl()
     }
 
-    const toggleColorControl = () => {
-      colorControlOn.value = !colorControlOn.value
-    }
-
     const setActivePreset = (presetId) => {
-      // 只有在开关开启时才能切换预设
-      if (!colorControlOn.value) return
-      
       activePreset.value = presetId
       // 切换预设时，从当前主题变量读取颜色，初始化色相与透明度
       loadPresetColorFromTheme(presetId)
@@ -405,7 +384,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     }
 
     const startDrag = (event) => {
-      if (!colorControlOn.value) return
       updateHueFromPosition(event.clientX || event.touches[0].clientX, event.clientY || event.touches[0].clientY)
 
       const onMove = (e) => {
@@ -426,8 +404,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     }
 
     const updateBrightness = () => {
-      // 只有在开关开启时才能调整透明度
-      if (!colorControlOn.value) return
       colorIntensity.value = brightness.value
       applyCurrentColorToTheme()
     }
@@ -484,7 +460,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
     })
 
     return {
-      colorControlOn,
       activePreset,
       colorIntensity,
       brightness,
@@ -495,7 +470,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
       selectedColorHex,
       selectedColorForSlider,
       backgroundGradient,
-      toggleColorControl,
       setActivePreset,
       startDrag,
       updateBrightness,
@@ -530,49 +504,6 @@ const ballSize = outerRadius - innerRadius+10  // ✅ 小球大小 = 彩色环�
   margin: 0;
 }
 
-.power-switch {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.switch-label {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.switch-button {
-  width: 32px;
-  height: 20px;
-  background: var(--color-switch-indicator);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.switch-button.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.switch-button::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  background: var(--color-switch-indicator-active);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.switch-button.active::after {
-  transform: translateX(12px);
-}
 
 .preset-buttons {
   display: flex;
