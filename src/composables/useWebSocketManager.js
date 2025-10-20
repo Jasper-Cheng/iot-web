@@ -448,6 +448,10 @@ export function useWebSocketManager() {
       
       // 清除所有事件处理器
       clearAllEventNotificationHandlers()
+      // 重置监听器附加状态
+      listenersAttachedSingleton = false
+      // 重置连接状态
+      connectionStateSingleton.value = 'disconnected'
     } catch (error) {
       console.warn('取消订阅过程中出现错误:', error)
     } finally {
