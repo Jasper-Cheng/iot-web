@@ -793,31 +793,26 @@ const getGenderText = (gender) => {
 
 // 退出登录
 const logout = async () => {
-  // 发送家庭消息通知退出登录
-  try {
-    const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
-    await familyMessage.sendFamilyMessage('update.member', {
-      title: '成员退出',
-      message: `用户"${userName}"已退出登录`,
-      level: 'normal'
-    })
-  } catch (messageError) {
+  // 发送家庭消息通知退出登录（不等待结果）
+  const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
+  familyMessage.sendFamilyMessage('update.member', {
+    title: '成员退出',
+    message: `用户"${userName}"已退出登录`,
+    level: 'normal'
+  }).catch(messageError => {
     console.warn('发送家庭消息失败:', messageError)
-  }
+  })
   
-  // 断开 WebSocket 连接
-  try {
-    await disconnect()
+  // 断开 WebSocket 连接（不等待结果）
+  disconnect().then(() => {
     console.log('WebSocket 连接已断开')
-  } catch (disconnectError) {
+  }).catch(disconnectError => {
     console.warn('断开 WebSocket 连接失败:', disconnectError)
-  }
+  })
   
-  // 清除认证状态
+  // 立即清除认证状态并跳转
   globalStore.clearAuth()
   showUserMenu.value = false
-  
-  // 跳转到登录页
   router.push('/login')
 }
 
@@ -1253,19 +1248,17 @@ const confirmDelete = async () => {
       response = await deleteUser(globalStore.user?.id)
     }
     
-    // API调用成功后，发送家庭消息通知注销
-    try {
-      const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
-      const action = globalStore.user?.account?.role === 'member' ? '退出家庭' : '注销账户'
-      console.log('发送家庭消息通知注销', userName, action)
-      await familyMessage.sendFamilyMessage('update.member', {
-        title: '成员注销',
-        message: `用户"${userName}"已${action}`,
-        level: 'normal'
-      })
-    } catch (messageError) {
+    // API调用成功后，发送家庭消息通知注销（不等待结果）
+    const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
+    const action = globalStore.user?.account?.role === 'member' ? '退出家庭' : '注销账户'
+    console.log('发送家庭消息通知注销', userName, action)
+    familyMessage.sendFamilyMessage('update.member', {
+      title: '成员注销',
+      message: `用户"${userName}"已${action}`,
+      level: 'normal'
+    }).catch(messageError => {
       console.warn('发送家庭消息失败:', messageError)
-    }
+    })
     
     if (response.message) {
       ElMessage.success(response.message)
@@ -1273,15 +1266,14 @@ const confirmDelete = async () => {
       ElMessage.success('账户注销成功')
     }
     
-    // 断开 WebSocket 连接
-    try {
-      await disconnect()
+    // 断开 WebSocket 连接（不等待结果）
+    disconnect().then(() => {
       console.log('WebSocket 连接已断开')
-    } catch (disconnectError) {
+    }).catch(disconnectError => {
       console.warn('断开 WebSocket 连接失败:', disconnectError)
-    }
+    })
     
-    // 清除认证状态并跳转到登录页
+    // 立即清除认证状态并跳转到登录页
     globalStore.clearAuth()
     showDeleteConfirmModal.value = false
     router.push('/login')
