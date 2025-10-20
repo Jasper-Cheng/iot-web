@@ -637,6 +637,53 @@
       </div>
     </div>
   </div>
+
+  <!-- 系统通知弹窗 -->
+  <div v-if="showSystemNotificationModal" class="device-modal" @click="closeSystemNotificationModal">
+    <div class="message-log-modal-content" @click.stop>
+      <div class="message-log-header">
+        <h3>系统通知</h3>
+        <button class="delete-close-btn" @click="closeSystemNotificationModal">X</button>
+      </div>
+      <div class="message-log-body" v-if="currentSystemNotification">
+        <div class="notification-content">
+          <div class="notification-icon" :class="`level-${currentSystemNotification.priority}`">
+            <svg v-if="currentSystemNotification.type === 'notification'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+          <div class="notification-details">
+            <h4 class="notification-title">{{ currentSystemNotification.title }}</h4>
+            <p class="notification-text">{{ currentSystemNotification.content }}</p>
+            <div class="notification-meta">
+              <span class="notification-priority" :class="`level-${currentSystemNotification.priority}`">
+                {{ currentSystemNotification.priority }}
+              </span>
+              <span class="notification-time">
+                {{ new Date(currentSystemNotification.timestamp).toLocaleString() }}
+              </span>
+            </div>
+            <div v-if="currentSystemNotification.device_id" class="notification-device">
+              <span class="device-label">设备:</span>
+              <span class="device-id">{{ currentSystemNotification.device_id }}</span>
+            </div>
+            <div v-if="currentSystemNotification.service_name" class="notification-service">
+              <span class="service-label">服务:</span>
+              <span class="service-name">{{ currentSystemNotification.service_name }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="notification-actions">
+          <button class="confirm-btn" @click="closeSystemNotificationModal">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -2882,6 +2929,154 @@ body, html {
 .message-level.level-urgent {
   background: var(--color-message-fatal-bg);
   color: var(--color-message-fatal);
+}
+
+/* 系统通知弹窗样式 */
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+}
+
+.notification-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.notification-icon.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.notification-icon.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.notification-icon.level-high {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.notification-icon.level-urgent {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
+}
+
+.notification-details {
+  flex: 1;
+}
+
+.notification-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.notification-text {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+  color: var(--text-secondary);
+}
+
+.notification-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.notification-priority {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.notification-priority.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.notification-priority.level-normal {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+}
+
+.notification-priority.level-high {
+  background: var(--color-message-error-bg);
+  color: var(--color-message-error);
+}
+
+.notification-priority.level-urgent {
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
+}
+
+.notification-time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.notification-device,
+.notification-service {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.device-label,
+.service-label {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.device-id,
+.service-name {
+  color: var(--text-secondary);
+  font-family: monospace;
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.notification-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.confirm-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirm-btn:hover {
+  background: var(--color-primary-hover);
 }
 
 .btn-cancel,
