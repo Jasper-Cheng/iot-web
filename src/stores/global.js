@@ -226,6 +226,54 @@ export const useGlobalStore = defineStore('global', {
 					getUserDetail(userId)
 				])
 				
+				// 根据当前用户角色使用不同数据源更新
+				const currentUserRole = this.user?.role || this.user?.account?.role
+				
+				if (currentUserRole === 'owner') {
+					// Owner: 使用 userRes 更新 account 部分
+					if (userRes && userRes.account) {
+						this.user = {
+							...this.user,
+							account: {
+								...this.user?.account,
+								...userRes.account
+							}
+						}
+					}
+				} else if (currentUserRole === 'member') {
+					// Member: 使用 membersRes 中的当前用户数据更新 account 部分
+					if (membersRes && membersRes.length > 0) {
+						// 从成员列表中找到当前用户
+						const currentMember = membersRes.find(member => member.id === this.user?.id)
+						
+						if (currentMember && currentMember.account) {
+							this.user = {
+								...this.user,
+								account: {
+									...this.user?.account,
+									...currentMember.account
+								}
+							}
+						} else {
+							console.warn('未在成员列表中找到当前用户或account数据')
+						}
+					}
+				} else {
+					// 其他角色或未知角色：使用 userRes 更新 account 部分
+					if (userRes && userRes.account) {
+						this.user = {
+							...this.user,
+							account: {
+								...this.user?.account,
+								...userRes.account
+							}
+						}
+					}
+				}
+				
+				// 同步到localStorage
+				this.saveToLocalStorage()
+				
 				// 将当前用户信息作为 Owner 添加到成员列表开头
 				const members = membersRes || []
 				const owner = userRes ? {
