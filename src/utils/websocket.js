@@ -541,6 +541,16 @@ export function getWebSocketManager(options = {}) {
 }
 
 /**
+ * 清除WebSocket管理器实例
+ */
+export function clearWebSocketManager() {
+  if (wsManagerInstance) {
+    wsManagerInstance.disconnect()
+    wsManagerInstance = null
+  }
+}
+
+/**
  * 创建新的WebSocket管理器实例
  * @param {Object} options - 配置选项
  * @returns {WebSocketManager} 新的WebSocket管理器实例

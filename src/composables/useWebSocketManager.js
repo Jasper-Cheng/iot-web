@@ -154,8 +154,8 @@
  *   "timestamp": 1620000000000
  * }
  */
-import { ref, computed, onMounted, provide } from 'vue'
-import { getWebSocketManager } from '../utils/websocket.js'
+import { ref, computed, onMounted, provide, watch } from 'vue'
+import { getWebSocketManager, clearWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
 
 
@@ -187,7 +187,18 @@ export function useWebSocketManager() {
       const token = globalStore.token
       if (!userId || !token) return
 
-      if (!wsManagerSingleton) {
+      // 检查是否需要重新创建 WebSocket 管理器（token 变化时）
+      const currentToken = wsManagerSingleton?.options?.url?.includes('token=') ? 
+        wsManagerSingleton.options.url.split('token=')[1] : null
+      
+      if (!wsManagerSingleton || currentToken !== token) {
+        // 先断开旧连接
+        if (wsManagerSingleton) {
+          wsManagerSingleton.disconnect()
+        }
+        // 清除全局 WebSocket 实例
+        clearWebSocketManager()
+        // 创建新的 WebSocket 管理器
         wsManagerSingleton = getWebSocketManager({
           url: `ws://localhost:8000/api/v1/ws/user/${userId}?token=${token}`,
           userId: userId,
@@ -441,7 +452,12 @@ export function useWebSocketManager() {
       console.warn('取消订阅过程中出现错误:', error)
     } finally {
       // 无论取消订阅是否成功，都断开连接
-      wsManagerSingleton && wsManagerSingleton.disconnect()
+      if (wsManagerSingleton) {
+        wsManagerSingleton.disconnect()
+        wsManagerSingleton = null
+      }
+      // 清除全局 WebSocket 实例
+      clearWebSocketManager()
     }
   }
 
