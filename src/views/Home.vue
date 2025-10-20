@@ -90,6 +90,7 @@ import { ref, computed } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { updateDeviceName } from '../api/devices'
+import { getPointsBalance } from '../api/points'
 import CheckinCalendar from '../components/CheckinCalendar.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
 import EnergyPanel from '../components/EnergyPanel.vue'
@@ -151,10 +152,24 @@ const showEditNameModal = ref(false)
 const editingDevice = ref(null)
 const editingDeviceName = ref('')
 
+// 积分相关方法
+const loadUserPoints = async () => {
+  if (!globalStore.user?.account?.id) return
+  
+  try {
+    const response = await getPointsBalance(globalStore.user.account.id)
+    // 更新全局状态中的积分
+    globalStore.userPoints = response.available_balance || 0
+  } catch (error) {
+    console.error('加载积分余额失败:', error)
+  }
+}
+
 // 处理签到成功
 const handleCheckinSuccess = (response) => {
   ElMessage.success('签到成功，获得积分:' + response.points_earned)
-  // 如果需要刷新积分显示，可以触发父组件的积分更新
+  // 刷新积分显示
+  loadUserPoints()
 }
 const isEditingName = ref(false)
 

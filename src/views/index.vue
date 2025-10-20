@@ -277,7 +277,7 @@
                       <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
                     </svg>
                   </div>
-                  <span class="points-value">{{ userPoints || 0 }}</span>
+                  <span class="points-value">{{ globalStore.userPoints || 0 }}</span>
                 </div>
                 <button class="points-history-btn" @click.prevent="openPointsHistoryModal" title="查看积分记录">
                   <span class="points-history-text">积分记录</span>
@@ -492,7 +492,7 @@
           </div>
           <div class="header-title">
             <h3>积分记录</h3>
-            <p class="header-subtitle">当前积分: {{ userPoints || 0 }}</p>
+            <p class="header-subtitle">当前积分: {{ globalStore.userPoints || 0 }}</p>
           </div>
         </div>
         <button class="delete-close-btn" @click="closePointsHistoryModal">X</button>
@@ -603,7 +603,6 @@ const readMessagesLimit = ref(20)
 const hasMoreReadMessages = ref(true)
 
 // 积分相关
-const userPoints = ref(0)
 const showPointsHistoryModal = ref(false)
 const pointsHistory = ref([])
 const isLoadingPointsHistory = ref(false)
@@ -958,7 +957,7 @@ const loadUserPoints = async () => {
   
   try {
     const response = await getPointsBalance(globalStore.user.account.id)
-    userPoints.value = response.available_balance || 0
+    globalStore.userPoints = response.available_balance || 0
   } catch (error) {
     console.error('加载积分余额失败:', error)
   }

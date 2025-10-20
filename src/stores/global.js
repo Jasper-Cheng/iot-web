@@ -147,7 +147,9 @@ export const useGlobalStore = defineStore('global', {
 			rooms: null,
 			messages: null,
 			auth: null
-		}
+		},
+		// 用户积分
+		userPoints: 0
 	}),
 	actions: {
 		async loadDevices(userId) {
