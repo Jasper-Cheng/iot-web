@@ -251,10 +251,6 @@ const handleLogin = async () => {
       password: formData.password
     })
     
-    // 先保存token到全局状态
-    globalStore.token = response.access_token
-    localStorage.setItem('token', response.access_token)
-    
     try {
       let userData = response
       
@@ -274,19 +270,25 @@ const handleLogin = async () => {
         }
       }
       
-      // 将更新后的response保存到全局状态
-      globalStore.user = userData
-      globalStore.isAuthenticated = true
-      localStorage.setItem('user', JSON.stringify(userData))
+      // 使用 setAuth 方法统一设置认证状态
+      globalStore.setAuth({
+        access_token: response.access_token,
+        account: userData
+      })
       
       // 登录成功，设置用户数据
       
     } catch (userError) {
       console.error('获取用户详情失败:', userError)
-      // 即使获取用户详情失败，也继续登录流程，保存原始响应
-      globalStore.user = response
-      globalStore.isAuthenticated = true
-      localStorage.setItem('user', JSON.stringify(response))
+      // 即使获取用户详情失败，也继续登录流程，使用原始响应数据
+      const userData = {
+        ...response,
+        user_id: response.id // 对于 owner 或失败情况，使用 response.id 作为 user_id
+      }
+      globalStore.setAuth({
+        access_token: response.access_token,
+        account: userData
+      })
       
       // 获取用户详情失败，使用原始响应数据
     }
