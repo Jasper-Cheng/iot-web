@@ -879,37 +879,61 @@ const handleFamilyPermissionUpdate = async (data) => {
   const { title, message, level } = data
   await globalStore.loadMembers(globalStore.user?.user_id)
   console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
+  // 显示登录通知
+  ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
 }
 
 const handleFamilyMessageUpdate = async (data) => {
   const { title, message, level } = data
-  await globalStore.loadMessages(globalStore.user?.user_id)
   console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
+  await globalStore.loadMessages(globalStore.user?.user_id)
 }
 
 const handleFamilyMemberUpdate = async (data) => {
   const { title, message, level } = data
   await globalStore.loadMembers(globalStore.user?.user_id)
   console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
+  // 显示登录通知
+  ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
 }
 
 const handleFamilyDeviceUpdate = async (data) => {
   const { title, message, level } = data
-  console.log(`家庭设备更新 [${level}]: ${title} - ${message}`)
   await globalStore.loadDevices(globalStore.user?.user_id)
   await globalStore.loadMembers(globalStore.user?.user_id)
+  console.log(`家庭设备更新 [${level}]: ${title} - ${message}`)
+  // 显示登录通知
+  ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
 }
 
 const handleFamilyRoomUpdate = async (data) => {
   const { title, message, level } = data
-  console.log(`家庭房间更新 [${level}]: ${title} - ${message}`)
   await globalStore.loadRooms(globalStore.user?.user_id)
+  console.log(`家庭房间更新 [${level}]: ${title} - ${message}`)
+  // 显示登录通知
+  ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
 }
 
 const handleFamilyRoomDevicesUpdate = async (data) => {
   const { title, message, level } = data
-  console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
   await globalStore.loadRooms(globalStore.user?.user_id)
+  console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
 }
 
 // 处理用户登录事件
