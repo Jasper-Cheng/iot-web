@@ -755,6 +755,10 @@ const systemMessagesPage = ref(1)
 const systemMessagesLimit = ref(20)
 const hasMoreSystemMessages = ref(true)
 
+// 系统通知弹窗相关
+const showSystemNotificationModal = ref(false)
+const currentSystemNotification = ref(null)
+
 // 当前主题
 const currentTheme = ref('dark')
 
@@ -800,8 +804,20 @@ const handleDeviceOnlineChange = (data) => {
 }
 
 const handleSystemNotification = (data) => {
-  const { title, message, level } = data
-  console.log(`系统通知 [${level}]: ${title} - ${message}`)
+  const { title, content, type, priority, timestamp, device_id, service_name } = data
+  console.log(`系统通知 [${priority}]: ${title} - ${content}`)
+  
+  // 显示系统通知弹窗
+  currentSystemNotification.value = {
+    title: title,
+    content: content,
+    priority: priority,
+    timestamp: timestamp || Date.now(),
+    type: type || 'notification',
+    device_id: device_id,
+    service_name: service_name
+  }
+  showSystemNotificationModal.value = true
 }
 
 const handlePromotion = (data) => {
@@ -1557,6 +1573,12 @@ watch(() => systemMessage?.connectionState?.value, (newState, oldState) => {
 onUnmounted(() => {
   document.removeEventListener('click', closeUserMenu)
 })
+
+// 关闭系统通知弹窗
+const closeSystemNotificationModal = () => {
+  showSystemNotificationModal.value = false
+  currentSystemNotification.value = null
+}
 </script>
 
 <style>
@@ -2935,13 +2957,13 @@ body, html {
 .notification-content {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
 }
 
 .notification-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -2950,126 +2972,87 @@ body, html {
 }
 
 .notification-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.notification-icon.level-low {
-  background: var(--color-message-normal-bg);
-  color: var(--color-message-normal);
-}
-
-.notification-icon.level-normal {
-  background: var(--color-message-normal-bg);
-  color: var(--color-message-normal);
-}
-
-.notification-icon.level-high {
-  background: var(--color-message-error-bg);
-  color: var(--color-message-error);
-}
-
-.notification-icon.level-urgent {
-  background: var(--color-message-fatal-bg);
-  color: var(--color-message-fatal);
-}
-
-.notification-details {
-  flex: 1;
+  width: 20px;
+  height: 20px;
 }
 
 .notification-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  color: var(--color-text-primary);
 }
 
 .notification-text {
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 0 0 12px 0;
-  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
 }
 
 .notification-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .notification-priority {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-}
-
-.notification-priority.level-low {
-  background: var(--color-message-normal-bg);
-  color: var(--color-message-normal);
-}
-
-.notification-priority.level-normal {
-  background: var(--color-message-normal-bg);
-  color: var(--color-message-normal);
-}
-
-.notification-priority.level-high {
-  background: var(--color-message-error-bg);
-  color: var(--color-message-error);
-}
-
-.notification-priority.level-urgent {
-  background: var(--color-message-fatal-bg);
-  color: var(--color-message-fatal);
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
 }
 
 .notification-time {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-size: 11px;
+  color: var(--color-text-primary);
 }
 
 .notification-device,
 .notification-service {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 14px;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
 }
 
 .device-label,
 .service-label {
-  color: var(--text-tertiary);
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
 .device-id,
 .service-name {
-  color: var(--text-secondary);
+  color: var(--color-text-primary);
   font-family: monospace;
-  background: var(--bg-secondary);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: var(--color-bg-secondary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .notification-actions {
   display: flex;
   justify-content: flex-end;
-  padding: 16px 20px;
-  border-top: 1px solid var(--border-color);
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
 }
 
 .confirm-btn {
   background: var(--color-primary);
   color: white;
   border: none;
-  padding: 8px 24px;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 6px 20px;
+  border-radius: 5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
