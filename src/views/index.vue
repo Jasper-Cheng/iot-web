@@ -863,6 +863,12 @@ const handleFamilyMessage = (data) => {
     case 'update.roomDevices':
       handleFamilyRoomDevicesUpdate(data.data)
       break
+    case 'user.login':
+      handleUserLogin(data.data)
+      break
+    case 'user.logout':
+      handleUserLogout(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -904,6 +910,32 @@ const handleFamilyRoomDevicesUpdate = async (data) => {
   const { title, message, level } = data
   console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
   await globalStore.loadRooms(globalStore.user?.user_id)
+}
+
+// 处理用户登录事件
+const handleUserLogin = (data) => {
+  const { title, message, level } = data
+  console.log(`用户登录 [${level}]: ${title} - ${message}`)
+  
+  // 显示登录通知
+  ElMessage.success({
+    message: message,
+    duration: 2000,
+    showClose: true
+  })
+}
+
+// 处理用户登出事件
+const handleUserLogout = (data) => {
+  const { title, message, level } = data
+  console.log(`用户登出 [${level}]: ${title} - ${message}`)
+  
+  // 显示登出通知
+  ElMessage.success({
+    message: message,
+    duration: 2000,
+    showClose: true
+  })
 }
 
 
