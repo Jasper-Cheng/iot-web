@@ -5,6 +5,7 @@ import Home from '../views/Home.vue'
 import Widgets from '../views/Widgets.vue'
 import Members from '../views/Members.vue'
 import Mall from '../views/Mall.vue'
+import Settings from '../views/Settings.vue'
 import { ElMessage } from 'element-plus'
 
 const routes = [
@@ -18,7 +19,8 @@ const routes = [
       { path: 'home', component: Home },
       { path: 'widgets', component: Widgets },
       { path: 'members', component: Members },
-      { path: 'mall', component: Mall }
+      { path: 'mall', component: Mall },
+      { path: 'settings', component: Settings }
     ]
   },
   { path: '/', redirect: '/login' }

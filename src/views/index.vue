@@ -52,6 +52,11 @@
               <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
               <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
+            <!-- Settings图标 -->
+            <svg v-else-if="navItem.id === 'settings'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
           </div>
           <span>{{ navItem.name }}</span>
         </li>
@@ -970,7 +975,8 @@ const navigationItems = ref([
   { id: 'home', name: 'Home', route: '/home', icon: 'home' },
   { id: 'widgets', name: 'Widgets', route: '/widgets', icon: 'widgets' },
   { id: 'members', name: 'Members', route: '/members', icon: 'members' },
-  { id: 'mall', name: 'Mall', route: '/mall', icon: 'mall' }
+  { id: 'mall', name: 'Mall', route: '/mall', icon: 'mall' },
+  { id: 'settings', name: '设置', route: '/settings', icon: 'settings' }
 ])
 
 // 当前活动导航项
