@@ -197,9 +197,6 @@
         </div>
         <div class="message-log-body">
           <div class="feedback-list-content">
-            <div class="feedback-list-header">
-              <p>您提交的反馈记录</p>
-            </div>
             <div v-if="isFeedbackLoading" class="loading-state">
               <p>正在加载反馈列表...</p>
             </div>
@@ -389,6 +386,7 @@
 import { getVersionInfo } from '../api/version'
 import { submitFeedback as submitFeedbackAPI, getFeedbackList } from '../api/feedback'
 import { useGlobalStore } from '../stores/global'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'Settings',
@@ -601,11 +599,11 @@ export default {
     async submitFeedback() {
       // 简单的表单验证
       if (!this.feedbackForm.type) {
-        alert('请选择反馈类型');
+        ElMessage.warning('请选择反馈类型');
         return;
       }
       if (!this.feedbackForm.content.trim()) {
-        alert('请输入反馈内容');
+        ElMessage.warning('请输入反馈内容');
         return;
       }
       
@@ -631,7 +629,7 @@ export default {
           }
         });
         
-        alert('感谢您的反馈，我们会尽快处理！');
+        ElMessage.success('感谢您的反馈，我们会尽快处理！');
         this.feedbackDialogVisible = false;
         
         // 重置表单
@@ -642,7 +640,7 @@ export default {
         };
       } catch (error) {
         console.error('反馈提交失败:', error);
-        alert('反馈提交失败，请稍后重试');
+        ElMessage.error('反馈提交失败，请稍后重试');
       }
     }
   }
@@ -1410,14 +1408,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   gap: 12px;
 }
 
 .feedback-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   flex: 1;
 }
 
@@ -1441,7 +1439,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 8px;
 }
 
 .feedback-type {
@@ -1507,23 +1505,23 @@ export default {
 }
 
 .status.processing {
-  background: rgba(255, 193, 7, 0.1);
-  color: #ffc107;
+  background: var(--color-feedback-processing-bg);
+  color: var(--color-feedback-processing-text);
 }
 
 .status.completed {
-  background: rgba(40, 167, 69, 0.1);
-  color: #28a745;
+  background: var(--color-feedback-completed-bg);
+  color: var(--color-feedback-completed-text);
 }
 
 .status.pending {
-  background: rgba(108, 117, 125, 0.1);
-  color: #6c757d;
+  background: var(--color-feedback-pending-bg);
+  color: var(--color-feedback-pending-text);
 }
 
 .status.closed {
-  background: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  background: var(--color-feedback-closed-bg);
+  color: var(--color-feedback-closed-text);
 }
 
 .no-feedback {

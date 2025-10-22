@@ -158,6 +158,16 @@
   --color-message-error-bg: rgba(245, 158, 11, 0.1);  /* 错误消息背景 */
   --color-message-fatal: #dc2626;                     /* 致命消息颜色 */
   --color-message-fatal-bg: rgba(239, 68, 68, 0.1);   /* 致命消息背景 */
+  
+  /* 反馈状态颜色 */
+  --color-feedback-processing-bg: rgba(255, 193, 7, 0.1);  /* 处理中背景 */
+  --color-feedback-processing-text: #ffc107;                /* 处理中文字 */
+  --color-feedback-completed-bg: rgba(40, 167, 69, 0.1);   /* 已完成背景 */
+  --color-feedback-completed-text: #28a745;                 /* 已完成文字 */
+  --color-feedback-pending-bg: rgba(108, 117, 125, 0.1);   /* 待处理背景 */
+  --color-feedback-pending-text: #6c757d;                   /* 待处理文字 */
+  --color-feedback-closed-bg: rgba(220, 53, 69, 0.1);      /* 已关闭背景 */
+  --color-feedback-closed-text: #dc3545;                    /* 已关闭文字 */
 }
 
 /* 浅色主题覆盖 */
@@ -315,4 +325,14 @@
   --color-message-error-bg: rgba(245, 158, 11, 0.1);  /* 错误消息背景 */
   --color-message-fatal: #dc2626;                     /* 致命消息颜色 */
   --color-message-fatal-bg: rgba(239, 68, 68, 0.1);   /* 致命消息背景 */
+  
+  /* 反馈状态颜色 */
+  --color-feedback-processing-bg: rgba(255, 193, 7, 0.1);  /* 处理中背景 */
+  --color-feedback-processing-text: #ffc107;                /* 处理中文字 */
+  --color-feedback-completed-bg: rgba(40, 167, 69, 0.1);   /* 已完成背景 */
+  --color-feedback-completed-text: #28a745;                 /* 已完成文字 */
+  --color-feedback-pending-bg: rgba(108, 117, 125, 0.1);   /* 待处理背景 */
+  --color-feedback-pending-text: #6c757d;                   /* 待处理文字 */
+  --color-feedback-closed-bg: rgba(220, 53, 69, 0.1);      /* 已关闭背景 */
+  --color-feedback-closed-text: #dc3545;                    /* 已关闭文字 */
 }
