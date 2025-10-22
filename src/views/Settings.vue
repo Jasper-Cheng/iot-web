@@ -14,7 +14,7 @@
                 <span>版本信息</span>
               </div>
               <div class="item-right">
-                <span>{{ appVersion }}</span>
+                <span>{{ currentVersionDisplay }}</span>
                 <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M9 18L15 12L9 6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -250,7 +250,7 @@
               </div>
               <div class="app-details">
                 <h3>智能家居物联网系统</h3>
-                <p class="version">版本 {{ appVersion }}</p>
+                <p class="version">版本 {{ currentVersionDisplay }}</p>
                 <p class="description">我们致力于为用户提供智能、便捷、安全的家居物联网解决方案，让生活更加美好。</p>
               </div>
             </div>
@@ -360,6 +360,18 @@ export default {
         content: [{ required: true, message: '请输入反馈内容', trigger: 'blur' }]
       }
     };
+  },
+  computed: {
+    // 当前版本显示
+    currentVersionDisplay() {
+      if (this.isVersionLoading) {
+        return '加载中...';
+      }
+      if (this.versionList.length > 0) {
+        return this.versionList[0].version_code || '未知版本';
+      }
+      return 'v1.0.0'; // 默认版本
+    }
   },
   mounted() {
     // 页面加载时自动获取版本信息
