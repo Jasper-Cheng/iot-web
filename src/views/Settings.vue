@@ -323,6 +323,7 @@
 
 <script>
 import { getVersionInfo } from '../api/version'
+import { submitFeedback as submitFeedbackAPI } from '../api/feedback'
 
 export default {
   name: 'Settings',
@@ -419,7 +420,7 @@ export default {
     closeAboutDialog() {
       this.aboutDialogVisible = false;
     },
-    submitFeedback() {
+    async submitFeedback() {
       // 简单的表单验证
       if (!this.feedbackForm.type) {
         alert('请选择反馈类型');
@@ -430,16 +431,35 @@ export default {
         return;
       }
       
-      // 这里可以添加提交反馈的API调用
-      alert('感谢您的反馈，我们会尽快处理！');
-      this.feedbackDialogVisible = false;
-      
-      // 重置表单
-      this.feedbackForm = {
-        type: '',
-        content: '',
-        contact: ''
-      };
+      try {
+        // 调用反馈提交API
+        await submitFeedbackAPI({
+          type: this.feedbackForm.type,
+          content: this.feedbackForm.content,
+          contact_info: this.feedbackForm.contact || '',
+          extra: {
+            ip_address: '', // 可以后续添加IP获取逻辑
+            user_agent: navigator.userAgent,
+            device_info: {
+              platform: 'Web',
+              version: '1.0.0'
+            }
+          }
+        });
+        
+        alert('感谢您的反馈，我们会尽快处理！');
+        this.feedbackDialogVisible = false;
+        
+        // 重置表单
+        this.feedbackForm = {
+          type: '',
+          content: '',
+          contact: ''
+        };
+      } catch (error) {
+        console.error('反馈提交失败:', error);
+        alert('反馈提交失败，请稍后重试');
+      }
     }
   }
 };
