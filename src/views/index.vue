@@ -160,8 +160,6 @@
                 </div>
               </div>
               
-              <div class="dropdown-divider"></div>
-              
               <!-- 消息列表 -->
               <div class="notification-content">
                 <div v-if="unreadMessages.length === 0" class="no-messages">
@@ -2011,6 +2009,7 @@ body, html {
   margin-left: auto;
   display: flex;
   align-items: center;
+  padding: 4px 4px;
 }
 
 .system-message-btn {
@@ -2018,7 +2017,7 @@ body, html {
   color: var(--color-bg-primary);
   border: none;
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 6px 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -2071,14 +2070,13 @@ body, html {
 }
 
 .message-list {
-  padding: 0;
+  padding: 4px 12px;
 }
 
 .message-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 12px;
   border-bottom: 1px solid var(--color-border);
   transition: all 0.3s ease-out;
   min-height: 60px;
@@ -3015,13 +3013,6 @@ body, html {
   color: var(--color-message-fatal);
 }
 
-/* 系统通知弹窗样式 */
-.notification-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-}
 
 .notification-icon {
   width: 40px;
@@ -3099,13 +3090,6 @@ body, html {
   border-radius: 3px;
   font-size: 11px;
   font-weight: 500;
-}
-
-.notification-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
-  border-top: 1px solid var(--color-border);
 }
 
 .confirm-btn {
