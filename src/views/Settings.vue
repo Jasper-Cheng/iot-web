@@ -361,18 +361,30 @@ export default {
       }
     };
   },
+  mounted() {
+    // 页面加载时自动获取版本信息
+    this.loadVersionInfo();
+  },
   methods: {
-    async showVersionDialog() {
+    // 加载版本信息
+    async loadVersionInfo() {
       this.isVersionLoading = true;
       try {
         // 请求版本信息
         const versionList = await getVersionInfo({
           platform: 'web',
-          limit: 10
+          limit: 10,
+          order_by: 'created_at',
+          order_desc: true
         });
         
         if (Array.isArray(versionList) && versionList.length > 0) {
-          this.versionList = versionList;
+          // 确保按创建时间倒序排列（最新的在前）
+          this.versionList = versionList.sort((a, b) => {
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateB - dateA; // 倒序：新的在前
+          });
         } else {
           this.versionList = [];
         }
@@ -381,8 +393,12 @@ export default {
         this.versionList = [];
       } finally {
         this.isVersionLoading = false;
-        this.versionDialogVisible = true;
       }
+    },
+    
+    // 显示版本信息对话框
+    showVersionDialog() {
+      this.versionDialogVisible = true;
     },
     closeVersionDialog() {
       this.versionDialogVisible = false;
@@ -432,6 +448,9 @@ export default {
       }
       
       try {
+        // 获取当前版本信息
+        const currentVersion = this.versionList.length > 0 ? this.versionList[0] : null;
+        
         // 调用反馈提交API
         await submitFeedbackAPI({
           type: this.feedbackForm.type,
@@ -442,7 +461,8 @@ export default {
             user_agent: navigator.userAgent,
             device_info: {
               platform: 'Web',
-              version: '1.0.0'
+              version: currentVersion ? currentVersion.version_code : '',
+              version_name: currentVersion ? currentVersion.version_name : ''
             }
           }
         });
