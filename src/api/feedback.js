@@ -31,3 +31,29 @@ export const submitFeedback = (feedbackData) => {
     data: submitData
   })
 }
+
+/**
+ * 获取反馈列表
+ * @param {Object} params - 查询参数
+ * @param {number} params.skip - 跳过条数，默认0
+ * @param {number} params.limit - 限制条数，默认100
+ * @param {string} params.order_by - 排序字段，如'created_at'
+ * @param {boolean} params.order_desc - 是否降序，默认true
+ * @returns {Promise} 返回反馈列表
+ */
+export const getFeedbackList = (params = {}) => {
+  const defaultParams = {
+    skip: 0,
+    limit: 100,
+    order_by: 'created_at',
+    order_desc: true
+  }
+  
+  const queryParams = { ...defaultParams, ...params }
+  
+  return request({
+    url: '/feedback/',
+    method: 'GET',
+    params: queryParams
+  })
+}

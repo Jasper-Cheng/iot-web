@@ -33,6 +33,19 @@
                 </svg>
               </div>
             </div>
+            <div class="about-item" @click="showFeedbackListDialog">
+              <div class="item-left">
+                <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>反馈列表</span>
+              </div>
+              <div class="item-right">
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M9 18L15 12L9 6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
             <div class="about-item" @click="showContactDialog">
               <div class="item-left">
                 <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -170,6 +183,57 @@
                 <button type="submit" class="submit-btn">提交</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 反馈列表对话框 -->
+    <div v-if="feedbackListDialogVisible" class="device-modal" @click="closeFeedbackListDialog">
+      <div class="message-log-modal-content" @click.stop>
+        <div class="message-log-header">
+          <h3>反馈列表</h3>
+          <button class="delete-close-btn" @click="closeFeedbackListDialog">×</button>
+        </div>
+        <div class="message-log-body">
+          <div class="feedback-list-content">
+            <div class="feedback-list-header">
+              <p>您提交的反馈记录</p>
+            </div>
+            <div v-if="isFeedbackLoading" class="loading-state">
+              <p>正在加载反馈列表...</p>
+            </div>
+            <div v-else-if="feedbackList.length > 0" class="feedback-list">
+              <div v-for="feedback in feedbackList" :key="feedback.id" class="feedback-item">
+                <div class="feedback-header">
+                  <div class="feedback-meta">
+                    <span class="feedback-name">{{ feedback.name || '匿名用户' }}</span>
+                    <span class="feedback-source">{{ getSourceText(feedback.source) }}</span>
+                  </div>
+                  <div class="feedback-type-date">
+                    <span class="feedback-type">{{ getFeedbackTypeText(feedback.type) }}</span>
+                    <span class="feedback-date">{{ formatDate(feedback.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="feedback-content">
+                  <p>{{ feedback.content }}</p>
+                </div>
+                <div v-if="feedback.replay" class="feedback-replay">
+                  <div class="replay-header">
+                    <span class="replay-label">回复：</span>
+                  </div>
+                  <div class="replay-content">
+                    <p>{{ feedback.replay }}</p>
+                  </div>
+                </div>
+                <div class="feedback-status">
+                  <span class="status" :class="getStatusClass(feedback.status)">{{ getStatusText(feedback.status) }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="no-feedback">
+              <p>暂无反馈记录</p>
+            </div>
           </div>
         </div>
       </div>
@@ -323,7 +387,8 @@
 
 <script>
 import { getVersionInfo } from '../api/version'
-import { submitFeedback as submitFeedbackAPI } from '../api/feedback'
+import { submitFeedback as submitFeedbackAPI, getFeedbackList } from '../api/feedback'
+import { useGlobalStore } from '../stores/global'
 
 export default {
   name: 'Settings',
@@ -333,10 +398,13 @@ export default {
       currentYear: new Date().getFullYear(),
       versionDialogVisible: false,
       feedbackDialogVisible: false,
+      feedbackListDialogVisible: false,
       contactDialogVisible: false,
       aboutDialogVisible: false,
       versionList: [],
       isVersionLoading: false,
+      feedbackList: [],
+      isFeedbackLoading: false,
       customerServicePhone: '400-888-8888',
       versionLogs: [
         {
@@ -362,6 +430,14 @@ export default {
     };
   },
   computed: {
+    // 全局状态
+    globalStore() {
+      return useGlobalStore();
+    },
+    // 当前用户信息
+    currentUser() {
+      return this.globalStore.user || {};
+    },
     // 当前版本显示
     currentVersionDisplay() {
       if (this.isVersionLoading) {
@@ -427,11 +503,85 @@ export default {
         second: '2-digit'
       });
     },
+    // 获取反馈类型文本
+    getFeedbackTypeText(type) {
+      const typeMap = {
+        'bug': 'bug',
+        'feature': '功能建议',
+        'improvement': '改进建议',
+        'complaint': '投诉',
+        'praise': '表扬',
+        'other': '其他'
+      };
+      return typeMap[type] || type;
+    },
+    // 获取状态文本
+    getStatusText(status) {
+      const statusMap = {
+        'pending': '待处理',
+        'processing': '处理中',
+        'closed': '已关闭',
+        'completed': '已完成'
+      };
+      return statusMap[status] || status;
+    },
+    // 获取状态样式类
+    getStatusClass(status) {
+      const classMap = {
+        'pending': 'pending',
+        'processing': 'processing',
+        'closed': 'closed',
+        'completed': 'completed'
+      };
+      return classMap[status] || 'pending';
+    },
+    // 获取来源文本
+    getSourceText(source) {
+      const sourceMap = {
+        'app': '移动端',
+        'web': 'Web端',
+        'email': '邮件',
+        'phone': '电话',
+        'wechat': '微信',
+        'other': '其他'
+      };
+      return sourceMap[source] || source;
+    },
     showFeedbackDialog() {
       this.feedbackDialogVisible = true;
     },
     closeFeedbackDialog() {
       this.feedbackDialogVisible = false;
+    },
+    async showFeedbackListDialog() {
+      this.feedbackListDialogVisible = true;
+      await this.loadFeedbackList();
+    },
+    // 加载反馈列表
+    async loadFeedbackList() {
+      this.isFeedbackLoading = true;
+      try {
+        const feedbackList = await getFeedbackList({
+          skip: 0,
+          limit: 100,
+          order_by: 'created_at',
+          order_desc: true
+        });
+        
+        if (Array.isArray(feedbackList)) {
+          this.feedbackList = feedbackList;
+        } else {
+          this.feedbackList = [];
+        }
+      } catch (error) {
+        console.error('获取反馈列表失败:', error);
+        this.feedbackList = [];
+      } finally {
+        this.isFeedbackLoading = false;
+      }
+    },
+    closeFeedbackListDialog() {
+      this.feedbackListDialogVisible = false;
     },
     showContactDialog() {
       this.contactDialogVisible = true;
@@ -465,8 +615,10 @@ export default {
         
         // 调用反馈提交API
         await submitFeedbackAPI({
+          name: this.currentUser.account.name || '',
           type: this.feedbackForm.type,
           content: this.feedbackForm.content,
+          source: 'web',
           contact_info: this.feedbackForm.contact || '',
           extra: {
             ip_address: '', // 可以后续添加IP获取逻辑
@@ -1219,6 +1371,162 @@ export default {
 }
 
 .no-version {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
+}
+
+/* 反馈列表对话框样式 */
+.feedback-list-content {
+  padding: 20px;
+}
+
+.feedback-list-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.feedback-list-header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feedback-item {
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.feedback-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.feedback-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.feedback-source {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.feedback-type-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.feedback-type {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.feedback-date {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.feedback-content {
+  margin-bottom: 12px;
+}
+
+.feedback-content p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.feedback-replay {
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.replay-header {
+  margin-bottom: 8px;
+}
+
+.replay-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.replay-content p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.feedback-status {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status.processing {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
+.status.completed {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.status.pending {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
+
+.status.closed {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.no-feedback {
   text-align: center;
   padding: 40px 20px;
   color: var(--color-text-secondary);
