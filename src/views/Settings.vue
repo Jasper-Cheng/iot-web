@@ -389,7 +389,6 @@ export default {
   display: flex;
   flex: 1;
   padding: 20px;
-  margin-top: 36px;
 }
 
 .about-container {
