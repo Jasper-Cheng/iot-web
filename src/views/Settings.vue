@@ -137,8 +137,11 @@
                 <label>反馈类型 *</label>
                 <select v-model="feedbackForm.type" required>
                   <option value="">请选择反馈类型</option>
+                  <option value="bug">bug</option>
                   <option value="feature">功能建议</option>
-                  <option value="bug">问题反馈</option>
+                  <option value="improvement">改进建议</option>
+                  <option value="complaint">投诉</option>
+                  <option value="praise">表扬</option>
                   <option value="other">其他</option>
                 </select>
               </div>
