@@ -79,15 +79,45 @@
           <button class="delete-close-btn" @click="closeVersionDialog">×</button>
         </div>
         <div class="message-log-body">
-          <div class="version-history">
-            <p><strong>当前版本:</strong> {{ appVersion }}</p>
-            <h3>更新日志:</h3>
-            <ul>
-              <li v-for="(log, index) in versionLogs" :key="index">
-                <strong>{{ log.version }}</strong> - {{ log.date }}<br>
-                {{ log.description }}
-              </li>
-            </ul>
+          <div class="version-content">
+            <div v-if="isVersionLoading" class="loading-state">
+              <p>正在获取版本信息...</p>
+            </div>
+            <div v-else-if="versionList.length > 0" class="version-list">
+              <div v-for="(version, index) in versionList" :key="version.id || index" class="version-item">
+                <div class="version-header">
+                  <h4>{{ version.title }}</h4>
+                  <p class="version-code">{{ version.version_name }}</p>
+                  <span class="version-date">{{ formatDate(version.created_at) }}</span>
+                </div>
+                <div class="version-details">
+                  <p class="description">{{ version.description }}</p>
+                  
+                  <div v-if="version.extra && version.extra.release_notes" class="release-notes">
+                    <h5>更新内容:</h5>
+                    <ul>
+                      <li v-for="note in version.extra.release_notes" :key="note">
+                        {{ note }}
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div v-if="version.extra && version.extra.compatibility" class="compatibility">
+                    <h5>兼容性要求:</h5>
+                    <div class="compatibility-info">
+                      <div v-for="(versionReq, platform) in version.extra.compatibility" :key="platform">
+                        <span class="platform">{{ platform }}:</span>
+                        <span class="version">{{ versionReq }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="index < versionList.length - 1" class="version-divider"></div>
+              </div>
+            </div>
+            <div v-else class="no-version">
+              <p>暂无版本信息</p>
+            </div>
           </div>
         </div>
       </div>
@@ -289,6 +319,8 @@
 </template>
 
 <script>
+import { getVersionInfo } from '../api/version'
+
 export default {
   name: 'Settings',
   data() {
@@ -299,6 +331,8 @@ export default {
       feedbackDialogVisible: false,
       contactDialogVisible: false,
       aboutDialogVisible: false,
+      versionList: [],
+      isVersionLoading: false,
       customerServicePhone: '400-888-8888',
       versionLogs: [
         {
@@ -324,11 +358,39 @@ export default {
     };
   },
   methods: {
-    showVersionDialog() {
-      this.versionDialogVisible = true;
+    async showVersionDialog() {
+      this.isVersionLoading = true;
+      try {
+        // 请求版本信息
+        const versionList = await getVersionInfo({
+          platform: 'web',
+          limit: 10
+        });
+        
+        if (Array.isArray(versionList) && versionList.length > 0) {
+          this.versionList = versionList;
+        } else {
+          this.versionList = [];
+        }
+      } catch (error) {
+        console.error('获取版本信息失败:', error);
+        this.versionList = [];
+      } finally {
+        this.isVersionLoading = false;
+        this.versionDialogVisible = true;
+      }
     },
     closeVersionDialog() {
       this.versionDialogVisible = false;
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
     },
     showFeedbackDialog() {
       this.feedbackDialogVisible = true;
@@ -970,6 +1032,137 @@ export default {
 .copyright p {
   margin: 4px 0;
   font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* 版本信息对话框样式 */
+.version-content {
+  padding: 20px;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
+}
+
+.version-list {
+  max-width: 100%;
+}
+
+.version-item {
+  margin-bottom: 24px;
+}
+
+.version-item:last-child {
+  margin-bottom: 0;
+}
+
+.version-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.version-header h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.version-code {
+  font-size: 14px;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin: 0;
+}
+
+.version-date {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+.version-details {
+  margin-bottom: 20px;
+}
+
+.description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.release-notes {
+  margin-bottom: 20px;
+}
+
+.release-notes h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 12px 0;
+}
+
+.release-notes ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.release-notes li {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.compatibility {
+  margin-bottom: 20px;
+}
+
+.compatibility h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 12px 0;
+}
+
+.compatibility-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compatibility-info > div {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.compatibility-info .platform {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  min-width: 60px;
+}
+
+.compatibility-info .version {
+  color: var(--color-text-secondary);
+}
+
+.version-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 20px 0;
+}
+
+.no-version {
+  text-align: center;
+  padding: 40px 20px;
   color: var(--color-text-secondary);
 }
 </style>
