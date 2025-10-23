@@ -53,7 +53,7 @@
        <SmartControlPanel />
         <CheckinCalendar @checkin-success="handleCheckinSuccess" />
         <ColorControlPanel />
-        <EnergyPanel />
+        <!-- <EnergyPanel /> -->
         <DeviceStatsPanel :rooms="roomsWithDevices" />
       </div>
     </div>
