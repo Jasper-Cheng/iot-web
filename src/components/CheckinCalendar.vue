@@ -261,11 +261,8 @@ const isLoading = ref(false)
 const checkinData = ref(new Map()) // 存储打卡数据
 const checkinStats = ref({
   total_check_ins: 0,
-  total_points: 0,
   continuous_days: 0,
-  longest_continuous: 0,
-  this_month_check_ins: 0,
-  this_month_points: 0
+  longest_continuous: 0
 })
 
 // 打卡记录弹窗相关数据
@@ -411,6 +408,7 @@ const loadCheckinStats = async () => {
   try {
     const response = await getCheckinStats(globalStore.user.account.id)
     checkinStats.value = response
+    console.log('checkinStats', checkinStats.value)
   } catch (error) {
     console.error('加载签到统计失败:', error)
   }
@@ -420,7 +418,8 @@ const loadCheckinStats = async () => {
 const loadCheckinData = async (year, month) => {
   try {
     const response = await getCheckinCalendar(year, month)
-    
+
+    console.log('response', response)
     // 清空当前月份的签到数据
     const currentMonthData = new Map()
     
@@ -428,15 +427,12 @@ const loadCheckinData = async (year, month) => {
     if (response.check_in_dates && Array.isArray(response.check_in_dates)) {
       response.check_in_dates.forEach(dateStr => {
         currentMonthData.set(dateStr, {
-          date: dateStr,
-          timestamp: new Date(dateStr).getTime(),
-          pointsEarned: 0, // 服务器没有返回具体积分，可以后续优化
-          continuousDays: response.continuous_days || 0,
-          checkInTime: dateStr
+          date: dateStr
         })
       })
     }
     
+    console.log('currentMonthData', currentMonthData)
     // 更新签到数据
     checkinData.value = currentMonthData
     
@@ -466,11 +462,7 @@ const handleDayClick = async (day) => {
     
     // 签到成功，更新本地数据
     checkinData.value.set(dateStr, {
-      date: dateStr,
-      timestamp: new Date().getTime(),
-      pointsEarned: response.points_earned || 0,
-      continuousDays: response.continuous_days || 1,
-      checkInTime: response.check_in_time
+      date: dateStr
     })
     
     // 触发签到成功事件
