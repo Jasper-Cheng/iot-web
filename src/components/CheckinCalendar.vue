@@ -13,8 +13,9 @@
         <div class="calendar-info">
           <h4>打卡日历</h4>
           <div class="calendar-stats">
-            <span class="checkin-count">{{ checkinCount }}天</span>
-            <span class="checkin-streak">{{ currentStreak }}天连击</span>
+            <span class="checkin-count">已打卡{{ checkinCount }}天</span>
+            <span class="checkin-streak">连击{{ currentStreak }}天</span>
+            <span class="checkin-streak">最长{{ longestStreak }}天</span>
           </div>
         </div>
       </div>
@@ -296,6 +297,10 @@ const checkinCount = computed(() => {
 })
 
 const currentStreak = computed(() => {
+  return checkinStats.value.continuous_days || 0
+})
+
+const longestStreak = computed(() => {
   return checkinStats.value.longest_continuous || 0
 })
 
