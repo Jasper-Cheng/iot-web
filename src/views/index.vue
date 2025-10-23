@@ -713,6 +713,7 @@ import { useGlobalStore } from '../stores/global'
 import { deleteUser, deleteFamilyMember, markAllMessagesAsRead } from '../api/users'
 import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
 import { getPointsBalance, getPointsHistory } from '../api/points'
+import { logout as logoutApi } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import { useWebSocketManager } from '../composables/useWebSocketManager'
 
@@ -1029,6 +1030,15 @@ const getGenderText = (gender) => {
 
 // 退出登录
 const logout = async () => {
+  try {
+    // 调用退出登录 API
+    await logoutApi()
+    console.log('退出登录成功')
+  } catch (error) {
+    console.warn('调用退出登录 API 失败:', error)
+    // 即使 API 调用失败，也继续执行退出流程
+  }
+  
   // 发送家庭消息通知退出登录（不等待结果）
   const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
   familyMessage.sendFamilyMessage('user.logout', {
