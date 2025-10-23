@@ -348,7 +348,8 @@ export const useGlobalStore = defineStore('global', {
 			try {
 				const res = await getDeviceMessages({
 					user_id: userId,
-					status: 'new'
+					status: 'new',
+					level: ['normal', 'error', 'fatal']
 				})
 				
 				// API直接返回消息数组，request.js已经提取了response.data
@@ -371,7 +372,8 @@ export const useGlobalStore = defineStore('global', {
 					user_id: userId,
 					status: 'read',
 					limit: params.limit || 20,
-					skip: params.skip || 0
+					skip: params.skip || 0,
+					level: ['normal', 'error', 'fatal']
 				})
 				
 				// 返回已读消息数组

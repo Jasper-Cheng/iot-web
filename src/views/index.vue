@@ -179,7 +179,11 @@
                     class="message-item"
                   >
                     <div class="message-icon" :class="`level-${message.level}`">
-                      <svg v-if="message.level === 'normal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg v-if="message.level === 'low'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
+                      </svg>
+                      <svg v-else-if="message.level === 'normal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
                         <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
                       </svg>
@@ -188,10 +192,14 @@
                         <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
                         <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
                       </svg>
-                      <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg v-else-if="message.level === 'fatal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
                         <path d="M12 8v4" stroke="currentColor" stroke-width="2" fill="none"/>
                         <path d="M12 16h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+                      </svg>
+                      <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
                       </svg>
                     </div>
                     <div class="message-content">
@@ -207,7 +215,7 @@
                         </div>
                         <div class="message-meta">
                           <span class="message-level" :class="`level-${message.level}`">
-                            {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
+                            {{ message.level === 'low' ? '低' : message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : message.level === 'fatal' ? '致命' : '未知' }}
                           </span>
                           <span class="message-time">{{ formatTime(message) }}</span>
                           <button 
@@ -435,7 +443,11 @@
             class="message-log-item"
           >
             <div class="message-icon" :class="`level-${message.level}`">
-              <svg v-if="message.level === 'normal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg v-if="message.level === 'low'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <svg v-else-if="message.level === 'normal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
@@ -444,10 +456,14 @@
                 <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
                 <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
               </svg>
-              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg v-else-if="message.level === 'fatal'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M12 8v4" stroke="currentColor" stroke-width="2" fill="none"/>
                 <path d="M12 16h.01" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
               </svg>
             </div>
             <div class="message-content">
@@ -463,7 +479,7 @@
                 </div>
                 <div class="message-meta">
                   <span class="message-level" :class="`level-${message.level}`">
-                    {{ message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : '致命' }}
+                    {{ message.level === 'low' ? '低' : message.level === 'normal' ? '普通' : message.level === 'error' ? '错误' : message.level === 'fatal' ? '致命' : '未知' }}
                   </span>
                   <span class="message-time">{{ formatTime(message) }}</span>
                 </div>
@@ -2101,6 +2117,12 @@ body, html {
   flex-shrink: 0;
 }
 
+.message-icon.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+  opacity: 0.7;
+}
+
 .message-icon.level-normal {
   background: var(--color-message-normal-bg);
   color: var(--color-message-normal);
@@ -2156,6 +2178,12 @@ body, html {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.message-level.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+  opacity: 0.7;
 }
 
 .message-level.level-normal {
@@ -2463,6 +2491,12 @@ body, html {
   flex-shrink: 0;
 }
 
+.message-log-item .message-icon.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+  opacity: 0.7;
+}
+
 .message-log-item .message-icon.level-normal {
   background: var(--color-message-normal-bg);
   color: var(--color-message-normal);
@@ -2518,6 +2552,12 @@ body, html {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.message-log-item .message-level.level-low {
+  background: var(--color-message-normal-bg);
+  color: var(--color-message-normal);
+  opacity: 0.7;
 }
 
 .message-log-item .message-level.level-normal {
