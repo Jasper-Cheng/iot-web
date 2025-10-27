@@ -1488,7 +1488,7 @@ const submitAddDevice = async () => {
   isAddingDevice.value = true
   
   try {
-    const response = await bindDeviceBySN(deviceForm.value.sn.trim(), globalStore.user?.user_id)
+    const response = await bindDeviceBySN(deviceForm.value.sn.trim())
     
     if (response) {
       ElMessage.success('设备添加成功')

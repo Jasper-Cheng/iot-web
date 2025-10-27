@@ -1,12 +1,9 @@
 import request from '../utils/request'
 
-export const fetchDeviceStatuses = (params) => {
+export const fetchDeviceStatuses = () => {
   return request({
     url: '/devices/',
-    method: 'get',
-    params: {
-      user_id: params.user_id
-    }
+    method: 'get'
   })
 }
 
@@ -17,11 +14,11 @@ export const unbindDeviceBySN = (sn) => {
   })
 }
 
-export const bindDeviceBySN = (sn, userId) => {
+export const bindDeviceBySN = (sn) => {
   return request({
     url: '/devices/bind-by-sn/',
     method: 'post',
-    data: { sn: sn, user_id: userId }
+    data: { sn: sn }
   })
 }
 
