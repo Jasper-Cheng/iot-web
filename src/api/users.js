@@ -1,21 +1,6 @@
 import request from '../utils/request'
 
 // 基础用户API
-export const getUsers = () => {
-	return request({
-		url: '/users',
-		method: 'get'
-	})
-}
-
-export const addUser = (data) => {
-	return request({
-		url: '/users',
-		method: 'post',
-		data: data
-	})
-}
-
 export const updateUser = (id, data) => {
 	return request({
 		url: `/users/${id}`,

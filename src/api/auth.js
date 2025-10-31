@@ -41,38 +41,3 @@ export function logout() {
     method: 'post'
   })
 }
-
-// 获取用户信息
-export function getUserInfo() {
-  return request({
-    url: '/auth/user',
-    method: 'get'
-  })
-}
-
-// 修改密码
-export function changePassword(data) {
-  return request({
-    url: '/auth/change-password',
-    method: 'post',
-    data
-  })
-}
-
-// 忘记密码
-export function forgotPassword(data) {
-  return request({
-    url: '/auth/forgot-password',
-    method: 'post',
-    data
-  })
-}
-
-// 重置密码
-export function resetPassword(data) {
-  return request({
-    url: '/auth/reset-password',
-    method: 'post',
-    data
-  })
-}
