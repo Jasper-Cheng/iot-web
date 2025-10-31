@@ -696,7 +696,7 @@ const addNewMember = async () => {
     
     await addFamilyMember(memberData)
     // 重新从服务器加载成员数据，watch会自动调用loadData()
-    await globalStore.loadMembers(globalStore.user?.user_id)
+    await globalStore.loadMembers()
     
     // 发送家庭消息通知成员添加
     try {

@@ -172,7 +172,7 @@ export const useGlobalStore = defineStore('global', {
 		userPoints: 0
 	}),
 	actions: {
-		async loadDevices(userId) {
+		async loadDevices() {
 			this.loading.devices = true
 			this.errors.devices = null
 			try {
@@ -198,7 +198,7 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.devices = false
 			}
 		},
-		async loadRooms(userId) {
+		async loadRooms() {
 			this.loading.rooms = true
 			this.errors.rooms = null
 			try {
@@ -236,7 +236,7 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.rooms = false
 			}
 		},
-		async loadMembers(userId) {
+		async loadMembers() {
 			this.loading.members = true
 			this.errors.members = null
 			try {
@@ -418,9 +418,9 @@ export const useGlobalStore = defineStore('global', {
 			const userId = this.user.user_id
 			
 			await Promise.all([
-				this.loadDevices(userId),
-				this.loadRooms(userId),
-				this.loadMembers(userId),
+				this.loadDevices(),
+				this.loadRooms(),
+				this.loadMembers(),
 				this.loadMessages(),
 				this.loadSystemMessages(userId)
 			])

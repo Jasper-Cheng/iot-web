@@ -897,7 +897,7 @@ const handleFamilyMessage = (data) => {
 // 具体的家庭消息处理方法
 const handleFamilyPermissionUpdate = async (data) => {
   const { title, message, level } = data
-  await globalStore.loadMembers(globalStore.user?.user_id)
+  await globalStore.loadMembers()
   console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
   // 显示登录通知
   ElMessage.primary({
@@ -915,7 +915,7 @@ const handleFamilyMessageUpdate = async (data) => {
 
 const handleFamilyMemberUpdate = async (data) => {
   const { title, message, level } = data
-  await globalStore.loadMembers(globalStore.user?.user_id)
+  await globalStore.loadMembers()
   console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
   // 显示登录通知
   ElMessage.primary({
@@ -927,8 +927,8 @@ const handleFamilyMemberUpdate = async (data) => {
 
 const handleFamilyDeviceUpdate = async (data) => {
   const { title, message, level } = data
-  await globalStore.loadDevices(globalStore.user?.user_id)
-  await globalStore.loadMembers(globalStore.user?.user_id)
+  await globalStore.loadDevices()
+  await globalStore.loadMembers()
   console.log(`家庭设备更新 [${level}]: ${title} - ${message}`)
   // 显示登录通知
   ElMessage.primary({
@@ -940,7 +940,7 @@ const handleFamilyDeviceUpdate = async (data) => {
 
 const handleFamilyRoomUpdate = async (data) => {
   const { title, message, level } = data
-  await globalStore.loadRooms(globalStore.user?.user_id)
+  await globalStore.loadRooms()
   console.log(`家庭房间更新 [${level}]: ${title} - ${message}`)
   // 显示登录通知
   ElMessage.primary({
@@ -952,7 +952,7 @@ const handleFamilyRoomUpdate = async (data) => {
 
 const handleFamilyRoomDevicesUpdate = async (data) => {
   const { title, message, level } = data
-  await globalStore.loadRooms(globalStore.user?.user_id)
+  await globalStore.loadRooms()
   console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
 }
 
