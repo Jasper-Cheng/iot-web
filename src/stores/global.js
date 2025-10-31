@@ -242,7 +242,7 @@ export const useGlobalStore = defineStore('global', {
 			try {
 				// 并行加载成员列表和当前用户信息
 				const [membersRes, userRes] = await Promise.all([
-					getMembers({ user_id: userId }),
+					getMembers(),
 					getUserDetail(userId)
 				])
 				

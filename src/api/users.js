@@ -33,13 +33,10 @@ export const deleteUser = (id) => {
 
 
 // 成员相关API
-export const getMembers = (params) => {
+export const getMembers = () => {
 	return request({
 		url: '/members/',
-		method: 'get',
-		params: {
-			user_id: params.user_id
-		}
+		method: 'get'
 	})
 }
 
