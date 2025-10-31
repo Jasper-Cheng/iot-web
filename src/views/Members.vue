@@ -685,7 +685,6 @@ const addNewMember = async () => {
     }
     
     const memberData = {
-      user_id: globalStore.user?.user_id, // 当前用户的ID
       account: newMember.value.username, // 使用account字段而不是username
       password: newMember.value.password,
       phone: newMember.value.phone,
