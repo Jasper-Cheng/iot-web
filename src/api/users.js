@@ -59,14 +59,6 @@ export const getUserDetail = (userId) => {
 }
 
 
-export const updateMemberDevicePermission = (memberId, deviceId, hasPermission) => {
-  return request({
-    url: `/members/${memberId}/device-permissions/${deviceId}`,
-    method: 'put',
-    data: { hasPermission }
-  })
-}
-
 export const addFamilyMember = (memberData) => {
   return request({
     url: '/members/',

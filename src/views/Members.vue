@@ -260,7 +260,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { 
-  updateMemberDevicePermission,
   addFamilyMember,
   updateFamilyMember,
   deleteFamilyMember,
