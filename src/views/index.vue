@@ -1354,16 +1354,14 @@ const markAllAsRead = async () => {
     console.log('标记所有消息为已读')
     
     // 调用API标记所有消息为已读
-    await markAllMessagesAsRead(globalStore.user?.user_id)
+    await markAllMessagesAsRead()
     
     // 清空未读消息列表
     unreadMessages.value = []
     
     // 更新全局消息状态
     globalStore.messages.forEach(message => {
-      if (message.status === 'new') {
-        message.status = 'read'
-      }
+      message.status = 'read'
     })
     
     // 发送家庭消息通知一键已读
@@ -1391,7 +1389,7 @@ const markMessageAsRead = async (message) => {
     console.log('标记消息为已读:', message.id)
     
     // 调用API标记消息为已读
-    await markMessageAsReadAPI(message.id, 'read')
+    await markMessageAsReadAPI(message.id)
     
     // 直接移除消息，无动画效果
     const index = unreadMessages.value.findIndex(m => m.id === message.id)
@@ -1405,22 +1403,10 @@ const markMessageAsRead = async (message) => {
       globalMessage.status = 'read'
     }
     
-    // 发送家庭消息通知单条消息已读
-    try {
-      const deviceName = message.device_name || '未知设备'
-      await familyMessage.sendFamilyMessage('update.message', {
-        title: '消息已读',
-        message: `用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"已标记设备"${deviceName}"的消息为已读`,
-        level: 'normal'
-      })
-    } catch (messageError) {
-      console.warn('发送家庭消息失败:', messageError)
-    }
-    
-    console.log('消息已成功标记为已读')
+    ElMessage.success('消息已标记为已读')
   } catch (error) {
-    console.error('标记消息已读失败:', error)
-    ElMessage.error('操作失败，请重试')
+    console.error('标记消息为已读失败:', error)
+    ElMessage.error('标记消息为已读失败')
   }
 }
 

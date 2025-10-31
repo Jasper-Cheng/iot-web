@@ -89,12 +89,9 @@ export const getDeviceMessages = (params) => {
 }
 
 // 标记消息已读
-export const markMessageAsRead = (messageId, status = 'read') => {
+export const markMessageAsRead = (messageId) => {
   return request({
-    url: `/device-messages/${messageId}/status`,
-    method: 'patch',
-    params: {
-      status: status
-    }
+    url: `/device-messages/${messageId}/make-read`,
+    method: 'patch'
   })
 }

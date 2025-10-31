@@ -113,9 +113,9 @@ export const batchUpdateMemberDevicePermissions = (memberId, deviceIds) => {
 }
 
 // 一键已读所有消息
-export const markAllMessagesAsRead = (userId) => {
+export const markAllMessagesAsRead = () => {
   return request({
-    url: `/device-messages/user/${userId}/mark-read`,
+    url: '/device-messages/mark-all-read',
     method: 'patch'
   })
 }
