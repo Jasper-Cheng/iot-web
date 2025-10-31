@@ -736,7 +736,7 @@ const editMember = async () => {
     
     // 根据角色调用不同的API
     if (isEditingOwner.value) {
-      await updateUser(editingMember.value.id, updateData)
+      await updateUser(updateData)
     } else {
       await updateFamilyMember(editingMember.value.id, updateData)
     }

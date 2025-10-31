@@ -1524,7 +1524,7 @@ const confirmDelete = async () => {
       response = await deleteFamilyMember(globalStore.user?.id)
     } else {
       // 拥有者调用删除用户API
-      response = await deleteUser(globalStore.user?.id)
+      response = await deleteUser()
     }
     
     // API调用成功后，发送家庭消息通知注销（不等待结果）

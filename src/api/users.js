@@ -1,17 +1,17 @@
 import request from '../utils/request'
 
 // 基础用户API
-export const updateUser = (id, data) => {
+export const updateUser = (data) => {
 	return request({
-		url: `/users/${id}`,
+		url: '/users/',
 		method: 'put',
 		data: data
 	})
 }
 
-export const deleteUser = (id) => {
+export const deleteUser = () => {
 	return request({
-		url: `/users/${id}`,
+		url: '/users/',
 		method: 'delete'
 	})
 }
@@ -33,9 +33,9 @@ export const getMemberDetail = (memberId) => {
 }
 
 // 用户详情API
-export const getUserDetail = (userId) => {
+export const getUserDetail = () => {
 	return request({
-		url: `/users/${userId}`,
+		url: '/users/',
 		method: 'get'
 	})
 }
