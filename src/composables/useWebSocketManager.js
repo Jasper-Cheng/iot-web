@@ -200,7 +200,7 @@ export function useWebSocketManager() {
         clearWebSocketManager()
         // 创建新的 WebSocket 管理器
         wsManagerSingleton = getWebSocketManager({
-          url: `ws://localhost:8000/api/v1/ws/user/${userId}?token=${token}`,
+          url: `ws://localhost:8000/api/v1/web/ws/user/${userId}?token=${token}`,
           userId: userId,
           debug: true,
           reconnectInterval: 3000,
