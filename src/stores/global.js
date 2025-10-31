@@ -342,12 +342,11 @@ export const useGlobalStore = defineStore('global', {
 				this.loading.members = false
 			}
 		},
-		async loadMessages(userId) {
+		async loadMessages() {
 			this.loading.messages = true
 			this.errors.messages = null
 			try {
 				const res = await getDeviceMessages({
-					user_id: userId,
 					status: 'new',
 					level: ['normal', 'error', 'fatal']
 				})
@@ -364,12 +363,11 @@ export const useGlobalStore = defineStore('global', {
 		},
 		
 		// 加载已读消息（支持分页）
-		async loadReadMessages(userId, params = {}) {
+		async loadReadMessages(params = {}) {
 			this.loading.messages = true
 			this.errors.messages = null
 			try {
 				const res = await getDeviceMessages({
-					user_id: userId,
 					status: 'read',
 					limit: params.limit || 20,
 					skip: params.skip || 0,
@@ -423,7 +421,7 @@ export const useGlobalStore = defineStore('global', {
 				this.loadDevices(userId),
 				this.loadRooms(userId),
 				this.loadMembers(userId),
-				this.loadMessages(userId),
+				this.loadMessages(),
 				this.loadSystemMessages(userId)
 			])
 		},

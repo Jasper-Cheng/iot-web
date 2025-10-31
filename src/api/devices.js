@@ -32,14 +32,7 @@ export const updateDeviceName = (id, name) => {
 
 // 获取设备消息
 export const getDeviceMessages = (params) => {
-  // user_id 必传
-  if (!params.user_id) {
-    throw new Error('user_id is required')
-  }
-  
-  const requestParams = {
-    user_id: params.user_id
-  }
+  const requestParams = {}
   
   // 有就添加，没有就不添加
   if (params.limit !== undefined) {
