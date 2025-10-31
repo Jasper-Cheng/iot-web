@@ -13,11 +13,3 @@ export const getSystemMessages = (params = {}) => {
     }
   })
 }
-
-// 获取单个系统消息详情
-export const getSystemMessageDetail = (id) => {
-  return request({
-    url: `/system-messages/${id}`,
-    method: 'get'
-  })
-}
