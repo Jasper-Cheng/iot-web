@@ -45,22 +45,16 @@ export const getCheckinCalendar = (year, month) => {
 }
 
 // 获取签到统计数据
-export const getCheckinStats = (accountId) => {
-  if (!accountId) {
-    throw new Error('Account ID is required to get checkin stats.')
-  }
+export const getCheckinStats = () => {
   return request({
-    url: `/check-in/stats/${accountId}`,
+    url: '/check-in/stats',
     method: 'get'
   })
 }
 
-export const getCheckinHistory = (accountId, skip = 0, limit = 20) => {
-  if (!accountId) {
-    throw new Error('Account ID is required to get checkin history.')
-  }
+export const getCheckinHistory = (skip = 0, limit = 20) => {
   return request({
-    url: `/check-in/history/${accountId}`,
+    url: '/check-in/history',
     method: 'get',
     params: {
       skip: skip,

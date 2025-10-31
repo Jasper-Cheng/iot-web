@@ -403,10 +403,8 @@ const nextMonth = () => {
 
 // 获取签到统计数据
 const loadCheckinStats = async () => {
-  if (!globalStore.user?.account?.id) return
-  
   try {
-    const response = await getCheckinStats(globalStore.user.account.id)
+    const response = await getCheckinStats()
     checkinStats.value = response
     console.log('checkinStats', checkinStats.value)
   } catch (error) {
@@ -523,24 +521,12 @@ const closeCheckinHistoryModal = () => {
   checkinHistory.value = []
 }
 
-const loadCheckinHistory = async (page = 1, append = false, customLimit = null, customSkip = null) => {
-  if (isLoadingCheckinHistory.value) return
-  
-  isLoadingCheckinHistory.value = true
+const loadCheckinHistory = async (append = false) => {
+  const skip = append ? checkinHistory.value.length : 0
+  const limit = 20
   
   try {
-    const limit = customLimit || checkinHistoryLimit.value
-    const skip = customSkip !== null ? customSkip : (page - 1) * limit
-    
-    const globalStore = useGlobalStore()
-    const accountId = globalStore.user?.account?.id
-    
-    if (!accountId) {
-      ElMessage.error('用户信息不完整，无法加载打卡记录')
-      return
-    }
-    
-    const response = await getCheckinHistory(accountId, skip, limit)
+    const response = await getCheckinHistory(skip, limit)
     
     if (append) {
       checkinHistory.value = [...checkinHistory.value, ...response]
@@ -548,13 +534,10 @@ const loadCheckinHistory = async (page = 1, append = false, customLimit = null, 
       checkinHistory.value = response
     }
     
-    // 更新分页信息
-    checkinHistoryPage.value = page
     hasMoreCheckinHistory.value = response.length === limit
-    
   } catch (error) {
-    console.error('加载打卡记录失败:', error)
-    ElMessage.error('加载打卡记录失败')
+    console.error('加载签到历史失败:', error)
+    ElMessage.error('加载签到历史失败')
   } finally {
     isLoadingCheckinHistory.value = false
   }
