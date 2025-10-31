@@ -154,10 +154,8 @@ const editingDeviceName = ref('')
 
 // 积分相关方法
 const loadUserPoints = async () => {
-  if (!globalStore.user?.account?.id) return
-  
   try {
-    const response = await getPointsBalance(globalStore.user.account.id)
+    const response = await getPointsBalance()
     // 更新全局状态中的积分
     globalStore.userPoints = response.available_balance || 0
   } catch (error) {

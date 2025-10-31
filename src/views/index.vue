@@ -1200,10 +1200,8 @@ const loadMoreReadMessagesDirect = async (skip, limit) => {
 
 // 积分相关方法
 const loadUserPoints = async () => {
-  if (!globalStore.user?.account?.id) return
-  
   try {
-    const response = await getPointsBalance(globalStore.user.account.id)
+    const response = await getPointsBalance()
     globalStore.userPoints = response.available_balance || 0
   } catch (error) {
     console.error('加载积分余额失败:', error)
@@ -1215,7 +1213,7 @@ const loadPointsHistory = async (page = 1, append = false) => {
   
   isLoadingPointsHistory.value = true
   try {
-    const response = await getPointsHistory(globalStore.user.account.id, {
+    const response = await getPointsHistory({
       skip: (page - 1) * pointsHistoryLimit.value,
       limit: pointsHistoryLimit.value
     })
@@ -1317,7 +1315,7 @@ const loadMorePointsHistoryDirect = async (skip, limit) => {
   
   isLoadingPointsHistory.value = true
   try {
-    const response = await getPointsHistory(globalStore.user.account.id, {
+    const response = await getPointsHistory({
       skip: skip,
       limit: limit
     })
