@@ -758,8 +758,7 @@ const confirmAddRoom = async () => {
   try {
     // 调用创建房间 API
     const response = await createRoom({
-      name: roomName,
-      user_id: globalStore.user.user_id
+      name: roomName
     })
     
     // 创建新房间对象

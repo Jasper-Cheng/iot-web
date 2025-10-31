@@ -202,7 +202,7 @@ export const useGlobalStore = defineStore('global', {
 			this.loading.rooms = true
 			this.errors.rooms = null
 			try {
-				const res = await getRooms({ user_id: userId })
+				const res = await getRooms()
 				
 				// API直接返回房间数组，request.js已经提取了response.data
 				const rooms = Array.isArray(res) ? res : []
