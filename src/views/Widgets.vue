@@ -137,10 +137,10 @@
               class="action-btn danger" 
               :class="{ disabled: !canControlDevice(selectedDevice.id) }"
               :disabled="!canControlDevice(selectedDevice.id)"
-              :title="!canControlDevice(selectedDevice.id) ? '您没有权限删除此设备' : '删除设备'"
+              :title="!canControlDevice(selectedDevice.id) ? '您没有权限解绑此设备' : '解绑设备'"
               @click="openDeleteDeviceConfirm(selectedDevice)"
             >
-              Remove Device
+              解绑设备
             </button>
           </div>
         </div>
@@ -183,21 +183,21 @@
             <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
           </svg>
         </div>
-        <h3>删除设备</h3>
+        <h3>解绑设备</h3>
       </div>
       <div class="confirm-content">
-        <p>确定要删除设备 <strong>"{{ devicePendingDelete.name }}"</strong> 吗？</p>
-        <p>此操作将<strong>永久删除</strong>设备，包括：</p>
+        <p>确定要解绑设备 <strong>"{{ devicePendingDelete.name }}"</strong> 吗？</p>
+        <p>此操作将<strong>解绑</strong>设备，包括：</p>
         <ul>
           <li>设备的所有配置和设置</li>
           <li>设备的历史数据记录</li>
           <li>设备与房间的关联关系</li>
         </ul>
-        <p class="warning-text">删除后设备将<strong>无法恢复</strong>，请谨慎操作！</p>
+        <p class="warning-text">解绑后设备将从您的家庭中移除，请谨慎操作！</p>
       </div>
       <div class="confirm-actions">
         <button class="btn-cancel" @click="closeDeleteDeviceConfirm">取消</button>
-        <button class="btn-delete" @click="confirmDeleteDevice">删除</button>
+        <button class="btn-delete" @click="confirmDeleteDevice">解绑</button>
       </div>
     </div>
   </div>
@@ -251,7 +251,7 @@ const isMember = computed(() => {
 
 // 检查当前用户是否有权限控制指定设备
 const canControlDevice = (deviceId) => {
-  // 只有Owner可以控制设备，Member不能删除设备
+  // 只有Owner可以控制设备，Member不能解绑设备
   return isOwner.value
 }
 
@@ -389,47 +389,14 @@ const confirmDeleteDevice = async () => {
   try {
     // 调用解绑设备 API，传入 SN
     await unbindDeviceBySN(device.sn)
-    
-    // 从 localDevices 中移除
-    const localIndex = localDevices.value.findIndex(d => d.id === device.id)
-    if (localIndex > -1) {
-      localDevices.value.splice(localIndex, 1)
-    }
-    
-    // 从 globalStore.rooms 中移除
-    if (device.roomId !== 'unassigned') {
-      const room = globalStore.rooms.find(r => r.id === device.roomId)
-      if (room && room.devices) {
-        room.devices = room.devices.filter(rd => rd.device_id !== device.id)
-      }
-    }
-    
-    // 从 globalStore.devices 中移除
-    const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
-    if (globalIndex > -1) {
-      globalStore.devices.splice(globalIndex, 1)
-    }
-    
-    // 发送家庭消息通知设备删除
-    try {
-      await familyMessage.sendFamilyMessage('update.device', {
-        title: '设备删除',
-        message: `设备"${device.name}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"删除`,
-        level: 'normal'
-      })
-    } catch (messageError) {
-      console.warn('发送家庭消息失败:', messageError)
-      // 不影响设备删除的主要流程
-    }
-    
+  
     // 关闭设备详情弹窗和确认弹窗
     closeDeviceModal()
     closeDeleteDeviceConfirm()
     
-    ElMessage.success('设备删除成功')
   } catch (error) {
-    console.error('删除设备失败:', error)
-    ElMessage.error('删除设备失败，请重试')
+    console.error('解绑设备失败:', error)
+    ElMessage.error('解绑设备失败，请重试')
     closeDeleteDeviceConfirm()
   }
 }

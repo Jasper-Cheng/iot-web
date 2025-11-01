@@ -874,6 +874,15 @@ const handleFamilyMessage = (data) => {
     case 'device.message.mark_all_read':
       handleDeviceMessageMarkAllRead(data.data)
       break
+    case 'device.name.update':
+      handleDeviceNameUpdate(data.data)
+      break
+    case 'device.bind':
+      handleDeviceBind(data.data)
+      break
+    case 'device.unbind':
+      handleDeviceUnbind(data.data)
+      break
     case 'update.member':
       handleFamilyMemberUpdate(data.data)
       break
@@ -956,6 +965,43 @@ const handleDeviceMessageMarkAllRead = (data) => {
       message.status = 'read'
     })
     ElMessage.success(`所有消息已标记为已读`)
+}
+
+// 处理设备名称更新事件
+const handleDeviceNameUpdate = (data) => {
+  const { senderId, senderRole, title, message, level, deviceId, deviceName, oldName } = data
+  console.log(`设备名称更新 [${level}]: ${title} - ${message}`)
+  
+  // 更新全局设备列表中对应设备的名称
+  if (deviceId && deviceName && globalStore.devices) {
+    const device = globalStore.devices.find(d => d.id === deviceId)
+    if (device) {
+      device.name = deviceName
+    }
+  }
+  ElMessage.success(`设备名称更新成功`)
+}
+
+// 处理设备绑定事件
+const handleDeviceBind = async (data) => {
+  const { senderId, senderRole, title, message, level, deviceId, deviceName, deviceSn } = data
+  console.log(`设备绑定 [${level}]: ${title} - ${message}`)
+  
+  // 重新加载设备列表以获取新绑定的设备
+  await globalStore.loadDevices()
+  
+  ElMessage.success(message || '设备绑定成功')
+}
+
+// 处理设备解绑事件
+const handleDeviceUnbind = async (data) => {
+  const { senderId, senderRole, title, message, level, deviceId, deviceName, deviceSn } = data
+  console.log(`设备解绑 [${level}]: ${title} - ${message}`)
+  
+  // 重新加载设备列表以移除已解绑的设备
+  await globalStore.loadDevices()
+  
+  ElMessage.success(message || '设备解绑成功')
 }
 
 const handleFamilyMemberUpdate = async (data) => {
@@ -1530,23 +1576,9 @@ const submitAddDevice = async () => {
   isAddingDevice.value = true
   
   try {
-    const response = await bindDeviceBySN(deviceForm.value.sn.trim())
+    await bindDeviceBySN(deviceForm.value.sn.trim())
+    closeAddDeviceModal()
     
-    if (response) {
-      ElMessage.success('设备添加成功')
-      closeAddDeviceModal()
-      
-      // 发送家庭消息通知设备添加
-      try {
-        await familyMessage.sendFamilyMessage('update.device', {
-          title: '设备添加',
-          message: `设备"${response.name || deviceForm.value.sn}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"添加`,
-          level: 'normal'
-        })
-      } catch (messageError) {
-        console.warn('发送家庭消息失败:', messageError)
-      }
-    }
   } catch (error) {
     console.error('添加设备失败:', error)
     
@@ -3368,3 +3400,4 @@ body, html {
 }
 
 </style>
+

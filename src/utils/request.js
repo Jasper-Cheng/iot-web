@@ -83,7 +83,7 @@ request.interceptors.response.use(
           ElMessage.error('服务器内部错误')
           break
         default:
-          ElMessage.error(data?.message || '请求失败')
+          ElMessage.error(data?.detail || '请求失败')
       }
     } else if (error.request) {
       ElMessage.error('网络连接失败，请检查网络')
