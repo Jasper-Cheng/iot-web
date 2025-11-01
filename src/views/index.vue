@@ -868,8 +868,11 @@ const handleFamilyMessage = (data) => {
     case 'update.permission':
       handleFamilyPermissionUpdate(data.data)
       break
-    case 'update.message':
-      handleFamilyMessageUpdate(data.data)
+    case 'device.message.read':
+      handleDeviceMessageRead(data.data)
+      break
+    case 'device.message.mark_all_read':
+      handleDeviceMessageMarkAllRead(data.data)
       break
     case 'update.member':
       handleFamilyMemberUpdate(data.data)
@@ -919,10 +922,40 @@ const handleFamilyPermissionUpdate = async (data) => {
   })
 }
 
-const handleFamilyMessageUpdate = async (data) => {
-  const { title, message, level } = data
-  console.log(`家庭消息更新 [${level}]: ${title} - ${message}`)
-  await globalStore.loadMessages(globalStore.user?.user_id)
+// 处理设备消息已读事件
+const handleDeviceMessageRead = (data) => {
+  const { senderId, senderRole, title, message, level, deviceId, deviceName, messageId } = data
+  console.log(`设备消息已读 [${level}]: ${title} - ${message}`)
+  
+  // 如果消息在当前未读列表中，移除它
+  if (messageId) {
+    const index = unreadMessages.value.findIndex(m => m.id === messageId)
+    if (index > -1) {
+      unreadMessages.value.splice(index, 1)
+    }
+    
+    // 更新全局消息状态
+    const globalMessage = globalStore.messages.find(m => m.id === messageId)
+    if (globalMessage) {
+      globalMessage.status = 'read'
+    }
+  }
+  ElMessage.success(`消息已标记为已读`)
+}
+
+// 处理所有设备消息已读事件
+const handleDeviceMessageMarkAllRead = (data) => {
+  const { senderId, senderRole, title, message, level, count } = data
+  console.log(`所有设备消息已读 [${level}]: ${title} - ${message}`)
+  
+     // 清空未读消息列表
+     unreadMessages.value = []
+    
+    // 更新全局消息状态
+    globalStore.messages.forEach(message => {
+      message.status = 'read'
+    })
+    ElMessage.success(`所有消息已标记为已读`)
 }
 
 const handleFamilyMemberUpdate = async (data) => {
@@ -1402,26 +1435,9 @@ const markAllAsRead = async () => {
     // 调用API标记所有消息为已读
     await markAllMessagesAsRead()
     
-    // 清空未读消息列表
-    unreadMessages.value = []
+ 
     
-    // 更新全局消息状态
-    globalStore.messages.forEach(message => {
-      message.status = 'read'
-    })
     
-    // 发送家庭消息通知一键已读
-    try {
-      await familyMessage.sendFamilyMessage('update.message', {
-        title: '消息已读',
-        message: `用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"已将所有消息标记为已读`,
-        level: 'normal'
-      })
-    } catch (messageError) {
-      console.warn('发送家庭消息失败:', messageError)
-    }
-    
-    ElMessage.success('所有消息已标记为已读')
     closeNotificationMenu()
   } catch (error) {
     console.error('标记已读失败:', error)
@@ -1437,19 +1453,8 @@ const markMessageAsRead = async (message) => {
     // 调用API标记消息为已读
     await markMessageAsReadAPI(message.id)
     
-    // 直接移除消息，无动画效果
-    const index = unreadMessages.value.findIndex(m => m.id === message.id)
-    if (index > -1) {
-      unreadMessages.value.splice(index, 1)
-    }
+ 
     
-    // 更新全局消息状态
-    const globalMessage = globalStore.messages.find(m => m.id === message.id)
-    if (globalMessage) {
-      globalMessage.status = 'read'
-    }
-    
-    ElMessage.success('消息已标记为已读')
   } catch (error) {
     console.error('标记消息为已读失败:', error)
     ElMessage.error('标记消息为已读失败')
