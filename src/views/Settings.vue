@@ -41,6 +41,7 @@
                 <span>反馈列表</span>
               </div>
               <div class="item-right">
+                <span v-if="hasNewFeedback" class="feedback-badge"></span>
                 <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M9 18L15 12L9 6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -436,6 +437,10 @@ export default {
     currentUser() {
       return this.globalStore.user || {};
     },
+    // 是否有新的意见反馈
+    hasNewFeedback() {
+      return this.globalStore.hasNewFeedback;
+    },
     // 当前版本显示
     currentVersionDisplay() {
       if (this.isVersionLoading) {
@@ -553,6 +558,8 @@ export default {
     },
     async showFeedbackListDialog() {
       this.feedbackListDialogVisible = true;
+      // 清除新反馈提示（小红点）
+      this.globalStore.setHasNewFeedback(false);
       await this.loadFeedbackList();
     },
     // 加载反馈列表
@@ -738,6 +745,17 @@ export default {
   font-weight: 500;
   color: var(--color-text-primary);
   line-height: 1.4;
+}
+
+.feedback-badge {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-danger, #f56565);
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .item-right {

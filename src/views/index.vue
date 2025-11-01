@@ -883,6 +883,9 @@ const handleFamilyMessage = (data) => {
     case 'device.unbind':
       handleDeviceUnbind(data.data)
       break
+    case 'feedback.create':
+      handleFeedbackCreate(data.data)
+      break
     case 'update.member':
       handleFamilyMemberUpdate(data.data)
       break
@@ -1002,6 +1005,22 @@ const handleDeviceUnbind = async (data) => {
   await globalStore.loadDevices()
   
   ElMessage.success(message || '设备解绑成功')
+}
+
+// 处理意见反馈创建事件
+const handleFeedbackCreate = (data) => {
+  const { senderId, senderRole, title, message, level, feedbackId, feedbackType, feedbackContent } = data
+  console.log(`意见反馈创建 [${level}]: ${title} - ${message}`)
+  
+  // 设置新的反馈提示（小红点）
+  globalStore.setHasNewFeedback(true)
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
 }
 
 const handleFamilyMemberUpdate = async (data) => {

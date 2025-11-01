@@ -171,7 +171,9 @@ export const useGlobalStore = defineStore('global', {
 			auth: null
 		},
 		// 用户积分
-		userPoints: 0
+		userPoints: 0,
+		// 是否有新的意见反馈
+		hasNewFeedback: false
 	}),
 	actions: {
 		async loadDevices() {
@@ -602,6 +604,11 @@ export const useGlobalStore = defineStore('global', {
 					...this.members.slice(memberIndex + 1)
 				]
 			}
+		},
+		
+		// 设置是否有新的意见反馈
+		setHasNewFeedback(hasNew) {
+			this.hasNewFeedback = hasNew
 		}
 	}
 })
