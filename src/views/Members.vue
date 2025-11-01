@@ -470,7 +470,7 @@ const loadData = async () => {
       email: member.account?.email || '',
       avatar: member.account?.avatar || '',
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
-      status: 'active',
+      status: member.status || 'inactive',
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       devicePermissions: member.devicePermissions || {},
       // 添加设备权限字段

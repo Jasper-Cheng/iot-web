@@ -250,7 +250,6 @@ const handleLogin = async () => {
       password: formData.password
     })
 
-    console.log('登录成功', response)
     // 先保存token到全局状态
     globalStore.token = response.access_token
     localStorage.setItem('token', response.access_token)

@@ -68,7 +68,8 @@ export const useGlobalStore = defineStore('global', {
 		//       id: 0,                       // 账号ID
 		//       created_at: "2025-09-23T02:30:12.887Z" // 账号创建时间
 		//     },
-		//     isOwner: true                  // 标识为拥有者（owner拥有所有设备权限，无需deviceIds字段）
+		//     isOwner: true,                 // 标识为拥有者（owner拥有所有设备权限，无需deviceIds字段）
+		//     status: "active"               // 在线状态：active/inactive
 		//   },
 		//   // 家庭成员 - 其他成员
 		//   {
@@ -88,7 +89,8 @@ export const useGlobalStore = defineStore('global', {
 		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
 		//     },
 		//     isOwner: false,                // 标识为普通成员
-		//     deviceIds: [58, 59]            // 设备ID数组，用于快速判断权限
+		//     deviceIds: [58, 59],           // 设备ID数组，用于快速判断权限
+		//     status: "active"               // 在线状态：active/inactive
 		//   }
 		// ]
 		members: [],
@@ -579,6 +581,24 @@ export const useGlobalStore = defineStore('global', {
 				// 从成员列表中移除指定成员（创建新数组以触发响应式更新）
 				this.members = [
 					...this.members.slice(0, memberIndex),
+					...this.members.slice(memberIndex + 1)
+				]
+			}
+		},
+		
+		// 更新成员在线状态
+		updateMemberStatus(accountId, status) {
+			const memberIndex = this.members.findIndex(member => 
+				member.account_id === accountId || member.account?.id === accountId || member.id === accountId
+			)
+			if (memberIndex !== -1) {
+				// 更新成员状态（创建新对象以触发响应式更新）
+				this.members = [
+					...this.members.slice(0, memberIndex),
+					{
+						...this.members[memberIndex],
+						status: status
+					},
 					...this.members.slice(memberIndex + 1)
 				]
 			}

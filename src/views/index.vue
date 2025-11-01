@@ -988,8 +988,13 @@ const handleDeleteUser = async (data) => {
 
 // 处理用户登录事件
 const handleUserLogin = (data) => {
-  const { title, message, level } = data
+  const { senderId, senderRole, title, message, level } = data
   console.log(`用户登录 [${level}]: ${title} - ${message}`)
+  
+  // 更新成员状态为 active
+  if (senderId) {
+    globalStore.updateMemberStatus(senderId, 'active')
+  }
   
   // 显示登录通知
   ElMessage.success({
@@ -1001,8 +1006,13 @@ const handleUserLogin = (data) => {
 
 // 处理用户登出事件
 const handleUserLogout = (data) => {
-  const { title, message, level } = data
+  const { senderId, senderRole, title, message, level } = data
   console.log(`用户登出 [${level}]: ${title} - ${message}`)
+  
+  // 更新成员状态为 inactive
+  if (senderId) {
+    globalStore.updateMemberStatus(senderId, 'inactive')
+  }
   
   // 显示登出通知
   ElMessage.success({
