@@ -1053,11 +1053,16 @@ const handleUserLogout = (data) => {
 
 // 处理用户连接事件（WebSocket连接）
 const handleUserConnect = (data) => {
-  const { senderId, senderRole, title, message, level } = data
+  const { senderId, senderRole, title, message, level, connectUserIds } = data
   console.log(`用户连接 [${level}]: ${title} - ${message}`)
   
-  // 更新成员状态为 active
-  if (senderId) {
+  // 更新所有连接用户的成员状态为 active
+  if (connectUserIds && Array.isArray(connectUserIds)) {
+    connectUserIds.forEach(userId => {
+      globalStore.updateMemberStatus(userId, 'active')
+    })
+  } else if (senderId) {
+    // 如果没有 connectUserIds，使用 senderId（向后兼容）
     globalStore.updateMemberStatus(senderId, 'active')
   }
 }
