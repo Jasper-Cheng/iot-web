@@ -868,6 +868,9 @@ const handleFamilyMessage = (data) => {
     case 'update.permission':
       handleFamilyPermissionUpdate(data.data)
       break
+    case 'member.permission.update':
+      handleMemberPermissionUpdate(data.data)
+      break
     case 'device.message.read':
       handleDeviceMessageRead(data.data)
       break
@@ -928,6 +931,24 @@ const handleFamilyPermissionUpdate = async (data) => {
   console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
   // 显示登录通知
   ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理成员权限更新事件
+const handleMemberPermissionUpdate = async (data) => {
+  const { senderId, senderRole, title, message, level, memberId, memberName, deviceCount, deviceIds, deviceNames } = data
+  console.log(`成员权限更新 [${level}]: ${title} - ${message}`)
+  
+  // 更新成员设备权限（保留现有的 status）
+  if (memberId && deviceIds) {
+    globalStore.updateMemberDevicePermissions(memberId, deviceIds)
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
     message: message,
     duration: 3000,
     showClose: true

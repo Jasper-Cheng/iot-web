@@ -606,6 +606,25 @@ export const useGlobalStore = defineStore('global', {
 			}
 		},
 		
+		// 更新成员设备权限
+		updateMemberDevicePermissions(memberId, deviceIds) {
+			const memberIndex = this.members.findIndex(member => member.id === memberId)
+			if (memberIndex !== -1) {
+				// 保留现有的 status，只更新 deviceIds
+				const existingStatus = this.members[memberIndex].status
+				// 更新成员权限（创建新对象以触发响应式更新）
+				this.members = [
+					...this.members.slice(0, memberIndex),
+					{
+						...this.members[memberIndex],
+						deviceIds: deviceIds || [],
+						status: existingStatus // 保留现有的 status
+					},
+					...this.members.slice(memberIndex + 1)
+				]
+			}
+		},
+		
 		// 设置是否有新的意见反馈
 		setHasNewFeedback(hasNew) {
 			this.hasNewFeedback = hasNew
