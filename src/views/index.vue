@@ -910,6 +910,9 @@ const handleFamilyMessage = (data) => {
     case 'update.roomDevices':
       handleFamilyRoomDevicesUpdate(data.data)
       break
+    case 'room.device.sort':
+      handleRoomDeviceSort(data.data)
+      break
     case 'login':
       handleUserLogin(data.data)
       break
@@ -1147,6 +1150,25 @@ const handleFeedbackCreate = (data) => {
   
   // 设置新的反馈提示（小红点）
   globalStore.setHasNewFeedback(true)
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理房间设备排序更新事件
+const handleRoomDeviceSort = (data) => {
+  const { senderId, senderRole, title, message, level, roomDevicesData } = data
+  console.log(`设备排序更新 [${level}]: ${title} - ${message}`)
+  
+  // 更新房间设备数据（使用响应式更新方法）
+  // roomDevicesData 格式: [{ id, roomId, deviceId, sortOrder }, ...]
+  if (roomDevicesData && Array.isArray(roomDevicesData)) {
+    globalStore.updateRoomDevicesSort(roomDevicesData)
+  }
   
   // 显示通知消息
   ElMessage.success({

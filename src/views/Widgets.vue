@@ -226,7 +226,7 @@ import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
 import { getThumbnailByCardName } from '../utils/deviceMapping'
 import { unbindDeviceBySN } from '../api/devices'
-import { createRoom, deleteRoom } from '../api/rooms'
+import { batchUpdateRoomDevices, createRoom, deleteRoom } from '../api/rooms'
 import { useWebSocketManager } from '../composables/useWebSocketManager'
 import { ElMessage } from 'element-plus'
 
@@ -623,21 +623,18 @@ const updateRoomDevicesSort = async (roomId) => {
     
     // 即使房间没有设备，也需要调用 API 来清空房间的设备列表
     // 这样服务器端会正确更新房间的设备关联关系
-    
-    // 调用全局状态管理中的批量更新方法
-    const response = await globalStore.updateRoomDevicesSort(roomId, roomDevices)
-    
-    // 发送家庭消息通知房间设备更新
-    try {
-      const roomName = getRoomName(roomId)
-      await familyMessage.sendFamilyMessage('update.roomDevices', {
-        title: '房间设备更新',
-        message: `房间"${roomName}"的设备配置已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"更新`,
-        level: 'normal'
-      })
-    } catch (messageError) {
-      console.warn('发送家庭消息失败:', messageError)
-    }
+      
+   // 调用全局状态管理中的批量更新方法
+   const data = {
+					room_id: roomId,
+					devices: roomDevices.map((device, index) => ({
+						device_id: device.device_id,
+						sort_order: index
+					}))
+				}
+				
+				await batchUpdateRoomDevices(data)
+  
   } catch (error) {
     console.error('更新房间设备排序失败:', error)
   }

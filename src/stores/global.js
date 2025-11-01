@@ -429,36 +429,7 @@ export const useGlobalStore = defineStore('global', {
 				this.loadSystemMessages(userId)
 			])
 		},
-		
-		// 批量更新房间设备排序
-		async updateRoomDevicesSort(roomId, devices) {
-			try {
-				const data = {
-					room_id: roomId,
-					devices: devices.map((device, index) => ({
-						device_id: device.device_id,
-						sort_order: index
-					}))
-				}
-				
-				const response = await batchUpdateRoomDevices(data)
-				
-				if (response.success && response.data) {
-					// 更新对应房间的设备排序
-					const room = this.rooms.find(r => r.id === roomId)
-					if (room) {
-						room.devices = response.data
-					}
-				}
-				
-				return response
-			} catch (error) {
-				console.error('批量更新房间设备排序失败:', error)
-				throw error
-			}
-		},
-		
-		// 认证相关方法
+				// 认证相关方法
 		setAuth(response) {
 			this.isAuthenticated = true
 			this.user = response.account || response
@@ -623,6 +594,52 @@ export const useGlobalStore = defineStore('global', {
 					...this.members.slice(memberIndex + 1)
 				]
 			}
+		},
+		
+		// 更新房间设备排序（用于接收 WebSocket 消息后的本地同步）
+		// roomDevicesData 格式: [{ id, roomId, deviceId, sortOrder }, ...]
+		updateRoomDevicesSort(roomDevicesData) {
+			if (!Array.isArray(roomDevicesData) || roomDevicesData.length === 0) {
+				return
+			}
+			
+			// 按 roomId 分组
+			const roomDevicesMap = new Map()
+			roomDevicesData.forEach(item => {
+				const { roomId, id, deviceId, sortOrder } = item
+				if (!roomId) return
+				
+				if (!roomDevicesMap.has(roomId)) {
+					roomDevicesMap.set(roomId, [])
+				}
+				
+				// 转换为房间 devices 格式: { room_id, device_id, sort_order, id }
+				roomDevicesMap.get(roomId).push({
+					id: id,
+					room_id: roomId,
+					device_id: deviceId,
+					sort_order: sortOrder
+				})
+			})
+			
+			// 更新每个房间的设备列表
+			roomDevicesMap.forEach((devices, roomId) => {
+				const roomIndex = this.rooms.findIndex(room => room.id === roomId)
+				if (roomIndex !== -1) {
+					// 按 sort_order 排序
+					const sortedDevices = [...devices].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+					
+					// 更新房间的设备列表（创建新对象以触发响应式更新）
+					this.rooms = [
+						...this.rooms.slice(0, roomIndex),
+						{
+							...this.rooms[roomIndex],
+							devices: sortedDevices
+						},
+						...this.rooms.slice(roomIndex + 1)
+					]
+				}
+			})
 		},
 		
 		// 设置是否有新的意见反馈
