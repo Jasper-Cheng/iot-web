@@ -149,7 +149,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { login, register } from '../api/auth'
-import { getMemberDetail, getUserDetail } from '../api/users'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 
@@ -250,52 +249,18 @@ const handleLogin = async () => {
       username: formData.username,
       password: formData.password
     })
-    
+
+    console.log('登录成功', response)
     // 先保存token到全局状态
     globalStore.token = response.access_token
     localStorage.setItem('token', response.access_token)
     
-    try {
-      let userData = response
-      
-      if (response.role === 'member') {
-        // 如果是member，调用/members/{member_id}接口
-        const memberResponse = await getMemberDetail(response.id)
-        // 将user_id添加到登录response中
-        userData = {
-          ...response,
-          user_id: memberResponse.user_id
-        }
-      }else if(response.role === 'owner'){
-        // 如果是owner，不同再调用接口
-        userData = {
-          ...response,
-          user_id: response.id
-        }
-      }
-      
-      // 使用 setAuth 方法统一设置认证状态
-      globalStore.setAuth({
-        access_token: response.access_token,
-        account: userData
-      })
-      
-      // 登录成功，设置用户数据
-      
-    } catch (userError) {
-      console.error('获取用户详情失败:', userError)
-      // 即使获取用户详情失败，也继续登录流程，使用原始响应数据
-      const userData = {
-        ...response,
-        user_id: response.id // 对于 owner 或失败情况，使用 response.id 作为 user_id
-      }
-      globalStore.setAuth({
-        access_token: response.access_token,
-        account: userData
-      })
-      
-      // 获取用户详情失败，使用原始响应数据
-    }
+    // 使用 setAuth 方法统一设置认证状态
+    // login API 已经返回 user_id，直接使用 response 即可
+    globalStore.setAuth({
+      access_token: response.access_token,
+      account: response
+    })
     
     // 保存记住的凭据
     saveRememberedCredentials()

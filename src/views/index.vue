@@ -883,10 +883,10 @@ const handleFamilyMessage = (data) => {
     case 'update.roomDevices':
       handleFamilyRoomDevicesUpdate(data.data)
       break
-    case 'user.login':
+    case 'login':
       handleUserLogin(data.data)
       break
-    case 'user.logout':
+    case 'logout':
       handleUserLogout(data.data)
       break
     case 'delete.member':
@@ -1068,16 +1068,6 @@ const logout = async () => {
     console.warn('调用退出登录 API 失败:', error)
     // 即使 API 调用失败，也继续执行退出流程
   }
-  
-  // 发送家庭消息通知退出登录（不等待结果）
-  const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
-  familyMessage.sendFamilyMessage('user.logout', {
-    title: '用户登出',
-    message: `用户"${userName}"已退出登录`,
-    level: 'normal'
-  }).catch(messageError => {
-    console.warn('发送家庭消息失败:', messageError)
-  })
   
   // 断开 WebSocket 连接（不等待结果）
   disconnect().then(() => {
@@ -1624,16 +1614,6 @@ onMounted(async () => {
   // 加载积分数据
   loadUserPoints()
   
-  // 发送登录成功的家庭消息
-  try {
-    await familyMessage.sendFamilyMessage('user.login', {
-      title: '用户登录',
-      message: `用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"已登录系统`,
-      level: 'normal'
-    })
-  } catch (error) {
-    console.warn('发送登录消息失败:', error)
-  }
 })
 
 // 监听WebSocket连接状态
