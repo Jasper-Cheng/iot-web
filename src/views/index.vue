@@ -889,6 +889,12 @@ const handleFamilyMessage = (data) => {
     case 'user.logout':
       handleUserLogout(data.data)
       break
+    case 'delete.member':
+      handleDeleteMember(data.data)
+      break
+    case 'delete.user':
+      handleDeleteUser(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -954,6 +960,30 @@ const handleFamilyRoomDevicesUpdate = async (data) => {
   const { title, message, level } = data
   await globalStore.loadRooms()
   console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
+}
+
+const handleDeleteMember = async (data) => {
+  const { title, message, level } = data
+  await globalStore.loadMembers()
+  console.log(`家庭成员删除 [${level}]: ${title} - ${message}`)
+  // 显示登录通知
+  ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+const handleDeleteUser = async (data) => {
+  const { title, message, level } = data
+  await globalStore.loadMembers()
+  console.log(`家庭用户删除 [${level}]: ${title} - ${message}`)
+  // 显示登录通知
+  ElMessage.primary({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
 }
 
 // 处理用户登录事件
@@ -1518,20 +1548,23 @@ const confirmDelete = async () => {
   try {
     let response
     
+    let messageType = 'delete.member'
     // 根据用户角色调用不同的API
     if (globalStore.user?.account?.role === 'member') {
       // 成员调用删除家庭成员API
       response = await deleteFamilyMember(globalStore.user?.id)
+      messageType = 'delete.member'
     } else {
       // 拥有者调用删除用户API
       response = await deleteUser()
+      messageType = 'delete.user'
     }
     
     // API调用成功后，发送家庭消息通知注销（不等待结果）
     const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
     const action = globalStore.user?.account?.role === 'member' ? '退出家庭' : '注销账户'
     console.log('发送家庭消息通知注销', userName, action)
-    familyMessage.sendFamilyMessage('update.member', {
+    familyMessage.sendFamilyMessage(messageType, {
       title: '成员注销',
       message: `用户"${userName}"已${action}`,
       level: 'normal'

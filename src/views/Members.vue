@@ -815,7 +815,7 @@ const confirmDeleteMember = async () => {
     // 发送家庭消息通知成员删除
     try {
       const memberName = member.account?.name || member.account?.account || '未知成员'
-      await familyMessage.sendFamilyMessage('update.member', {
+      await familyMessage.sendFamilyMessage('delete.member', {
         title: '成员删除',
         message: `成员"${memberName}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"从家庭中移除`,
         level: 'normal'

@@ -78,7 +78,8 @@
  *     "deviceId": "device_123",
  *     "eventType": "sensorAlert",
  *     "data": {
- *       "sensorId": "temp_sensor_1",
+ *       "senderId": "1234567890",
+ *       "senderRole": "member",
  *       "alertLevel": "high", 
  *       "currentValue": 38.5,
  *       "threshold": 35.0
@@ -144,8 +145,10 @@
  *   "id": "fam_002",
  *   "method": "family.message",
  *   "params": {
- *     "type": "update.permission",
+ *     "type": "delete.member",
  *     "data": {
+ *       "senderId": "member_123",
+ *       "senderRole": "member",
  *       "title": "删除成员",
  *       "message": "成员xx被用户xx删除，请更新",
  *       "level": "urgent"
@@ -154,6 +157,7 @@
  *   "timestamp": 1620000000000
  * }
  */
+
 import { ref, computed, onMounted, provide, watch } from 'vue'
 import { getWebSocketManager, clearWebSocketManager } from '../utils/websocket.js'
 import { useGlobalStore } from '../stores/global'
