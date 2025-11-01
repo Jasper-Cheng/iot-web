@@ -871,6 +871,15 @@ const handleFamilyMessage = (data) => {
     case 'member.permission.update':
       handleMemberPermissionUpdate(data.data)
       break
+    case 'member.create':
+      handleMemberCreate(data.data)
+      break
+    case 'member.update':
+      handleMemberUpdate(data.data)
+      break
+    case 'member.delete':
+      handleMemberDelete(data.data)
+      break
     case 'device.message.read':
       handleDeviceMessageRead(data.data)
       break
@@ -945,6 +954,109 @@ const handleMemberPermissionUpdate = async (data) => {
   // 更新成员设备权限（保留现有的 status）
   if (memberId && deviceIds) {
     globalStore.updateMemberDevicePermissions(memberId, deviceIds)
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理创建成员事件
+const handleMemberCreate = async (data) => {
+  const { senderId, senderRole, title, message, level, memberId, memberName, memberAccount } = data
+  console.log(`创建成员 [${level}]: ${title} - ${message}`)
+  
+  // 保存当前所有成员的 status
+  const statusMap = new Map()
+  globalStore.members.forEach(member => {
+    const key = member.account_id || member.account?.id || member.id
+    if (key && member.status) {
+      statusMap.set(key, member.status)
+    }
+  })
+  
+  // 重新加载成员列表以获取新创建的成员信息
+  await globalStore.loadMembers()
+  
+  // 恢复原先的 status
+  statusMap.forEach((status, key) => {
+    globalStore.updateMemberStatus(key, status)
+  })
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理更新成员信息事件
+const handleMemberUpdate = async (data) => {
+  const { senderId, senderRole, title, message, level, memberId, memberName,  updateData } = data
+  console.log(`更新成员信息 [${level}]: ${title} - ${message}`)
+  
+  // 更新成员信息（保留现有的 status 和其他字段）
+  if (memberId) {
+  
+    // 如果有更新数据，调用更新方法
+    if (Object.keys(updateData).length > 0) {
+      globalStore.updateMemberInfo(memberId, updateData)
+    } else {
+      // 如果没有具体更新数据，重新加载成员列表以确保同步
+      await globalStore.loadMembers()
+    }
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理删除成员事件
+const handleMemberDelete = async (data) => {
+  const { senderId, senderRole, title, message, level, memberId, memberName } = data
+  console.log(`删除成员 [${level}]: ${title} - ${message}`)
+  
+  // 检查删除的是否是当前用户
+  const isCurrentUser = memberId === globalStore.user?.id 
+  
+  if (isCurrentUser) {
+    // 如果删除的是当前用户，退出登录
+    try {
+      // 调用退出登录 API
+      await logoutApi()
+      console.log('退出登录成功')
+    } catch (error) {
+      console.warn('调用退出登录 API 失败:', error)
+      // 即使 API 调用失败，也继续执行退出流程
+    }
+    
+    // 断开 WebSocket 连接（不等待结果）
+    disconnect().then(() => {
+      console.log('WebSocket 连接已断开')
+    }).catch(disconnectError => {
+      console.warn('断开 WebSocket 连接失败:', disconnectError)
+    })
+    
+    // 立即清除认证状态并跳转
+    globalStore.clearAuth()
+    showUserMenu.value = false
+    router.push('/login')
+    
+    ElMessage.warning('您已被移除，正在退出登录')
+    return
+  }
+  
+  // 从成员列表中删除指定成员
+  if (memberId) {
+    globalStore.removeMemberInfo(memberId)
   }
   
   // 显示通知消息
