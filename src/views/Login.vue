@@ -264,9 +264,6 @@ const handleLogin = async () => {
     // 保存记住的凭据
     saveRememberedCredentials()
     
-    // 显示成功消息
-    ElMessage.success('登录成功')
-    
     // 跳转到首页
     router.push('/home')
     
