@@ -889,6 +889,12 @@ const handleFamilyMessage = (data) => {
     case 'logout':
       handleUserLogout(data.data)
       break
+    case 'connect':
+      handleUserConnect(data.data)
+      break
+    case 'disconnect':
+      handleUserDisconnect(data.data)
+      break
     case 'delete.member':
       handleDeleteMember(data.data)
       break
@@ -991,11 +997,6 @@ const handleUserLogin = (data) => {
   const { senderId, senderRole, title, message, level } = data
   console.log(`用户登录 [${level}]: ${title} - ${message}`)
   
-  // 更新成员状态为 active
-  if (senderId) {
-    globalStore.updateMemberStatus(senderId, 'active')
-  }
-  
   // 显示登录通知
   ElMessage.success({
     message: message,
@@ -1009,17 +1010,34 @@ const handleUserLogout = (data) => {
   const { senderId, senderRole, title, message, level } = data
   console.log(`用户登出 [${level}]: ${title} - ${message}`)
   
-  // 更新成员状态为 inactive
-  if (senderId) {
-    globalStore.updateMemberStatus(senderId, 'inactive')
-  }
-  
   // 显示登出通知
   ElMessage.success({
     message: message,
     duration: 2000,
     showClose: true
   })
+}
+
+// 处理用户连接事件（WebSocket连接）
+const handleUserConnect = (data) => {
+  const { senderId, senderRole, title, message, level } = data
+  console.log(`用户连接 [${level}]: ${title} - ${message}`)
+  
+  // 更新成员状态为 active
+  if (senderId) {
+    globalStore.updateMemberStatus(senderId, 'active')
+  }
+}
+
+// 处理用户断开连接事件（WebSocket断开）
+const handleUserDisconnect = (data) => {
+  const { senderId, senderRole, title, message, level } = data
+  console.log(`用户断开连接 [${level}]: ${title} - ${message}`)
+  
+  // 更新成员状态为 inactive
+  if (senderId) {
+    globalStore.updateMemberStatus(senderId, 'inactive')
+  }
 }
 
 
