@@ -1515,27 +1515,23 @@ const loadReadMessages = async (page = 1, append = false) => {
   if (!globalStore.user?.user_id) return
   
   isLoadingReadMessages.value = true
-  try {
-    const messages = await globalStore.loadReadMessages(globalStore.user.user_id, {
-      limit: readMessagesLimit.value,
-      skip: (page - 1) * readMessagesLimit.value
-    })
-    
-    if (append) {
-      readMessages.value = [...readMessages.value, ...messages]
-    } else {
-      readMessages.value = messages
-    }
-    
-    // 判断是否还有更多数据
-    hasMoreReadMessages.value = messages.length === readMessagesLimit.value
-    readMessagesPage.value = page
-    
-  } catch (error) {
-    console.error('加载已读消息失败:', error)
-  } finally {
+  
+  const messages = await globalStore.loadReadMessages({
+    limit: readMessagesLimit.value,
+    skip: (page - 1) * readMessagesLimit.value
+  }).finally(() => {
     isLoadingReadMessages.value = false
+  })
+  
+  if (append) {
+    readMessages.value = [...readMessages.value, ...messages]
+  } else {
+    readMessages.value = messages
   }
+  
+  // 判断是否还有更多数据
+  hasMoreReadMessages.value = messages.length === readMessagesLimit.value
+  readMessagesPage.value = page
 }
 
 // 打开消息日志弹窗
@@ -1571,24 +1567,20 @@ const loadMoreReadMessagesDirect = async (skip, limit) => {
   if (!globalStore.user?.user_id) return
   
   isLoadingReadMessages.value = true
-  try {
-    const messages = await globalStore.loadReadMessages(globalStore.user.user_id, {
-      limit: limit,
-      skip: skip
-    })
-    
-    // 追加到现有消息列表
-    readMessages.value = [...readMessages.value, ...messages]
-    
-    // 判断是否还有更多数据
-    hasMoreReadMessages.value = messages.length === (limit - skip)
-    readMessagesPage.value = Math.floor(skip / 20) + 1
-    
-  } catch (error) {
-    console.error('加载已读消息失败:', error)
-  } finally {
+  
+  const messages = await globalStore.loadReadMessages({
+    limit: limit,
+    skip: skip
+  }).finally(() => {
     isLoadingReadMessages.value = false
-  }
+  })
+  
+  // 追加到现有消息列表
+  readMessages.value = [...readMessages.value, ...messages]
+  
+  // 判断是否还有更多数据
+  hasMoreReadMessages.value = messages.length === (limit - skip)
+  readMessagesPage.value = Math.floor(skip / 20) + 1
 }
 
 // 积分相关方法
@@ -1650,27 +1642,23 @@ const loadSystemMessages = async (page = 1, append = false) => {
   if (!globalStore.user?.user_id) return
   
   isLoadingSystemMessages.value = true
-  try {
-    const messages = await globalStore.loadSystemMessages(globalStore.user.user_id, {
-      limit: systemMessagesLimit.value,
-      skip: (page - 1) * systemMessagesLimit.value
-    })
-    
-    if (append) {
-      globalStore.systemMessages = [...globalStore.systemMessages, ...messages]
-    } else {
-      globalStore.systemMessages = messages
-    }
-    
-    // 判断是否还有更多数据
-    hasMoreSystemMessages.value = messages.length === systemMessagesLimit.value
-    systemMessagesPage.value = page
-    
-  } catch (error) {
-    console.error('加载系统消息失败:', error)
-  } finally {
+  
+  const messages = await globalStore.loadSystemMessages(globalStore.user.user_id, {
+    limit: systemMessagesLimit.value,
+    skip: (page - 1) * systemMessagesLimit.value
+  }).finally(() => {
     isLoadingSystemMessages.value = false
+  })
+  
+  if (append) {
+    globalStore.systemMessages = [...globalStore.systemMessages, ...messages]
+  } else {
+    globalStore.systemMessages = messages
   }
+  
+  // 判断是否还有更多数据
+  hasMoreSystemMessages.value = messages.length === systemMessagesLimit.value
+  systemMessagesPage.value = page
 }
 
 const openSystemMessageModal = () => {
