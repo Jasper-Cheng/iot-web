@@ -937,6 +937,12 @@ const handleFamilyMessage = (data) => {
     case 'delete.user':
       handleDeleteUser(data.data)
       break
+    case 'user.delete':
+      handleUserDelete(data.data)
+      break
+    case 'user.update':
+      handleUserUpdate(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -1037,16 +1043,7 @@ const handleMemberDelete = async (data) => {
   const isCurrentUser = memberId === globalStore.user?.id 
   
   if (isCurrentUser) {
-    // 如果删除的是当前用户，退出登录
-    try {
-      // 调用退出登录 API
-      await logoutApi()
-      console.log('退出登录成功')
-    } catch (error) {
-      console.warn('调用退出登录 API 失败:', error)
-      // 即使 API 调用失败，也继续执行退出流程
-    }
-    
+    ElMessage.warning('您已被移除，正在退出登录')
     // 断开 WebSocket 连接（不等待结果）
     disconnect().then(() => {
       console.log('WebSocket 连接已断开')
@@ -1054,12 +1051,14 @@ const handleMemberDelete = async (data) => {
       console.warn('断开 WebSocket 连接失败:', disconnectError)
     })
     
-    // 立即清除认证状态并跳转
-    globalStore.clearAuth()
-    showUserMenu.value = false
-    router.push('/login')
+    // 延迟 500 毫秒后执行退出登录流程
+    setTimeout(() => {
+      // 立即清除认证状态并跳转
+      globalStore.clearAuth()
+      showUserMenu.value = false
+      router.push('/login')
+    }, 500)
     
-    ElMessage.warning('您已被移除，正在退出登录')
     return
   }
   
@@ -1224,6 +1223,29 @@ const handleRoomDelete = (data) => {
   })
 }
 
+// 处理用户更新事件
+const handleUserUpdate = async (data) => {
+  const { senderId, senderRole, title, message, level, userId, userName, updateData } = data
+  console.log(`更新用户信息 [${level}]: ${title} - ${message}`)
+  
+  
+  if (userId) {
+    // 更新当前用户信息
+    if (updateData && Object.keys(updateData).length > 0) {
+      globalStore.updateMemberInfo(userId, updateData)
+    } else {
+      globalStore.loadMembers()
+    }
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
 const handleFamilyMemberUpdate = async (data) => {
   const { title, message, level } = data
   await globalStore.loadMembers()
@@ -1289,6 +1311,29 @@ const handleDeleteUser = async (data) => {
     duration: 3000,
     showClose: true
   })
+}
+
+// 处理删除用户事件
+const handleUserDelete = async (data) => {
+  const { senderId, senderRole, title, message, level, userId, userName } = data
+  console.log(`删除用户 [${level}]: ${title} - ${message}`)
+  
+  // 显示警告消息
+  ElMessage.warning('用户已被删除，正在退出登录')
+  // 断开 WebSocket 连接（不等待结果）
+  disconnect().then(() => {
+    console.log('WebSocket 连接已断开')
+  }).catch(disconnectError => {
+    console.warn('断开 WebSocket 连接失败:', disconnectError)
+  })
+  
+  // 延迟 500 毫秒后执行退出登录流程
+  setTimeout(() => {
+    // 清除认证状态并跳转
+    globalStore.clearAuth()
+    showUserMenu.value = false
+    router.push('/login')
+  }, 500)
 }
 
 // 处理用户登录事件
@@ -1826,49 +1871,15 @@ const closeDeleteConfirm = () => {
 // 确认注销账户
 const confirmDelete = async () => {
   try {
-    let response
-    
-    let messageType = 'delete.member'
     // 根据用户角色调用不同的API
     if (globalStore.user?.account?.role === 'member') {
       // 成员调用删除家庭成员API
-      response = await deleteFamilyMember(globalStore.user?.id)
-      messageType = 'delete.member'
+      await deleteFamilyMember(globalStore.user?.id)
     } else {
       // 拥有者调用删除用户API
-      response = await deleteUser()
-      messageType = 'delete.user'
+      await deleteUser()
     }
-    
-    // API调用成功后，发送家庭消息通知注销（不等待结果）
-    const userName = globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'
-    const action = globalStore.user?.account?.role === 'member' ? '退出家庭' : '注销账户'
-    console.log('发送家庭消息通知注销', userName, action)
-    familyMessage.sendFamilyMessage(messageType, {
-      title: '成员注销',
-      message: `用户"${userName}"已${action}`,
-      level: 'normal'
-    }).catch(messageError => {
-      console.warn('发送家庭消息失败:', messageError)
-    })
-    
-    if (response.message) {
-      ElMessage.success(response.message)
-    } else {
-      ElMessage.success('账户注销成功')
-    }
-    
-    // 断开 WebSocket 连接（不等待结果）
-    disconnect().then(() => {
-      console.log('WebSocket 连接已断开')
-    }).catch(disconnectError => {
-      console.warn('断开 WebSocket 连接失败:', disconnectError)
-    })
-    
-    // 立即清除认证状态并跳转到登录页
-    globalStore.clearAuth()
-    showDeleteConfirmModal.value = false
-    router.push('/login')
+
   } catch (error) {
     console.error('注销账户失败:', error)
     
