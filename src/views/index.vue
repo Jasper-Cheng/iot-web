@@ -1593,39 +1593,31 @@ const loadMoreReadMessagesDirect = async (skip, limit) => {
 
 // 积分相关方法
 const loadUserPoints = async () => {
-  try {
-    const response = await getPointsBalance()
-    globalStore.userPoints = response.available_balance || 0
-  } catch (error) {
-    console.error('加载积分余额失败:', error)
-  }
+  const response = await getPointsBalance()
+  globalStore.userPoints = response.available_balance || 0
 }
 
 const loadPointsHistory = async (page = 1, append = false) => {
   if (!globalStore.user?.account?.id) return
   
   isLoadingPointsHistory.value = true
-  try {
-    const response = await getPointsHistory({
-      skip: (page - 1) * pointsHistoryLimit.value,
-      limit: pointsHistoryLimit.value
-    })
-    
-    if (append) {
-      pointsHistory.value = [...pointsHistory.value, ...response]
-    } else {
-      pointsHistory.value = response
-    }
-    
-    // 判断是否还有更多数据
-    hasMorePointsHistory.value = response.length === pointsHistoryLimit.value
-    pointsHistoryPage.value = page
-    
-  } catch (error) {
-    console.error('加载积分历史失败:', error)
-  } finally {
+  
+  const response = await getPointsHistory({
+    skip: (page - 1) * pointsHistoryLimit.value,
+    limit: pointsHistoryLimit.value
+  }).finally(() => {
     isLoadingPointsHistory.value = false
+  })
+  
+  if (append) {
+    pointsHistory.value = [...pointsHistory.value, ...response]
+  } else {
+    pointsHistory.value = response
   }
+  
+  // 判断是否还有更多数据
+  hasMorePointsHistory.value = response.length === pointsHistoryLimit.value
+  pointsHistoryPage.value = page
 }
 
 const openPointsHistoryModal = () => {
@@ -1707,24 +1699,20 @@ const loadMorePointsHistoryDirect = async (skip, limit) => {
   if (!globalStore.user?.account?.id) return
   
   isLoadingPointsHistory.value = true
-  try {
-    const response = await getPointsHistory({
-      skip: skip,
-      limit: limit
-    })
-    
-    // 追加到现有积分历史列表
-    pointsHistory.value = [...pointsHistory.value, ...response]
-    
-    // 判断是否还有更多数据
-    hasMorePointsHistory.value = response.length === (limit - skip)
-    pointsHistoryPage.value = Math.floor(skip / 20) + 1
-    
-  } catch (error) {
-    console.error('加载积分历史失败:', error)
-  } finally {
+  
+  const response = await getPointsHistory({
+    skip: skip,
+    limit: limit
+  }).finally(() => {
     isLoadingPointsHistory.value = false
-  }
+  })
+  
+  // 追加到现有积分历史列表
+  pointsHistory.value = [...pointsHistory.value, ...response]
+  
+  // 判断是否还有更多数据
+  hasMorePointsHistory.value = response.length === (limit - skip)
+  pointsHistoryPage.value = Math.floor(skip / 20) + 1
 }
 
 const formatPointsTime = (timestamp) => {

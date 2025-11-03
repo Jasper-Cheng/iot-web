@@ -403,38 +403,28 @@ const nextMonth = () => {
 
 // 获取签到统计数据
 const loadCheckinStats = async () => {
-  try {
-    const response = await getCheckinStats()
-    checkinStats.value = response
-  } catch (error) {
-    console.error('加载签到统计失败:', error)
-  }
+  const response = await getCheckinStats()
+  checkinStats.value = response
 }
 
 // 获取指定月份的签到数据
 const loadCheckinData = async (year, month) => {
-  try {
-    const response = await getCheckinCalendar(year, month)
+  const response = await getCheckinCalendar(year, month)
 
-    // 清空当前月份的签到数据
-    const currentMonthData = new Map()
-    
-    // 将服务器返回的签到日期添加到本地数据中
-    if (response.check_in_dates && Array.isArray(response.check_in_dates)) {
-      response.check_in_dates.forEach(dateStr => {
-        currentMonthData.set(dateStr, {
-          date: dateStr
-        })
+  // 清空当前月份的签到数据
+  const currentMonthData = new Map()
+  
+  // 将服务器返回的签到日期添加到本地数据中
+  if (response.check_in_dates && Array.isArray(response.check_in_dates)) {
+    response.check_in_dates.forEach(dateStr => {
+      currentMonthData.set(dateStr, {
+        date: dateStr
       })
-    }
-    
-    // 更新签到数据
-    checkinData.value = currentMonthData
-    
-  } catch (error) {
-    console.error('加载签到数据失败:', error)
-    // 不显示错误提示，因为这是后台数据加载
+    })
   }
+  
+  // 更新签到数据
+  checkinData.value = currentMonthData
 }
 
 // 处理日期点击
@@ -449,44 +439,29 @@ const handleDayClick = async (day) => {
   
   // 执行签到
   isLoading.value = true
-  try {
-    const response = await checkIn({
-      ip_address: '', // 可以后续添加IP获取逻辑
-      platform: 'web'
-    })
-    
-    // 签到成功，更新本地数据
-    checkinData.value.set(dateStr, {
-      date: dateStr
-    })
-    
-    // 触发签到成功事件
-    emit('checkin-success', response)
-    
-    // 重新加载统计数据和当前月份的签到数据
-    const year = currentDate.value.getFullYear()
-    const month = currentDate.value.getMonth() + 1
-    await Promise.all([
-      loadCheckinStats(),
-      loadCheckinData(year, month)
-    ])
-    
-  } catch (error) {
-    console.error('签到失败:', error)
-    
-    // 显示服务器返回的错误信息
-    let errorMessage = '签到失败'
-    if (error.response?.data?.detail) {
-      errorMessage = error.response.data.detail
-    } else if (error.message) {
-      errorMessage = error.message
-    }
-    
-    // 使用ElMessage显示错误信息
-    ElMessage.error(errorMessage)
-  } finally {
+  
+  const response = await checkIn({
+    ip_address: '', // 可以后续添加IP获取逻辑
+    platform: 'web'
+  }).finally(() => {
     isLoading.value = false
-  }
+  })
+  
+  // 签到成功，更新本地数据
+  checkinData.value.set(dateStr, {
+    date: dateStr
+  })
+  
+  // 触发签到成功事件
+  emit('checkin-success', response)
+  
+  // 重新加载统计数据和当前月份的签到数据
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  await Promise.all([
+    loadCheckinStats(),
+    loadCheckinData(year, month)
+  ])
 }
 
 // 监听当前日期变化，重新加载签到数据
@@ -522,22 +497,17 @@ const loadCheckinHistory = async (append = false) => {
   const skip = append ? checkinHistory.value.length : 0
   const limit = 20
   
-  try {
-    const response = await getCheckinHistory(skip, limit)
-    
-    if (append) {
-      checkinHistory.value = [...checkinHistory.value, ...response]
-    } else {
-      checkinHistory.value = response
-    }
-    
-    hasMoreCheckinHistory.value = response.length === limit
-  } catch (error) {
-    console.error('加载签到历史失败:', error)
-    ElMessage.error('加载签到历史失败')
-  } finally {
+  const response = await getCheckinHistory(skip, limit).finally(() => {
     isLoadingCheckinHistory.value = false
+  })
+  
+  if (append) {
+    checkinHistory.value = [...checkinHistory.value, ...response]
+  } else {
+    checkinHistory.value = response
   }
+  
+  hasMoreCheckinHistory.value = response.length === limit
 }
 
 const loadMoreCheckinHistory = () => {

@@ -154,13 +154,9 @@ const editingDeviceName = ref('')
 
 // 积分相关方法
 const loadUserPoints = async () => {
-  try {
-    const response = await getPointsBalance()
-    // 更新全局状态中的积分
-    globalStore.userPoints = response.available_balance || 0
-  } catch (error) {
-    console.error('加载积分余额失败:', error)
-  }
+  const response = await getPointsBalance()
+  // 更新全局状态中的积分
+  globalStore.userPoints = response.available_balance || 0
 }
 
 // 处理签到成功
