@@ -65,6 +65,19 @@
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
+
+        <!-- 微信登录按钮 -->
+        <div class="social-login-divider">
+          <span class="divider-line"></span>
+          <span class="divider-text">或</span>
+          <span class="divider-line"></span>
+        </div>
+        <button type="button" class="wechat-login-btn" @click="handleWechatLogin" :disabled="isLoading">
+          <svg class="wechat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.496-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.166c-2.016 0-3.666 1.615-3.873 3.682-2.063.177-3.692 1.851-3.692 3.932 0 2.18 1.906 3.944 4.256 3.944a4.256 4.256 0 0 0 3.518-1.848.695.695 0 0 1 .578-.098l1.432.838a.2.2 0 0 0 .228-.01.202.202 0 0 0 .08-.2l-.299-1.137a.585.585 0 0 1 .217-.667c1.236-.946 2.015-2.317 2.015-3.832-.001-2.18-1.907-3.944-4.262-3.944zm-2.582 3.805c.358 0 .649.29.649.648a.642.642 0 0 1-.649.646.642.642 0 0 1-.647-.646c0-.358.29-.648.647-.648zm4.209 0c.358 0 .649.29.649.648a.642.642 0 0 1-.649.646.642.642 0 0 1-.647-.646c0-.358.29-.648.647-.648z"/>
+          </svg>
+          微信登录
+        </button>
       </form>
 
       <!-- 注册表单 -->
@@ -141,14 +154,38 @@
         <a href="#" class="register-link" @click.prevent="toggleMode">{{ isRegister ? '去登录' : '立即注册' }}</a>
       </div>
     </div>
+
+    <!-- 微信二维码登录弹窗 -->
+    <div v-if="showWechatQR" class="wechat-qr-overlay" @click.self="closeWechatQR">
+      <div class="wechat-qr-modal">
+        <div class="qr-header">
+          <h3>微信扫码登录</h3>
+          <button class="qr-close-btn" @click="closeWechatQR">×</button>
+        </div>
+        <div class="qr-content">
+          <div v-if="wechatQRLoading" class="qr-loading">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+          </div>
+          <div v-else-if="wechatQRCode" class="qr-image-container">
+            <img :src="wechatQRCode" alt="微信登录二维码" class="qr-image" />
+            <p class="qr-tip">请使用微信扫描二维码</p>
+          </div>
+          <div v-else class="qr-error">
+            <p>二维码加载失败，请重试</p>
+            <button class="retry-btn" @click="initWechatQR">重试</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
-import { login, register } from '../api/auth'
+import { login, register, getWechatQRCode, wechatLogin, wechatLoginByToken, checkWechatLoginStatus } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 
@@ -218,6 +255,13 @@ const registerData = reactive({
 const isLoading = ref(false)
 const errorMessage = ref('')
 const isRegister = ref(false)
+
+// 微信登录相关
+const showWechatQR = ref(false)
+const wechatQRCode = ref('')
+const wechatQRLoading = ref(false)
+const wechatTicket = ref('')
+let wechatPollingTimer = null
 
 // 关闭登录弹窗
 const closeLogin = () => {
@@ -355,9 +399,178 @@ const handleForgotPassword = () => {
   ElMessage.info('你没忘！')
 }
 
-// 组件挂载时恢复记住的凭据
+// 处理微信登录
+const handleWechatLogin = () => {
+  // 方案1: 跳转到微信授权页面（需要后端配置微信OAuth2.0）
+  const wechatAuthUrl = '/api/v1/web/auth/wechat/authorize'
+  
+  // 检查是否支持二维码登录（更通用的方案）
+  if (window.innerWidth >= 768) {
+    // PC端显示二维码
+    initWechatQR()
+  } else {
+    // 移动端跳转到授权页面
+    window.location.href = wechatAuthUrl
+  }
+}
+
+// 初始化微信二维码
+const initWechatQR = async () => {
+  showWechatQR.value = true
+  wechatQRLoading.value = true
+  wechatQRCode.value = ''
+  wechatTicket.value = ''
+  
+  try {
+    const response = await getWechatQRCode()
+    if (response.qrcode_url) {
+      wechatQRCode.value = response.qrcode_url
+      wechatTicket.value = response.ticket || ''
+      
+      // 开始轮询检查登录状态
+      if (wechatTicket.value) {
+        startWechatPolling()
+      }
+    } else {
+      ElMessage.error('获取二维码失败')
+      wechatQRLoading.value = false
+    }
+  } catch (error) {
+    console.error('获取微信二维码失败:', error)
+    ElMessage.error('获取二维码失败，请重试')
+    wechatQRLoading.value = false
+  } finally {
+    wechatQRLoading.value = false
+  }
+}
+
+// 开始轮询检查微信登录状态
+const startWechatPolling = () => {
+  if (wechatPollingTimer) {
+    clearInterval(wechatPollingTimer)
+  }
+  
+  wechatPollingTimer = setInterval(async () => {
+    if (!wechatTicket.value) {
+      stopWechatPolling()
+      return
+    }
+    
+    try {
+      const response = await checkWechatLoginStatus(wechatTicket.value)
+      
+      if (response.status === 'confirmed' && response.token) {
+        // 登录成功
+        stopWechatPolling()
+        await completeWechatLogin(response.token)
+      } else if (response.status === 'expired') {
+        // 二维码过期
+        stopWechatPolling()
+        ElMessage.warning('二维码已过期，请重新获取')
+        initWechatQR()
+      }
+    } catch (error) {
+      console.error('检查微信登录状态失败:', error)
+    }
+  }, 2000) // 每2秒轮询一次
+}
+
+// 停止轮询
+const stopWechatPolling = () => {
+  if (wechatPollingTimer) {
+    clearInterval(wechatPollingTimer)
+    wechatPollingTimer = null
+  }
+}
+
+// 完成微信登录
+const completeWechatLogin = async (token) => {
+  try {
+    isLoading.value = true
+    globalStore.loading.auth = true
+    
+    const response = await wechatLoginByToken(token)
+    
+    // 保存token和用户信息
+    globalStore.token = response.access_token
+    localStorage.setItem('token', response.access_token)
+    
+    globalStore.setAuth({
+      access_token: response.access_token,
+      account: response
+    })
+    
+    ElMessage.success('微信登录成功')
+    closeWechatQR()
+    
+    // 跳转到首页
+    router.push('/home')
+  } catch (error) {
+    console.error('微信登录失败:', error)
+    ElMessage.error('微信登录失败，请重试')
+  } finally {
+    isLoading.value = false
+    globalStore.loading.auth = false
+  }
+}
+
+// 关闭微信二维码弹窗
+const closeWechatQR = () => {
+  showWechatQR.value = false
+  stopWechatPolling()
+  wechatQRCode.value = ''
+  wechatTicket.value = ''
+}
+
+// 处理URL参数中的微信授权code（用于微信OAuth回调）
+const handleWechatCallback = async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const code = urlParams.get('code')
+  const state = urlParams.get('state')
+  
+  if (code) {
+    try {
+      isLoading.value = true
+      globalStore.loading.auth = true
+      
+      const response = await wechatLogin(code)
+      
+      // 保存token和用户信息
+      globalStore.token = response.access_token
+      localStorage.setItem('token', response.access_token)
+      
+      globalStore.setAuth({
+        access_token: response.access_token,
+        account: response
+      })
+      
+      ElMessage.success('微信登录成功')
+      
+      // 清除URL参数
+      window.history.replaceState({}, document.title, window.location.pathname)
+      
+      // 跳转到首页或指定页面
+      const redirect = urlParams.get('redirect') || '/home'
+      router.push(redirect)
+    } catch (error) {
+      console.error('微信登录失败:', error)
+      ElMessage.error('微信登录失败，请重试')
+    } finally {
+      isLoading.value = false
+      globalStore.loading.auth = false
+    }
+  }
+}
+
+// 组件挂载时恢复记住的凭据并检查微信回调
 onMounted(() => {
   restoreRememberedCredentials()
+  handleWechatCallback()
+})
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  stopWechatPolling()
 })
 </script>
 
@@ -765,5 +978,206 @@ onMounted(() => {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* 微信登录样式 */
+.social-login-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 0 16px;
+  gap: 12px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-login-border, #e0e0e0);
+}
+
+.divider-text {
+  color: var(--color-login-text-muted, #999);
+  font-size: 14px;
+  padding: 0 8px;
+}
+
+.wechat-login-btn {
+  width: 100%;
+  background: #07c160;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.wechat-login-btn:hover {
+  background: #06ad56;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(7, 193, 96, 0.3);
+}
+
+.wechat-login-btn:active {
+  transform: translateY(0);
+}
+
+.wechat-login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.wechat-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* 微信二维码弹窗样式 */
+.wechat-qr-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.wechat-qr-modal {
+  background: var(--color-login-modal-bg, #ffffff);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-login-border, rgba(255, 255, 255, 0.2));
+  border-radius: 20px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.qr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.qr-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-login-text-primary, #333);
+}
+
+.qr-close-btn {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: var(--color-login-text-muted, #999);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.qr-close-btn:hover {
+  background-color: var(--color-login-primary-hover, rgba(0, 0, 0, 0.05));
+  color: var(--color-login-text-primary, #333);
+}
+
+.qr-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.qr-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.qr-loading p {
+  color: var(--color-login-text-muted, #999);
+  font-size: 14px;
+}
+
+.qr-image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.qr-image {
+  width: 260px;
+  height: 260px;
+  border: 2px solid var(--color-login-border, #e0e0e0);
+  border-radius: 12px;
+  background: white;
+  padding: 12px;
+}
+
+.qr-tip {
+  color: var(--color-login-text-muted, #666);
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
+.qr-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.qr-error p {
+  color: var(--color-login-error-text, #ff4757);
+  font-size: 14px;
+  margin: 0;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, var(--color-login-gradient-start, #667eea), var(--color-login-gradient-end, #764ba2));
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.retry-btn:active {
+  transform: translateY(0);
 }
 </style>

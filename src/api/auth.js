@@ -41,3 +41,44 @@ export function logout() {
     method: 'post'
   })
 }
+
+// 获取微信登录二维码
+export function getWechatQRCode() {
+  return request({
+    url: '/auth/wechat/qrcode',
+    method: 'get'
+  })
+}
+
+// 微信登录（通过code）
+export function wechatLogin(code) {
+  return request({
+    url: '/auth/wechat/login',
+    method: 'post',
+    data: {
+      code: code
+    }
+  })
+}
+
+// 微信登录（通过token）
+export function wechatLoginByToken(token) {
+  return request({
+    url: '/auth/wechat/login',
+    method: 'post',
+    data: {
+      token: token
+    }
+  })
+}
+
+// 检查微信登录状态（轮询）
+export function checkWechatLoginStatus(ticket) {
+  return request({
+    url: '/auth/wechat/status',
+    method: 'get',
+    params: {
+      ticket: ticket
+    }
+  })
+}
