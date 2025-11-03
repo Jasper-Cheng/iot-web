@@ -317,18 +317,11 @@ const confirmEditName = async () => {
 
   isEditingName.value = true
   
-  try {
-    // 调用API更新设备名称
-    await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim())
-    
-    closeEditNameModal()
-  } catch (error) {
-    console.error('修改设备名称失败:', error)
-    // 这里可以添加用户提示，比如使用 ElMessage
-    ElMessage.error('修改设备名称失败，请重试')
-  } finally {
+  await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim()).finally(() => {
     isEditingName.value = false
-  }
+  })
+  
+  closeEditNameModal()
 }
 
 </script>

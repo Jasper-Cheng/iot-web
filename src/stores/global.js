@@ -179,28 +179,24 @@ export const useGlobalStore = defineStore('global', {
 		async loadDevices() {
 			this.loading.devices = true
 			this.errors.devices = null
-			try {
-				const res = await fetchDeviceStatuses()
-				// API直接返回设备数组，request.js已经提取了response.data
-				const devices = Array.isArray(res) ? res : []
-				
-				// 为每个设备添加映射信息
-				this.devices = devices.map(device => {
-					const cardName = getDeviceCardBySN(device.sn)
-					
-					return {
-						...device,
-						cardName,           // 对应的卡片组件名
-						modelCode: device.sn ? device.sn.split('-')[0] : null  // 模型code
-					}
-				})
-				
-			} catch (err) {
-				this.errors.devices = err
-				console.error('设备列表加载失败:', err)
-			} finally {
+			
+			const res = await fetchDeviceStatuses().finally(() => {
 				this.loading.devices = false
-			}
+			})
+			
+			// API直接返回设备数组，request.js已经提取了response.data
+			const devices = Array.isArray(res) ? res : []
+			
+			// 为每个设备添加映射信息
+			this.devices = devices.map(device => {
+				const cardName = getDeviceCardBySN(device.sn)
+				
+				return {
+					...device,
+					cardName,           // 对应的卡片组件名
+					modelCode: device.sn ? device.sn.split('-')[0] : null  // 模型code
+				}
+			})
 		},
 		async loadRooms() {
 			this.loading.rooms = true
@@ -349,45 +345,34 @@ export const useGlobalStore = defineStore('global', {
 		async loadMessages() {
 			this.loading.messages = true
 			this.errors.messages = null
-			try {
-				const res = await getDeviceMessages({
-					status: 'new',
-					level: ['normal', 'error', 'fatal']
-				})
-				
-				// API直接返回消息数组，request.js已经提取了response.data
-				this.messages = Array.isArray(res) ? res : []
-				
-			} catch (err) {
-				this.errors.messages = err
-				console.error('未读消息加载失败:', err)
-			} finally {
+			
+			const res = await getDeviceMessages({
+				status: 'new',
+				level: ['normal', 'error', 'fatal']
+			}).finally(() => {
 				this.loading.messages = false
-			}
+			})
+			
+			// API直接返回消息数组，request.js已经提取了response.data
+			this.messages = Array.isArray(res) ? res : []
 		},
 		
 		// 加载已读消息（支持分页）
 		async loadReadMessages(params = {}) {
 			this.loading.messages = true
 			this.errors.messages = null
-			try {
-				const res = await getDeviceMessages({
-					status: 'read',
-					limit: params.limit || 20,
-					skip: params.skip || 0,
-					level: ['normal', 'error', 'fatal']
-				})
-				
-				// 返回已读消息数组
-				return Array.isArray(res) ? res : []
-				
-			} catch (err) {
-				this.errors.messages = err
-				console.error('已读消息加载失败:', err)
-				return []
-			} finally {
+			
+			const res = await getDeviceMessages({
+				status: 'read',
+				limit: params.limit || 20,
+				skip: params.skip || 0,
+				level: ['normal', 'error', 'fatal']
+			}).finally(() => {
 				this.loading.messages = false
-			}
+			})
+			
+			// 返回已读消息数组
+			return Array.isArray(res) ? res : []
 		},
 		
 		// 加载系统消息（支持分页）

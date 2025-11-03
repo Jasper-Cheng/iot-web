@@ -386,19 +386,12 @@ const confirmDeleteDevice = async () => {
   const device = devicePendingDelete.value
   if (!device || !device.sn) return
   
-  try {
-    // 调用解绑设备 API，传入 SN
-    await unbindDeviceBySN(device.sn)
+  // 调用解绑设备 API，传入 SN
+  await unbindDeviceBySN(device.sn)
   
-    // 关闭设备详情弹窗和确认弹窗
-    closeDeviceModal()
-    closeDeleteDeviceConfirm()
-    
-  } catch (error) {
-    console.error('解绑设备失败:', error)
-    ElMessage.error('解绑设备失败，请重试')
-    closeDeleteDeviceConfirm()
-  }
+  // 关闭设备详情弹窗和确认弹窗
+  closeDeviceModal()
+  closeDeleteDeviceConfirm()
 }
 
 // 删除房间（将房间内设备移回 All Devices）
@@ -650,35 +643,30 @@ const closeDeviceModal = () => {
 const removeDevice = async (device) => {
   if (!device || !device.sn) return
   
-  try {
-    // 调用解绑设备 API，传入 SN
-    await unbindDeviceBySN(device.sn)
-    
-    // 从 localDevices 中移除
-    const localIndex = localDevices.value.findIndex(d => d.id === device.id)
-    if (localIndex > -1) {
-      localDevices.value.splice(localIndex, 1)
-    }
-    
-    // 从 globalStore.rooms 中移除
-    if (device.roomId !== 'unassigned') {
-      const room = globalStore.rooms.find(r => r.id === device.roomId)
-      if (room && room.devices) {
-        room.devices = room.devices.filter(rd => rd.device_id !== device.id)
-      }
-    }
-    
-    // 从 globalStore.devices 中移除
-    const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
-    if (globalIndex > -1) {
-      globalStore.devices.splice(globalIndex, 1)
-    }
-    
-    closeDeviceModal()
-  } catch (error) {
-    console.error('解绑设备失败:', error)
-    // 可以添加错误提示
+  // 调用解绑设备 API，传入 SN
+  await unbindDeviceBySN(device.sn)
+  
+  // 从 localDevices 中移除
+  const localIndex = localDevices.value.findIndex(d => d.id === device.id)
+  if (localIndex > -1) {
+    localDevices.value.splice(localIndex, 1)
   }
+  
+  // 从 globalStore.rooms 中移除
+  if (device.roomId !== 'unassigned') {
+    const room = globalStore.rooms.find(r => r.id === device.roomId)
+    if (room && room.devices) {
+      room.devices = room.devices.filter(rd => rd.device_id !== device.id)
+    }
+  }
+  
+  // 从 globalStore.devices 中移除
+  const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
+  if (globalIndex > -1) {
+    globalStore.devices.splice(globalIndex, 1)
+  }
+  
+  closeDeviceModal()
 }
 
 

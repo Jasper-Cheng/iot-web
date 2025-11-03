@@ -1759,18 +1759,10 @@ const markAllAsRead = async () => {
 
 // 标记单条消息为已读
 const markMessageAsRead = async (message) => {
-  try {
-    console.log('标记消息为已读:', message.id)
-    
-    // 调用API标记消息为已读
-    await markMessageAsReadAPI(message.id)
-    
- 
-    
-  } catch (error) {
-    console.error('标记消息为已读失败:', error)
-    ElMessage.error('标记消息为已读失败')
-  }
+  console.log('标记消息为已读:', message.id)
+  
+  // 调用API标记消息为已读
+  await markMessageAsReadAPI(message.id)
 }
 
 // 格式化时间 - 优先显示updated_at，否则显示created_at
@@ -1836,27 +1828,11 @@ const submitAddDevice = async () => {
 
   isAddingDevice.value = true
   
-  try {
-    await bindDeviceBySN(deviceForm.value.sn.trim())
-    closeAddDeviceModal()
-    
-  } catch (error) {
-    console.error('添加设备失败:', error)
-    
-    if (error.response && error.response.data) {
-      if (error.response.data.detail) {
-        ElMessage.error(error.response.data.detail)
-      } else if (error.response.data.message) {
-        ElMessage.error(error.response.data.message)
-      } else {
-        ElMessage.error('添加设备失败，请重试')
-      }
-    } else {
-      ElMessage.error('添加设备失败，请重试')
-    }
-  } finally {
+  await bindDeviceBySN(deviceForm.value.sn.trim()).finally(() => {
     isAddingDevice.value = false
-  }
+  })
+  
+  closeAddDeviceModal()
 }
 
 // 关闭注销确认弹窗
