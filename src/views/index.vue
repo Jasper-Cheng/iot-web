@@ -865,9 +865,6 @@ const handleFamilyMessage = (data) => {
   // console.log('收到家庭消息:', data)
   // 根据消息类型调用相应的处理函数
   switch (data.type) {
-    case 'update.permission':
-      handleFamilyPermissionUpdate(data.data)
-      break
     case 'member.permission.update':
       handleMemberPermissionUpdate(data.data)
       break
@@ -898,18 +895,6 @@ const handleFamilyMessage = (data) => {
     case 'feedback.create':
       handleFeedbackCreate(data.data)
       break
-    case 'update.member':
-      handleFamilyMemberUpdate(data.data)
-      break
-   case 'update.device':
-      handleFamilyDeviceUpdate(data.data)
-      break
-    case 'update.room':
-      handleFamilyRoomUpdate(data.data)
-      break
-    case 'update.roomDevices':
-      handleFamilyRoomDevicesUpdate(data.data)
-      break
     case 'room.device.sort':
       handleRoomDeviceSort(data.data)
       break
@@ -931,12 +916,6 @@ const handleFamilyMessage = (data) => {
     case 'disconnect':
       handleUserDisconnect(data.data)
       break
-    case 'delete.member':
-      handleDeleteMember(data.data)
-      break
-    case 'delete.user':
-      handleDeleteUser(data.data)
-      break
     case 'user.delete':
       handleUserDelete(data.data)
       break
@@ -949,18 +928,6 @@ const handleFamilyMessage = (data) => {
 }
 
 // 具体的家庭消息处理方法
-const handleFamilyPermissionUpdate = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadMembers()
-  console.log(`家庭权限更新 [${level}]: ${title} - ${message}`)
-  // 显示登录通知
-  ElMessage.primary({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
 // 处理成员权限更新事件
 const handleMemberPermissionUpdate = async (data) => {
   const { senderId, senderRole, title, message, level, memberId, memberName, deviceCount, deviceIds, deviceNames } = data
@@ -1240,73 +1207,6 @@ const handleUserUpdate = async (data) => {
   
   // 显示通知消息
   ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-const handleFamilyMemberUpdate = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadMembers()
-  console.log(`家庭成员更新 [${level}]: ${title} - ${message}`)
-  // 显示登录通知
-  ElMessage.primary({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-const handleFamilyDeviceUpdate = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadDevices()
-  await globalStore.loadMembers()
-  console.log(`家庭设备更新 [${level}]: ${title} - ${message}`)
-  // 显示登录通知
-  ElMessage.primary({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-const handleFamilyRoomUpdate = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadRooms()
-  console.log(`家庭房间更新 [${level}]: ${title} - ${message}`)
-  // 显示登录通知
-  ElMessage.primary({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-const handleFamilyRoomDevicesUpdate = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadRooms()
-  console.log(`家庭房间设备更新 [${level}]: ${title} - ${message}`)
-}
-
-const handleDeleteMember = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadMembers()
-  console.log(`家庭成员删除 [${level}]: ${title} - ${message}`)
-  // 显示登录通知
-  ElMessage.primary({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-const handleDeleteUser = async (data) => {
-  const { title, message, level } = data
-  await globalStore.loadMembers()
-  console.log(`家庭用户删除 [${level}]: ${title} - ${message}`)
-  // 显示登录通知
-  ElMessage.primary({
     message: message,
     duration: 3000,
     showClose: true
