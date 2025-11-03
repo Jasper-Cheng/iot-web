@@ -642,6 +642,57 @@ export const useGlobalStore = defineStore('global', {
 			})
 		},
 		
+		// 添加新房间（用于接收 WebSocket 消息后的本地同步）
+		addRoom(roomData) {
+			if (!roomData || !roomData.id) {
+				console.warn('无效的房间数据:', roomData)
+				return
+			}
+			
+			// 检查房间是否已存在
+			const existingRoomIndex = this.rooms.findIndex(room => room.id === roomData.id)
+			if (existingRoomIndex !== -1) {
+				// 如果已存在，更新房间信息
+				this.rooms = [
+					...this.rooms.slice(0, existingRoomIndex),
+					{
+						...this.rooms[existingRoomIndex],
+						...roomData,
+						devices: roomData.devices || []
+					},
+					...this.rooms.slice(existingRoomIndex + 1)
+				]
+			} else {
+				// 如果不存在，添加到列表末尾（创建新数组以触发响应式更新）
+				this.rooms = [
+					...this.rooms,
+					{
+						...roomData,
+						devices: roomData.devices || []
+					}
+				]
+			}
+		},
+		
+		// 删除房间（本地更新，不调用接口）
+		removeRoom(roomId) {
+			const roomIndex = this.rooms.findIndex(room => room.id === roomId)
+			if (roomIndex !== -1) {
+				// 将该房间的设备移动到 unassigned - 更新 globalStore.devices
+				if (this.devices && Array.isArray(this.devices)) {
+					this.devices = this.devices.map(device => 
+						device.roomId === roomId ? { ...device, roomId: 'unassigned' } : device
+					)
+				}
+				
+				// 从房间列表中移除指定房间（创建新数组以触发响应式更新）
+				this.rooms = [
+					...this.rooms.slice(0, roomIndex),
+					...this.rooms.slice(roomIndex + 1)
+				]
+			}
+		},
+		
 		// 设置是否有新的意见反馈
 		setHasNewFeedback(hasNew) {
 			this.hasNewFeedback = hasNew

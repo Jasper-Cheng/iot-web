@@ -913,6 +913,12 @@ const handleFamilyMessage = (data) => {
     case 'room.device.sort':
       handleRoomDeviceSort(data.data)
       break
+    case 'room.create':
+      handleRoomCreate(data.data)
+      break
+    case 'room.delete':
+      handleRoomDelete(data.data)
+      break
     case 'login':
       handleUserLogin(data.data)
       break
@@ -1168,6 +1174,42 @@ const handleRoomDeviceSort = (data) => {
   // roomDevicesData 格式: [{ id, roomId, deviceId, sortOrder }, ...]
   if (roomDevicesData && Array.isArray(roomDevicesData)) {
     globalStore.updateRoomDevicesSort(roomDevicesData)
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理创建房间事件
+const handleRoomCreate = (data) => {
+  const { senderId, senderRole, title, message, level, roomData } = data
+  console.log(`创建房间 [${level}]: ${title} - ${message}`)
+  
+  // 直接将 roomData 添加到房间列表中
+  if (roomData) {
+    globalStore.addRoom(roomData)
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message,
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理删除房间事件
+const handleRoomDelete = (data) => {
+  const { senderId, senderRole, title, message, level, roomId, roomName } = data
+  console.log(`删除房间 [${level}]: ${title} - ${message}`)
+  
+  // 从房间列表中删除指定房间
+  if (roomId) {
+    globalStore.removeRoom(roomId)
   }
   
   // 显示通知消息

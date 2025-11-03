@@ -409,26 +409,6 @@ const removeRoom = async () => {
   try {
     // 调用删除房间 API
     await deleteRoom(room.id)
-    
-    // 将该房间的设备移动到 unassigned - 更新 globalStore.devices
-    globalStore.devices = globalStore.devices.map(d => (
-      d.roomId === room.id ? { ...d, roomId: 'unassigned' } : d
-    ))
-
-    // 从 globalStore.rooms 中移除房间
-    const idx = globalStore.rooms.findIndex(r => r.id === room.id)
-    if (idx > -1) globalStore.rooms.splice(idx, 1)
-
-    // 发送家庭消息通知房间删除
-    try {
-      await familyMessage.sendFamilyMessage('update.room', {
-        title: '房间删除',
-        message: `房间"${room.name}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"删除`,
-        level: 'normal'
-      })
-    } catch (messageError) {
-      console.warn('发送家庭消息失败:', messageError)
-    }
 
     closeDeleteConfirm()
   } catch (error) {
@@ -721,31 +701,7 @@ const confirmAddRoom = async () => {
   
   try {
     // 调用创建房间 API
-    const response = await createRoom({
-      name: roomName
-    })
-    
-    // 创建新房间对象
-    const newRoom = {
-      id: response.id,
-      name: response.name,
-      devices: [],
-      color: 'var(--room-default)'
-    }
-    
-    // 添加到 globalStore.rooms 中
-    // globalStore.rooms.push(newRoom)
-    
-    // 发送家庭消息通知房间添加
-    try {
-      await familyMessage.sendFamilyMessage('update.room', {
-        title: '房间添加',
-        message: `房间"${roomName}"已被用户"${globalStore.user?.account?.name || globalStore.user?.account?.account || '未知用户'}"添加`,
-        level: 'normal'
-      })
-    } catch (messageError) {
-      console.warn('发送家庭消息失败:', messageError)
-    }
+    await createRoom({name: roomName})
     
     // 重置表单
     newRoomName.value = ''
