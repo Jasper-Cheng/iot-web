@@ -598,33 +598,56 @@ export const useGlobalStore = defineStore('global', {
 		
 		// 更新房间设备排序（用于接收 WebSocket 消息后的本地同步）
 		// roomDevicesData 格式: [{ id, roomId, deviceId, sortOrder }, ...]
-		updateRoomDevicesSort(roomDevicesData) {
-			if (!Array.isArray(roomDevicesData) || roomDevicesData.length === 0) {
+		// 可能是空数组，表示房间应该被清空（此时需要 roomId 参数）
+		updateRoomDevicesSort(roomDevicesData, roomId = null) {
+			if (!Array.isArray(roomDevicesData)) {
+				return
+			}
+			
+			// 如果 roomDevicesData 为空数组，且有 roomId 参数，清空该房间
+			if (roomDevicesData.length === 0 && roomId) {
+				const roomIndex = this.rooms.findIndex(room => room.id === roomId)
+				if (roomIndex !== -1 && this.rooms[roomIndex].devices && this.rooms[roomIndex].devices.length > 0) {
+					// 清空房间的设备列表（创建新对象以触发响应式更新）
+					this.rooms = [
+						...this.rooms.slice(0, roomIndex),
+						{
+							...this.rooms[roomIndex],
+							devices: []
+						},
+						...this.rooms.slice(roomIndex + 1)
+					]
+				}
+				return
+			}
+			
+			// 如果 roomDevicesData 为空且没有 roomId，无法确定是哪个房间，直接返回
+			if (roomDevicesData.length === 0) {
 				return
 			}
 			
 			// 按 roomId 分组
 			const roomDevicesMap = new Map()
 			roomDevicesData.forEach(item => {
-				const { roomId, id, deviceId, sortOrder } = item
-				if (!roomId) return
+				const { roomId: itemRoomId, id, deviceId, sortOrder } = item
+				if (!itemRoomId) return
 				
-				if (!roomDevicesMap.has(roomId)) {
-					roomDevicesMap.set(roomId, [])
+				if (!roomDevicesMap.has(itemRoomId)) {
+					roomDevicesMap.set(itemRoomId, [])
 				}
 				
 				// 转换为房间 devices 格式: { room_id, device_id, sort_order, id }
-				roomDevicesMap.get(roomId).push({
+				roomDevicesMap.get(itemRoomId).push({
 					id: id,
-					room_id: roomId,
+					room_id: itemRoomId,
 					device_id: deviceId,
 					sort_order: sortOrder
 				})
 			})
 			
 			// 更新每个房间的设备列表
-			roomDevicesMap.forEach((devices, roomId) => {
-				const roomIndex = this.rooms.findIndex(room => room.id === roomId)
+			roomDevicesMap.forEach((devices, targetRoomId) => {
+				const roomIndex = this.rooms.findIndex(room => room.id === targetRoomId)
 				if (roomIndex !== -1) {
 					// 按 sort_order 排序
 					const sortedDevices = [...devices].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))

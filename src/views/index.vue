@@ -1167,13 +1167,17 @@ const handleFeedbackCreate = (data) => {
 
 // 处理房间设备排序更新事件
 const handleRoomDeviceSort = (data) => {
-  const { senderId, senderRole, title, message, level, roomDevicesData } = data
+  const { senderId, senderRole, title, message, level, roomId, roomName, roomDevicesData } = data
   console.log(`设备排序更新 [${level}]: ${title} - ${message}`)
   
   // 更新房间设备数据（使用响应式更新方法）
   // roomDevicesData 格式: [{ id, roomId, deviceId, sortOrder }, ...]
+  // 可能是空数组，表示房间应该被清空
+  // 现在消息中直接包含 roomId 和 roomName，无需从 message 中解析
   if (roomDevicesData && Array.isArray(roomDevicesData)) {
-    globalStore.updateRoomDevicesSort(roomDevicesData)
+    // 如果 roomDevicesData 为空数组，使用消息中的 roomId 来清空该房间
+    const extractedRoomId = roomDevicesData.length === 0 ? roomId : null
+    globalStore.updateRoomDevicesSort(roomDevicesData, extractedRoomId)
   }
   
   // 显示通知消息
