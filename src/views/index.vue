@@ -862,7 +862,7 @@ const handleSystemUpdate = (data) => {
 
 // 家庭消息处理
 const handleFamilyMessage = (data) => {
-  console.log('收到家庭消息:', data)
+  // console.log('收到家庭消息:', data)
   // 根据消息类型调用相应的处理函数
   switch (data.type) {
     case 'update.permission':

@@ -406,7 +406,6 @@ const loadCheckinStats = async () => {
   try {
     const response = await getCheckinStats()
     checkinStats.value = response
-    console.log('checkinStats', checkinStats.value)
   } catch (error) {
     console.error('加载签到统计失败:', error)
   }
@@ -417,7 +416,6 @@ const loadCheckinData = async (year, month) => {
   try {
     const response = await getCheckinCalendar(year, month)
 
-    console.log('response', response)
     // 清空当前月份的签到数据
     const currentMonthData = new Map()
     
@@ -430,7 +428,6 @@ const loadCheckinData = async (year, month) => {
       })
     }
     
-    console.log('currentMonthData', currentMonthData)
     // 更新签到数据
     checkinData.value = currentMonthData
     
