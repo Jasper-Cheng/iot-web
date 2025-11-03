@@ -565,24 +565,20 @@ export default {
     // 加载反馈列表
     async loadFeedbackList() {
       this.isFeedbackLoading = true;
-      try {
-        const feedbackList = await getFeedbackList({
-          skip: 0,
-          limit: 100,
-          order_by: 'created_at',
-          order_desc: true
-        });
-        
-        if (Array.isArray(feedbackList)) {
-          this.feedbackList = feedbackList;
-        } else {
-          this.feedbackList = [];
-        }
-      } catch (error) {
-        console.error('获取反馈列表失败:', error);
-        this.feedbackList = [];
-      } finally {
+      
+      const feedbackList = await getFeedbackList({
+        skip: 0,
+        limit: 100,
+        order_by: 'created_at',
+        order_desc: true
+      }).finally(() => {
         this.isFeedbackLoading = false;
+      });
+      
+      if (Array.isArray(feedbackList)) {
+        this.feedbackList = feedbackList;
+      } else {
+        this.feedbackList = [];
       }
     },
     closeFeedbackListDialog() {
@@ -614,41 +610,36 @@ export default {
         return;
       }
       
-      try {
-        // 获取当前版本信息
-        const currentVersion = this.versionList.length > 0 ? this.versionList[0] : null;
-        
-        // 调用反馈提交API
-        await submitFeedbackAPI({
-          name: this.currentUser.account.name || '',
-          type: this.feedbackForm.type,
-          content: this.feedbackForm.content,
-          source: 'web',
-          contact_info: this.feedbackForm.contact || '',
-          extra: {
-            ip_address: '', // 可以后续添加IP获取逻辑
-            user_agent: navigator.userAgent,
-            device_info: {
-              platform: 'Web',
-              version: currentVersion ? currentVersion.version_code : '',
-              version_name: currentVersion ? currentVersion.version_name : ''
-            }
+      // 获取当前版本信息
+      const currentVersion = this.versionList.length > 0 ? this.versionList[0] : null;
+      
+      // 调用反馈提交API
+      await submitFeedbackAPI({
+        name: this.currentUser.account.name || '',
+        type: this.feedbackForm.type,
+        content: this.feedbackForm.content,
+        source: 'web',
+        contact_info: this.feedbackForm.contact || '',
+        extra: {
+          ip_address: '', // 可以后续添加IP获取逻辑
+          user_agent: navigator.userAgent,
+          device_info: {
+            platform: 'Web',
+            version: currentVersion ? currentVersion.version_code : '',
+            version_name: currentVersion ? currentVersion.version_name : ''
           }
-        });
-        
-        ElMessage.success('感谢您的反馈，我们会尽快处理！');
-        this.feedbackDialogVisible = false;
-        
-        // 重置表单
-        this.feedbackForm = {
-          type: '',
-          content: '',
-          contact: ''
-        };
-      } catch (error) {
-        console.error('反馈提交失败:', error);
-        ElMessage.error('反馈提交失败，请稍后重试');
-      }
+        }
+      });
+      
+      ElMessage.success('感谢您的反馈，我们会尽快处理！');
+      this.feedbackDialogVisible = false;
+      
+      // 重置表单
+      this.feedbackForm = {
+        type: '',
+        content: '',
+        contact: ''
+      };
     }
   }
 };
