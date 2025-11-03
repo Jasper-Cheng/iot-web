@@ -460,30 +460,25 @@ export default {
     // 加载版本信息
     async loadVersionInfo() {
       this.isVersionLoading = true;
-      try {
-        // 请求版本信息
-        const versionList = await getVersionInfo({
-          platform: 'web',
-          limit: 10,
-          order_by: 'created_at',
-          order_desc: true
-        });
-        
-        if (Array.isArray(versionList) && versionList.length > 0) {
-          // 确保按创建时间倒序排列（最新的在前）
-          this.versionList = versionList.sort((a, b) => {
-            const dateA = new Date(a.created_at);
-            const dateB = new Date(b.created_at);
-            return dateB - dateA; // 倒序：新的在前
-          });
-        } else {
-          this.versionList = [];
-        }
-      } catch (error) {
-        console.error('获取版本信息失败:', error);
-        this.versionList = [];
-      } finally {
+      
+      const versionList = await getVersionInfo({
+        platform: 'web',
+        limit: 10,
+        order_by: 'created_at',
+        order_desc: true
+      }).finally(() => {
         this.isVersionLoading = false;
+      });
+      
+      if (Array.isArray(versionList) && versionList.length > 0) {
+        // 确保按创建时间倒序排列（最新的在前）
+        this.versionList = versionList.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // 倒序：新的在前
+        });
+      } else {
+        this.versionList = [];
       }
     },
     
