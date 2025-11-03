@@ -370,22 +370,16 @@ export const useGlobalStore = defineStore('global', {
 		async loadSystemMessages(userId, params = {}) {
 			this.loading.systemMessages = true
 			this.errors.systemMessages = null
-			try {
-				const res = await getSystemMessages({
-					skip: params.skip || 0,
-					limit: params.limit || 20
-				})
-				
-				// 返回系统消息数组
-				return Array.isArray(res) ? res : []
-				
-			} catch (err) {
-				this.errors.systemMessages = err
-				console.error('系统消息加载失败:', err)
-				return []
-			} finally {
+			
+			const res = await getSystemMessages({
+				skip: params.skip || 0,
+				limit: params.limit || 20
+			}).finally(() => {
 				this.loading.systemMessages = false
-			}
+			})
+			
+			// 返回系统消息数组
+			return Array.isArray(res) ? res : []
 		},
 		
 		async loadAll() {
