@@ -201,40 +201,31 @@ export const useGlobalStore = defineStore('global', {
 		async loadRooms() {
 			this.loading.rooms = true
 			this.errors.rooms = null
-			try {
-				const res = await getRooms()
-				
-				// API直接返回房间数组，request.js已经提取了response.data
-				const rooms = Array.isArray(res) ? res : []
-				
-				// 为每个房间加载设备
-				const roomsWithDevices = await Promise.all(
-					rooms.map(async (room) => {
-						try {
-							const roomDevicesRes = await getRoomDevices(room.id)
-							const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
-							
-							return {
-								...room,
-								devices: roomDevices
-							}
-						} catch (deviceErr) {
-							console.error(`房间 ${room.id} 设备加载失败:`, deviceErr)
-							return {
-								...room,
-								devices: []
-							}
-						}
-					})
-				)
-				
-			this.rooms = roomsWithDevices
-			} catch (err) {
-				this.errors.rooms = err
-				console.error('房间列表加载失败:', err)
-			} finally {
+			
+			const res = await getRooms().finally(() => {
 				this.loading.rooms = false
-			}
+			})
+			
+			// API直接返回房间数组，request.js已经提取了response.data
+			const rooms = Array.isArray(res) ? res : []
+			
+			// 为每个房间加载设备
+			const roomsWithDevices = await Promise.all(
+				rooms.map(async (room) => {
+					const roomDevicesRes = await getRoomDevices(room.id).catch(() => {
+						// 如果加载失败，返回空数组
+						return []
+					})
+					const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
+					
+					return {
+						...room,
+						devices: roomDevices
+					}
+				})
+			)
+			
+			this.rooms = roomsWithDevices
 		},
 		async loadMembers() {
 			this.loading.members = true

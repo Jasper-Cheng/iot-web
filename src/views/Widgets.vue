@@ -399,15 +399,10 @@ const removeRoom = async () => {
   const room = roomPendingDelete.value
   if (!room) return
 
-  try {
-    // 调用删除房间 API
-    await deleteRoom(room.id)
+  // 调用删除房间 API
+  await deleteRoom(room.id)
 
-    closeDeleteConfirm()
-  } catch (error) {
-    console.error('删除房间失败:', error)
-    // 可以添加错误提示
-  }
+  closeDeleteConfirm()
 }
 
 // 拖拽开始
@@ -557,60 +552,50 @@ const handleDragEnterCard = (event, targetRoomId, targetDevice) => {
 
 // 处理不同的拖动场景
 const handleDragScenarios = async (originalRoomId, targetRoomId) => {
-  try {
-    // 1. 设备从A到all,更新A中的设备数量及排序，重新计算all中的设备
-    if (originalRoomId !== 'unassigned' && targetRoomId === 'unassigned') {
-      await updateRoomDevicesSort(originalRoomId)
-    }
-    
-    // 2. 设备从all到A，更新all中的设备数量及排序，重新计算all中的设备
-    else if (originalRoomId === 'unassigned' && targetRoomId !== 'unassigned') {
-      await updateRoomDevicesSort(targetRoomId)
-    }
-    
-    // 3. 设备从A到B，更新A、B中的设备数量及排序
-    else if (originalRoomId !== 'unassigned' && targetRoomId !== 'unassigned' && originalRoomId !== targetRoomId) {
-      await updateRoomDevicesSort(originalRoomId)
-      await updateRoomDevicesSort(targetRoomId)
-    }
-    
-    // 4. 设备从A到A，更新A中设备的排序
-    else if (originalRoomId !== 'unassigned' && originalRoomId === targetRoomId) {
-      await updateRoomDevicesSort(originalRoomId)
-    }
-    
-    // 5. All Devices 内部排序不需要API调用
-    else if (originalRoomId === 'unassigned' && targetRoomId === 'unassigned') {
-      // All Devices 内部排序，无需API调用
-    }
-    
-  } catch (error) {
-    console.error('拖动场景处理失败:', error)
+  // 1. 设备从A到all,更新A中的设备数量及排序，重新计算all中的设备
+  if (originalRoomId !== 'unassigned' && targetRoomId === 'unassigned') {
+    await updateRoomDevicesSort(originalRoomId)
+  }
+  
+  // 2. 设备从all到A，更新all中的设备数量及排序，重新计算all中的设备
+  else if (originalRoomId === 'unassigned' && targetRoomId !== 'unassigned') {
+    await updateRoomDevicesSort(targetRoomId)
+  }
+  
+  // 3. 设备从A到B，更新A、B中的设备数量及排序
+  else if (originalRoomId !== 'unassigned' && targetRoomId !== 'unassigned' && originalRoomId !== targetRoomId) {
+    await updateRoomDevicesSort(originalRoomId)
+    await updateRoomDevicesSort(targetRoomId)
+  }
+  
+  // 4. 设备从A到A，更新A中设备的排序
+  else if (originalRoomId !== 'unassigned' && originalRoomId === targetRoomId) {
+    await updateRoomDevicesSort(originalRoomId)
+  }
+  
+  // 5. All Devices 内部排序不需要API调用
+  else if (originalRoomId === 'unassigned' && targetRoomId === 'unassigned') {
+    // All Devices 内部排序，无需API调用
   }
 }
 
 // 更新房间设备排序
 const updateRoomDevicesSort = async (roomId) => {
-  try {
-    const roomDevices = getRoomDevices(roomId)
-    
-    // 即使房间没有设备，也需要调用 API 来清空房间的设备列表
-    // 这样服务器端会正确更新房间的设备关联关系
-      
-   // 调用全局状态管理中的批量更新方法
-   const data = {
-					room_id: roomId,
-					devices: roomDevices.map((device, index) => ({
-						device_id: device.device_id,
-						sort_order: index
-					}))
-				}
-				
-				await batchUpdateRoomDevices(data)
+  const roomDevices = getRoomDevices(roomId)
   
-  } catch (error) {
-    console.error('更新房间设备排序失败:', error)
+  // 即使房间没有设备，也需要调用 API 来清空房间的设备列表
+  // 这样服务器端会正确更新房间的设备关联关系
+    
+  // 调用全局状态管理中的批量更新方法
+  const data = {
+    room_id: roomId,
+    devices: roomDevices.map((device, index) => ({
+      device_id: device.device_id,
+      sort_order: index
+    }))
   }
+  
+  await batchUpdateRoomDevices(data)
 }
 
 // 拖拽时自动滚动页面（向上/向下）
@@ -687,17 +672,12 @@ const confirmAddRoom = async () => {
     return
   }
   
-  try {
-    // 调用创建房间 API
-    await createRoom({name: roomName})
-    
-    // 重置表单
-    newRoomName.value = ''
-    addRoomModalOpen.value = false
-  } catch (error) {
-    console.error('创建房间失败:', error)
-    // 可以添加错误提示
-  }
+  // 调用创建房间 API
+  await createRoom({name: roomName})
+  
+  // 重置表单
+  newRoomName.value = ''
+  addRoomModalOpen.value = false
 }
 
 const cancelAddRoom = () => {
