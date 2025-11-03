@@ -1342,17 +1342,19 @@ const logout = async () => {
     // request.js 已统一处理错误，这里只确保即使失败也继续执行后续流程
   })
   
-  // 断开 WebSocket 连接（不等待结果）
-  disconnect().then(() => {
-    console.log('WebSocket 连接已断开')
-  }).catch(disconnectError => {
-    console.warn('断开 WebSocket 连接失败:', disconnectError)
-  })
-  
-  // 立即清除认证状态并跳转
-  globalStore.clearAuth()
-  showUserMenu.value = false
-  router.push('/login')
+  //延迟500毫秒后执行退出登录流程
+  setTimeout(() => {
+    // 断开 WebSocket 连接（不等待结果）
+    disconnect().then(() => {
+      console.log('WebSocket 连接已断开')
+    }).catch(disconnectError => {
+      console.warn('断开 WebSocket 连接失败:', disconnectError)
+    })
+    // 立即清除认证状态并跳转
+    globalStore.clearAuth()
+    showUserMenu.value = false
+    router.push('/login')
+  }, 500)
 }
 
 // 操作：设置为明亮/黑暗
