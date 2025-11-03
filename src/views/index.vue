@@ -1437,14 +1437,10 @@ const getGenderText = (gender) => {
 
 // 退出登录
 const logout = async () => {
-  try {
-    // 调用退出登录 API
-    await logoutApi()
-    console.log('退出登录成功')
-  } catch (error) {
-    console.warn('调用退出登录 API 失败:', error)
-    // 即使 API 调用失败，也继续执行退出流程
-  }
+  // 调用退出登录 API（即使失败也继续执行退出流程）
+  logoutApi().catch(() => {
+    // request.js 已统一处理错误，这里只确保即使失败也继续执行后续流程
+  })
   
   // 断开 WebSocket 连接（不等待结果）
   disconnect().then(() => {

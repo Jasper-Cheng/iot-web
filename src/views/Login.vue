@@ -243,58 +243,31 @@ const handleLogin = async () => {
   isLoading.value = true
   globalStore.loading.auth = true
   
-  try {
-    // 调用登录API
-    const response = await login({
-      username: formData.username,
-      password: formData.password
-    })
-
-    // 先保存token到全局状态
-    globalStore.token = response.access_token
-    localStorage.setItem('token', response.access_token)
-    
-    // 使用 setAuth 方法统一设置认证状态
-    // login API 已经返回 user_id，直接使用 response 即可
-    globalStore.setAuth({
-      access_token: response.access_token,
-      account: response
-    })
-    
-    // 保存记住的凭据
-    saveRememberedCredentials()
-    
-    // 跳转到首页
-    router.push('/home')
-    
-  } catch (error) {
-    console.error('Login failed:', error.response?.data || error.message)
-    
-    // 处理错误响应
-    if (error.response && error.response.data) {
-      if (error.response.data.detail) {
-        // 处理detail数组或字符串
-        if (Array.isArray(error.response.data.detail)) {
-          errorMessage.value = error.response.data.detail.join(', ')
-        } else {
-          errorMessage.value = error.response.data.detail
-        }
-      } else if (error.response.data.message) {
-        errorMessage.value = error.response.data.message
-      } else if (typeof error.response.data === 'string') {
-        errorMessage.value = error.response.data
-      } else {
-        errorMessage.value = `登录失败 (${error.response.status}): ${JSON.stringify(error.response.data)}`
-      }
-    } else if (error.message) {
-      errorMessage.value = error.message
-    } else {
-      errorMessage.value = '登录失败，请重试'
-    }
-  } finally {
+  // 调用登录API
+  const response = await login({
+    username: formData.username,
+    password: formData.password
+  }).finally(() => {
     isLoading.value = false
     globalStore.loading.auth = false
-  }
+  })
+
+  // 先保存token到全局状态
+  globalStore.token = response.access_token
+  localStorage.setItem('token', response.access_token)
+  
+  // 使用 setAuth 方法统一设置认证状态
+  // login API 已经返回 user_id，直接使用 response 即可
+  globalStore.setAuth({
+    access_token: response.access_token,
+    account: response
+  })
+  
+  // 保存记住的凭据
+  saveRememberedCredentials()
+  
+  // 跳转到首页
+  router.push('/home')
 }
 
 // 切换模式
@@ -324,68 +297,42 @@ const handleRegister = async () => {
   isLoading.value = true
   globalStore.loading.auth = true
   
-  try {
-    // 调用注册API
-    const response = await register({
-      username: registerData.username,
-      password: registerData.password,
-      phone: registerData.phone,
-      name: registerData.name || registerData.username, // 使用姓名，如果没有则使用用户名
-      gender: registerData.gender,
-      email: registerData.email,
-      avatar: registerData.avatar
-    })
-    
-    // 注册成功，显示成功消息
-    ElMessage.success('注册成功，请登录')
-    
-    // 将注册的账号和密码填写到登录表单
-    formData.username = registerData.username
-    formData.password = registerData.password
-    
-    // 切换到登录模式
-    isRegister.value = false
-    
-    // 清空注册表单
-    Object.assign(registerData, {
-      username: '',
-      name: '',
-      avatar: '',
-      phone: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      role: 'owner',
-      gender: 'other'
-    })
-    
-  } catch (error) {
-    console.error('Register failed:', error.response?.data || error.message)
-    
-    // 处理错误响应
-    if (error.response && error.response.data) {
-      if (error.response.data.detail) {
-        if (Array.isArray(error.response.data.detail)) {
-          errorMessage.value = error.response.data.detail.join(', ')
-        } else {
-          errorMessage.value = error.response.data.detail
-        }
-      } else if (error.response.data.message) {
-        errorMessage.value = error.response.data.message
-      } else if (typeof error.response.data === 'string') {
-        errorMessage.value = error.response.data
-      } else {
-        errorMessage.value = `注册失败 (${error.response.status}): ${JSON.stringify(error.response.data)}`
-      }
-    } else if (error.message) {
-      errorMessage.value = error.message
-    } else {
-      errorMessage.value = '注册失败，请重试'
-    }
-  } finally {
+  // 调用注册API
+  const response = await register({
+    username: registerData.username,
+    password: registerData.password,
+    phone: registerData.phone,
+    name: registerData.name || registerData.username, // 使用姓名，如果没有则使用用户名
+    gender: registerData.gender,
+    email: registerData.email,
+    avatar: registerData.avatar
+  }).finally(() => {
     isLoading.value = false
     globalStore.loading.auth = false
-  }
+  })
+  
+  // 注册成功，显示成功消息
+  ElMessage.success('注册成功，请登录')
+  
+  // 将注册的账号和密码填写到登录表单
+  formData.username = registerData.username
+  formData.password = registerData.password
+  
+  // 切换到登录模式
+  isRegister.value = false
+  
+  // 清空注册表单
+  Object.assign(registerData, {
+    username: '',
+    name: '',
+    avatar: '',
+    phone: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'owner',
+    gender: 'other'
+  })
 }
 
 
