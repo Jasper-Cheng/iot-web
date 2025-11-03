@@ -485,25 +485,6 @@ class WebSocketManager {
   }
 
   /**
-   * 发送家庭消息
-   * @param {string} type - 消息类型 (update.permission, update.message, update.member)
-   * @param {Object} data - 消息数据
-   * @param {string} data.title - 消息标题
-   * @param {string} data.message - 消息内容
-   * @param {string} data.level - 消息级别 (normal/urgent/critical)
-   * @returns {Promise} 返回发送结果
-   */
-  sendFamilyMessage(type, data) {
-    return this.send({
-      method: 'family.message',
-      params: {
-        type,
-        data
-      }
-    }, true)
-  }
-
-  /**
    * 销毁WebSocket管理器
    */
   destroy() {

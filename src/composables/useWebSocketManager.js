@@ -467,14 +467,6 @@ export function useWebSocketManager() {
     }
   }
 
-  // 发送家庭消息的方法
-  const sendFamilyMessage = async (type, data) => {
-    if (!wsManagerSingleton) {
-      throw new Error('WebSocket 未连接')
-    }
-    return await wsManagerSingleton.sendFamilyMessage(type, data)
-  }
-
   // 提供设备管理方法给所有子组件
   provide('deviceManager', {
     invokeDeviceService,   // 调用设备服务 (如开关、调节等)
@@ -497,7 +489,6 @@ export function useWebSocketManager() {
   provide('familyMessage', {
     setFamilyMessageHandler,
     clearFamilyMessageHandler,
-    sendFamilyMessage,
     connectionState: computed(() => connectionState.value)
   })
 
@@ -529,7 +520,6 @@ export function useWebSocketManager() {
     familyMessage: {
       setFamilyMessageHandler,   // 设置家庭消息处理器
       clearFamilyMessageHandler, // 清除家庭消息处理器
-      sendFamilyMessage,         // 发送家庭消息
       connectionState: computed(() => connectionState.value) // WebSocket 连接状态
     },
     disconnect  // 导出断开连接方法
