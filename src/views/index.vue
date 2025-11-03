@@ -1729,20 +1729,12 @@ const formatPointsTime = (timestamp) => {
 
 // 一键已读
 const markAllAsRead = async () => {
-  try {
-    console.log('标记所有消息为已读')
-    
-    // 调用API标记所有消息为已读
-    await markAllMessagesAsRead()
-    
- 
-    
-    
-    closeNotificationMenu()
-  } catch (error) {
-    console.error('标记已读失败:', error)
-    ElMessage.error('操作失败，请重试')
-  }
+  console.log('标记所有消息为已读')
+  
+  // 调用API标记所有消息为已读
+  await markAllMessagesAsRead()
+  
+  closeNotificationMenu()
 }
 
 // 标记单条消息为已读
@@ -1830,33 +1822,16 @@ const closeDeleteConfirm = () => {
 
 // 确认注销账户
 const confirmDelete = async () => {
-  try {
-    // 根据用户角色调用不同的API
-    if (globalStore.user?.account?.role === 'member') {
-      // 成员调用删除家庭成员API
-      await deleteFamilyMember(globalStore.user?.id)
-    } else {
-      // 拥有者调用删除用户API
-      await deleteUser()
-    }
-
-  } catch (error) {
-    console.error('注销账户失败:', error)
-    
-    if (error.response && error.response.data) {
-      if (error.response.data.detail) {
-        ElMessage.error(error.response.data.detail)
-      } else if (error.response.data.message) {
-        ElMessage.error(error.response.data.message)
-      } else {
-        ElMessage.error('注销失败，请重试')
-      }
-    } else {
-      ElMessage.error('注销失败，请重试')
-    }
-    
-    showDeleteConfirmModal.value = false
+  // 根据用户角色调用不同的API
+  if (globalStore.user?.account?.role === 'member') {
+    // 成员调用删除家庭成员API
+    await deleteFamilyMember(globalStore.user?.id)
+  } else {
+    // 拥有者调用删除用户API
+    await deleteUser()
   }
+  
+  showDeleteConfirmModal.value = false
 }
 
 // 监听未读消息变化，自动更新未读消息列表

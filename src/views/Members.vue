@@ -519,35 +519,28 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
     return
   }
   
-  try {
-    // 先更新本地数据
-    if (member) {
-      if (!member.deviceIds) {
-        member.deviceIds = []
-      }
-      
-      if (hasPermission) {
-        // 添加设备权限
-        if (!member.deviceIds.includes(deviceId)) {
-          member.deviceIds.push(deviceId)
-        }
-      } else {
-        // 移除设备权限
-        const index = member.deviceIds.indexOf(deviceId)
-        if (index > -1) {
-          member.deviceIds.splice(index, 1)
-        }
-      }
+  // 先更新本地数据
+  if (member) {
+    if (!member.deviceIds) {
+      member.deviceIds = []
     }
     
-    // 调用批量更新接口
-    await batchUpdateMemberDevicePermissions(memberId, member.deviceIds)
-    
-    
-  } catch (error) {
-    console.error('更新权限失败:', error)
-    ElMessage.error('更新权限失败，请重试')
+    if (hasPermission) {
+      // 添加设备权限
+      if (!member.deviceIds.includes(deviceId)) {
+        member.deviceIds.push(deviceId)
+      }
+    } else {
+      // 移除设备权限
+      const index = member.deviceIds.indexOf(deviceId)
+      if (index > -1) {
+        member.deviceIds.splice(index, 1)
+      }
+    }
   }
+  
+  // 调用批量更新接口
+  await batchUpdateMemberDevicePermissions(memberId, member.deviceIds)
 }
 
 const selectAllDevices = async (memberId) => {
@@ -565,20 +558,14 @@ const selectAllDevices = async (memberId) => {
       return
     }
     
-    try {
-      // 获取所有设备ID
-      const allDeviceIds = devices.value.map(device => device.id)
-      
-      // 更新本地数据
-      member.deviceIds = [...allDeviceIds]
-      
-      // 调用批量更新接口
-      await batchUpdateMemberDevicePermissions(memberId, allDeviceIds)
-      
-    } catch (error) {
-      console.error('全选设备权限失败:', error)
-      ElMessage.error('全选设备权限失败，请重试')
-    }
+    // 获取所有设备ID
+    const allDeviceIds = devices.value.map(device => device.id)
+    
+    // 更新本地数据
+    member.deviceIds = [...allDeviceIds]
+    
+    // 调用批量更新接口
+    await batchUpdateMemberDevicePermissions(memberId, allDeviceIds)
   }
 }
 
@@ -597,79 +584,64 @@ const deselectAllDevices = async (memberId) => {
       return
     }
     
-    try {
-      // 清空本地数据
-      member.deviceIds = []
-      
-      // 调用批量更新接口（传入空数组）
-      await batchUpdateMemberDevicePermissions(memberId, [])
-      
-    } catch (error) {
-      console.error('取消所有设备权限失败:', error)
-      ElMessage.error('取消所有设备权限失败，请重试')
-    }
+    // 清空本地数据
+    member.deviceIds = []
+    
+    // 调用批量更新接口（传入空数组）
+    await batchUpdateMemberDevicePermissions(memberId, [])
   }
 }
 
 const addNewMember = async () => {
-  try {
-    // 清除之前的错误信息
-    formError.value = ''
-    
-    // 验证密码（添加模式，密码必填）
-    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword, false)
-    if (!passwordValidation.valid) {
-      formError.value = passwordValidation.message
-      return
-    }
-    
-    const memberData = {
-      account: newMember.value.username, // 使用account字段而不是username
-      password: newMember.value.password,
-      phone: newMember.value.phone,
-      name: newMember.value.name,
-      gender: newMember.value.gender,
-      email: newMember.value.email,
-      avatar: newMember.value.avatar
-    }
-    
-    await addFamilyMember(memberData)
-   
-    closeModal()
-    resetNewMemberForm()
-    
-  } catch (error) {
-    handleError(error, '添加成员失败，请重试')
+  // 清除之前的错误信息
+  formError.value = ''
+  
+  // 验证密码（添加模式，密码必填）
+  const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword, false)
+  if (!passwordValidation.valid) {
+    formError.value = passwordValidation.message
+    return
   }
+  
+  const memberData = {
+    account: newMember.value.username, // 使用account字段而不是username
+    password: newMember.value.password,
+    phone: newMember.value.phone,
+    name: newMember.value.name,
+    gender: newMember.value.gender,
+    email: newMember.value.email,
+    avatar: newMember.value.avatar
+  }
+  
+  await addFamilyMember(memberData)
+ 
+  closeModal()
+  resetNewMemberForm()
 }
 
 const editMember = async () => {
-  try {
-    // 清除之前的错误信息
-    formError.value = ''
-    
-    // 验证密码（编辑模式，密码可选）
-    const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword, true)
-    if (!passwordValidation.valid) {
-      formError.value = passwordValidation.message
-      return
-    }
-    
-    // 构建更新数据（编辑模式）
-    const updateData = buildUpdateData(newMember.value, true)
-    
-    // 根据角色调用不同的API
-    if (isEditingOwner.value) {
-      await updateUser(updateData)
-    } else {
-      await updateFamilyMember(editingMember.value.id, updateData)
-    }
-    
-    closeModal()
-    resetNewMemberForm()
-  } catch (error) {
-    handleError(error, '更新失败，请重试')
+  // 清除之前的错误信息
+  formError.value = ''
+  
+  // 验证密码（编辑模式，密码可选）
+  const passwordValidation = validatePassword(newMember.value.password, newMember.value.confirmPassword, true)
+  if (!passwordValidation.valid) {
+    formError.value = passwordValidation.message
+    return
   }
+  
+  // 构建更新数据（编辑模式）
+  const updateData = buildUpdateData(newMember.value, true)
+  
+  // 根据角色调用不同的API
+  if (isEditingOwner.value) {
+    await updateUser(updateData)
+  } else {
+    await updateFamilyMember(editingMember.value.id, updateData)
+  }
+  
+  closeModal()
+  resetNewMemberForm()
 }
 
 // 打开添加成员模态框
@@ -713,15 +685,10 @@ const confirmDeleteMember = async () => {
   const member = memberPendingDelete.value
   if (!member) return
   
-  try {
-    await deleteFamilyMember(member.id)
-    
-    closeDeleteConfirm()
-    ElMessage.success('删除成员成功')
-  } catch (error) {
-    console.error('删除成员失败:', error)
-    ElMessage.error('删除成员失败，请重试')
-  }
+  await deleteFamilyMember(member.id)
+  
+  closeDeleteConfirm()
+  ElMessage.success('删除成员成功')
 }
 
 // 处理模态框背景点击

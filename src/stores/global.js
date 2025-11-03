@@ -230,108 +230,99 @@ export const useGlobalStore = defineStore('global', {
 		async loadMembers() {
 			this.loading.members = true
 			this.errors.members = null
-			try {
-				// 并行加载成员列表和当前用户信息
-				const [membersRes, userRes] = await Promise.all([
-					getMembers(),
-					getUserDetail()
-				])
-				
-				// 根据当前用户角色使用不同数据源更新
-				const currentUserRole = this.user?.role || this.user?.account?.role
-				
-				if (currentUserRole === 'owner') {
-					// Owner: 使用 userRes 更新 account 部分
-					if (userRes && userRes.account) {
-						this.user = {
-							...this.user,
-							account: {
-								...this.user?.account,
-								...userRes.account
-							}
-						}
-					}
-				} else if (currentUserRole === 'member') {
-					// Member: 使用 membersRes 中的当前用户数据更新 account 部分
-					if (membersRes && membersRes.length > 0) {
-						// 从成员列表中找到当前用户
-						const currentMember = membersRes.find(member => member.id === this.user?.id)
-						
-						if (currentMember && currentMember.account) {
-							this.user = {
-								...this.user,
-								account: {
-									...this.user?.account,
-									...currentMember.account
-								}
-							}
-						} else {
-							console.warn('未在成员列表中找到当前用户或account数据')
-						}
-					}
-				} else {
-					// 其他角色或未知角色：使用 userRes 更新 account 部分
-					if (userRes && userRes.account) {
-						this.user = {
-							...this.user,
-							account: {
-								...this.user?.account,
-								...userRes.account
-							}
+			
+			// 并行加载成员列表和当前用户信息
+			const [membersRes, userRes] = await Promise.all([
+				getMembers(),
+				getUserDetail()
+			]).finally(() => {
+				this.loading.members = false
+			})
+			
+			// 根据当前用户角色使用不同数据源更新
+			const currentUserRole = this.user?.role || this.user?.account?.role
+			
+			if (currentUserRole === 'owner') {
+				// Owner: 使用 userRes 更新 account 部分
+				if (userRes && userRes.account) {
+					this.user = {
+						...this.user,
+						account: {
+							...this.user?.account,
+							...userRes.account
 						}
 					}
 				}
-				
-				// 同步到localStorage
-				this.saveToLocalStorage()
-				
-				// 将当前用户信息作为 Owner 添加到成员列表开头
-				const members = membersRes || []
-				const owner = userRes ? {
-					...userRes,
-					isOwner: true
-				} : null
-				
-				// 合并所有成员（Owner + 其他成员）
-				const allMembers = owner ? [owner, ...members] : members
-				
-				// 为每个成员加载设备权限（owner默认拥有所有权限）
-				const membersWithPermissions = await Promise.all(
-					allMembers.map(async (member, index) => {
-						// 第一位是owner，默认拥有所有权限
-						if (index === 0 && member.isOwner) {
-							return {
-								...member
-								// owner拥有所有设备权限，不需要deviceIds字段
+			} else if (currentUserRole === 'member') {
+				// Member: 使用 membersRes 中的当前用户数据更新 account 部分
+				if (membersRes && membersRes.length > 0) {
+					// 从成员列表中找到当前用户
+					const currentMember = membersRes.find(member => member.id === this.user?.id)
+					
+					if (currentMember && currentMember.account) {
+						this.user = {
+							...this.user,
+							account: {
+								...this.user?.account,
+								...currentMember.account
 							}
 						}
-						
-						try {
-							// 获取成员的设备权限
-							const permissions = await getMemberDevicePermissions(member.id || member.user_id)
-							// 提取device_id组成数组
-							const deviceIds = permissions ? permissions.map(p => p.device_id) : []
-							return {
-								...member,
-								deviceIds: deviceIds // 设备ID数组，用于快速判断权限
-							}
-						} catch (error) {
-							console.warn(`获取成员 ${member.id || member.user_id} 的设备权限失败:`, error)
-							return {
-								...member,
-								deviceIds: [] // 权限加载失败时设为空数组
-							}
+					} else {
+						console.warn('未在成员列表中找到当前用户或account数据')
+					}
+				}
+			} else {
+				// 其他角色或未知角色：使用 userRes 更新 account 部分
+				if (userRes && userRes.account) {
+					this.user = {
+						...this.user,
+						account: {
+							...this.user?.account,
+							...userRes.account
 						}
-					})
-				)
-				
-				this.members = membersWithPermissions
-			} catch (err) {
-				this.errors.members = err
-				console.error('成员列表加载失败:', err)
-			} finally {
-				this.loading.members = false
+					}
+				}
 			}
+			
+			// 同步到localStorage
+			this.saveToLocalStorage()
+			
+			// 将当前用户信息作为 Owner 添加到成员列表开头
+			const members = membersRes || []
+			const owner = userRes ? {
+				...userRes,
+				isOwner: true
+			} : null
+			
+			// 合并所有成员（Owner + 其他成员）
+			const allMembers = owner ? [owner, ...members] : members
+			
+			// 为每个成员加载设备权限（owner默认拥有所有权限）
+			const membersWithPermissions = await Promise.all(
+				allMembers.map(async (member, index) => {
+					// 第一位是owner，默认拥有所有权限
+					if (index === 0 && member.isOwner) {
+						return {
+							...member
+							// owner拥有所有设备权限，不需要deviceIds字段
+						}
+					}
+					
+					// 获取成员的设备权限
+					const permissions = await getMemberDevicePermissions(member.id || member.user_id).catch(() => {
+						// 权限加载失败时返回空数组
+						return []
+					})
+					// 提取device_id组成数组
+					const deviceIds = permissions ? permissions.map(p => p.device_id) : []
+					return {
+						...member,
+						deviceIds: deviceIds // 设备ID数组，用于快速判断权限
+					}
+				})
+			)
+			
+			this.members = membersWithPermissions
 		},
 		async loadMessages() {
 			this.loading.messages = true

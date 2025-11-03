@@ -25,12 +25,6 @@ export const getMembers = () => {
 	})
 }
 
-export const getMemberDetail = (memberId) => {
-	return request({
-		url: `/members/${memberId}`,
-		method: 'get'
-	})
-}
 
 // 用户详情API
 export const getUserDetail = () => {
