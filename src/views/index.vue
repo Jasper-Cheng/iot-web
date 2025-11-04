@@ -81,7 +81,7 @@
       <!-- 顶部头部 -->
       <header class="header">
         <div class="header-left">
-          <h1 class="greeting">Greetings from home again, {{ globalStore.user?.account?.name || globalStore.user?.account?.account || 'happy' }}</h1>
+          <h1 class="greeting">Greetings from home again, {{ globalStore.user?.account?.nickname || 'happy' }}</h1>
           <p class="status">Every system and gadget is operating as planned.</p>
         </div>
         <div class="header-right">
@@ -264,11 +264,11 @@
           <div class="user-profile" @click.stop="toggleUserMenuAndCloseNotificationMenu">
             <img 
               :src="globalStore.user?.account?.avatar || DEFAULT_NO_AVATAR_URL" 
-              :alt="globalStore.user?.account?.name || 'User Avatar'" 
+              :alt="globalStore.user?.account?.nickname || 'User Avatar'" 
               @error="$event.target.src = DEFAULT_NO_AVATAR_URL"
               class="profile-avatar"
             >
-            <span class="user-name">{{ globalStore.user?.account?.name || globalStore.user?.account?.account || '用户' }}</span>
+            <span class="user-name">{{ globalStore.user?.account?.nickname || '用户' }}</span>
             <span class="dropdown-arrow" :class="{ active: showUserMenu }">▼</span>
           </div>
           
@@ -282,7 +282,7 @@
                 class="dropdown-avatar"
               >
               <div class="user-details">
-                <h4>{{ globalStore.user?.account?.name || globalStore.user?.account?.account || '用户' }}</h4>
+                <h4>{{ globalStore.user?.account?.nickname || '用户' }}</h4>
                 <p class="user-email">{{ globalStore.user?.account?.email || '未设置邮箱' }}</p>
                 <p class="user-phone">{{ globalStore.user?.account?.phone || '未设置手机号' }}</p>
                 <div class="user-meta">

@@ -389,17 +389,14 @@ export const useGlobalStore = defineStore('global', {
 		setAuth(response) {
 			this.isAuthenticated = true
 			// 保存完整的用户数据（包括 access_token, token_type, role, account, id, user_id）
-			this.user = {
-				access_token: response.access_token,
-				token_type: response.token_type,
-				role: response.role,
-				account: response.account,
-				id: response.id,
-				user_id: response.user_id
-			}
+			this.user = response
 			this.token = response.access_token
 			// 保存到localStorage
 			this.saveToLocalStorage()
+			console.log("response", response)
+			console.log("this.user", this.user)
+			console.log("this.token", this.token)
+			console.log("this.isAuthenticated", this.isAuthenticated)
 		},
 		clearAuth() {
 			this.isAuthenticated = false

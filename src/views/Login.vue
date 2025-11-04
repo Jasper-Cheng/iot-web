@@ -295,17 +295,11 @@ const handleLogin = async () => {
     isLoading.value = false
     globalStore.loading.auth = false
   })
+  console.log("response", response)
 
-  // 先保存token到全局状态
-  globalStore.token = response.access_token
-  localStorage.setItem('token', response.access_token)
-  
   // 使用 setAuth 方法统一设置认证状态
   // login API 已经返回 user_id，直接使用 response 即可
-  globalStore.setAuth({
-    access_token: response.access_token,
-    account: response
-  })
+  globalStore.setAuth(response)
   
   // 保存记住的凭据
   saveRememberedCredentials()
