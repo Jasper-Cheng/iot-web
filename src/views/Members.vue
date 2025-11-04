@@ -36,11 +36,11 @@
         <div class="member-header" @click="toggleMemberExpanded(member.id)">
           <div class="member-info">
             <div class="member-avatar">
-              <img :src="member.avatar || DEFAULT_NO_AVATAR_URL" :alt="member.name" @error="$event.target.src = DEFAULT_NO_AVATAR_URL">
+              <img :src="member.avatar || DEFAULT_NO_AVATAR_URL" :alt="member.nickname" @error="$event.target.src = DEFAULT_NO_AVATAR_URL">
               <div class="status-indicator" :class="member.status"></div>
             </div>
             <div class="member-details">
-              <h3>{{ member.name }}</h3>
+              <h3>{{ member.nickname }}</h3>
               <p :title="member.email">{{ member.email }}</p>
               <span class="role-badge" :class="member.role">{{ getRoleText(member.role) }}</span>
             </div>
@@ -167,8 +167,8 @@
           <!-- 基本信息 -->
           <div class="form-row">
             <div class="form-group">
-              <label>姓名 *</label>
-              <input v-model="newMember.name" type="text" required placeholder="请输入姓名">
+              <label>昵称 *</label>
+              <input v-model="newMember.nickname" type="text" required placeholder="请输入昵称">
             </div>
             <div class="form-group">
               <label>性别 *</label>
@@ -186,18 +186,8 @@
               <input v-model="newMember.email" type="email" placeholder="请输入邮箱地址">
             </div>
             <div class="form-group">
-              <!-- 占位，保持布局 -->
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
               <label>电话 *</label>
               <input v-model="newMember.phone" type="tel" required placeholder="请输入电话号码">
-            </div>
-            <div class="form-group">
-              <label>账号 *</label>
-              <input v-model="newMember.username" type="text" required placeholder="请输入账号">
             </div>
           </div>
           
@@ -236,16 +226,16 @@
         <div class="delete-modal-body">
           <div class="member-delete-info">
             <div class="member-avatar">
-              <img :src="memberPendingDelete.avatar || DEFAULT_NO_AVATAR_URL" :alt="memberPendingDelete.name" @error="$event.target.src = DEFAULT_NO_AVATAR_URL">
+              <img :src="memberPendingDelete.avatar || DEFAULT_NO_AVATAR_URL" :alt="memberPendingDelete.nickname" @error="$event.target.src = DEFAULT_NO_AVATAR_URL">
             </div>
             <div class="member-details">
-              <h4>{{ memberPendingDelete.name }}</h4>
+              <h4>{{ memberPendingDelete.nickname }}</h4>
               <p :title="memberPendingDelete.email">{{ memberPendingDelete.email }}</p>
               <span class="role-badge" :class="memberPendingDelete.role">{{ getRoleText(memberPendingDelete.role) }}</span>
             </div>
           </div>
           <p class="delete-warning">
-            确定要删除成员 "{{ memberPendingDelete.name }}" 吗？此操作不可撤销。
+            确定要删除成员 "{{ memberPendingDelete.nickname }}" 吗？此操作不可撤销。
           </p>
         </div>
         <div class="delete-modal-footer">
@@ -290,9 +280,8 @@ const editingMember = ref(null)
 
 // 新成员表单数据
 const newMember = ref({
-  name: '',
+  nickname: '',
   gender: 'other',
-  username: '',
   password: '',
   confirmPassword: '',
   phone: '',
@@ -413,7 +402,7 @@ const handleError = (error, defaultMessage) => {
 
 const buildUpdateData = (formData, isEditing = false) => {
   const updateData = {}
-  const fields = ['username', 'name', 'gender', 'phone', 'email', 'avatar']
+  const fields = ['nickname', 'gender', 'phone', 'email', 'avatar']
   
   // 编辑模式下，如果密码不为空才添加密码字段
   if (isEditing && formData.password && formData.password.trim() !== '') {
@@ -426,36 +415,11 @@ const buildUpdateData = (formData, isEditing = false) => {
   fields.forEach(field => {
     const value = formData[field]
     if (value && value.toString().trim() !== '') {
-      if (field === 'username') {
-        updateData.account = value
-      } else {
-        updateData[field] = value
-      }
+      updateData[field] = value
     }
   })
   
   return updateData
-}
-
-const updateMemberInStore = (memberId, updateData) => {
-  return globalStore.members.map(member => {
-    if (member.id === memberId) {
-      const updatedMember = { ...member }
-      const updatedAccount = { ...member.account }
-      
-      // 只更新有值的字段
-      if (updateData.account) updatedAccount.account = updateData.account
-      if (updateData.name) updatedAccount.name = updateData.name
-      if (updateData.gender) updatedAccount.gender = updateData.gender
-      if (updateData.phone) updatedAccount.phone = updateData.phone
-      if (updateData.email) updatedAccount.email = updateData.email
-      if (updateData.avatar) updatedAccount.avatar = updateData.avatar
-      
-      updatedMember.account = updatedAccount
-      return updatedMember
-    }
-    return member
-  })
 }
 
 // 方法
@@ -466,7 +430,7 @@ const loadData = async () => {
     const members = globalStore.members || []
     const mappedMembers = members.map(member => ({
       id: member.id,
-      name: member.account?.nickname || '未知成员',
+      nickname: member.account?.nickname || '未知成员',
       email: member.account?.email || '',
       avatar: member.account?.avatar || '',
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
@@ -476,7 +440,6 @@ const loadData = async () => {
       // 添加设备权限字段
       deviceIds: member.deviceIds || [],
       // 添加编辑时需要的字段
-      username: member.account?.nickname, // account.account 已移除，使用空字符串
       phone: member.account?.phone || '',
       gender: member.account?.gender || '',
       // 保留原始数据字段
@@ -603,10 +566,9 @@ const addNewMember = async () => {
   }
   
   const memberData = {
-    account: newMember.value.username, // 使用account字段而不是username
     password: newMember.value.password,
     phone: newMember.value.phone,
-    name: newMember.value.name,
+    nickname: newMember.value.nickname,
     gender: newMember.value.gender,
     email: newMember.value.email,
     avatar: newMember.value.avatar
@@ -653,9 +615,8 @@ const openEditModal = (member) => {
   
   
   newMember.value = {
-    name: member.name || '',
+    nickname: member.nickname || '', // 昵称
     gender: member.gender || '',
-    username: member.username || '',
     password: '', // 编辑时不显示密码
     confirmPassword: '', // 编辑时不显示确认密码
     phone: member.phone || '',
@@ -708,9 +669,8 @@ const closeModal = () => {
 
 const resetNewMemberForm = () => {
   newMember.value = {
-    name: '',
+    nickname: '',
     gender: 'other',
-    username: '',
     password: '',
     confirmPassword: '',
     phone: '',

@@ -610,7 +610,7 @@ export default {
       
       // 调用反馈提交API
       await submitFeedbackAPI({
-        name: this.currentUser.account.name || '',
+        name: this.currentUser.account?.nickname || '',
         type: this.feedbackForm.type,
         content: this.feedbackForm.content,
         source: 'web',

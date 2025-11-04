@@ -277,7 +277,7 @@
             <div class="user-info">
               <img 
                 :src="globalStore.user?.account?.avatar || DEFAULT_NO_AVATAR_URL" 
-                :alt="globalStore.user?.account?.name || 'User Avatar'" 
+                :alt="globalStore.user?.account?.nickname || 'User Avatar'" 
                 @error="$event.target.src = DEFAULT_NO_AVATAR_URL"
                 class="dropdown-avatar"
               >
