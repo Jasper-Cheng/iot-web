@@ -466,7 +466,7 @@ const loadData = async () => {
     const members = globalStore.members || []
     const mappedMembers = members.map(member => ({
       id: member.id,
-      name: member.account?.name || '未知成员',
+      name: member.account?.nickname || '未知成员',
       email: member.account?.email || '',
       avatar: member.account?.avatar || '',
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
@@ -476,12 +476,11 @@ const loadData = async () => {
       // 添加设备权限字段
       deviceIds: member.deviceIds || [],
       // 添加编辑时需要的字段
-      username: member.account?.account || '',
+      username: member.account?.nickname, // account.account 已移除，使用空字符串
       phone: member.account?.phone || '',
       gender: member.account?.gender || '',
       // 保留原始数据字段
       user_id: member.user_id,
-      account_id: member.account_id,
       created_at: member.created_at,
       account: member.account,
       // 使用 isOwner 字段（由 globalStore 设置）

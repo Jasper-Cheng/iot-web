@@ -14,19 +14,18 @@ export const useGlobalStore = defineStore('global', {
 		// {
 		//   access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // JWT访问令牌
 		//   token_type: "bearer",           // 令牌类型
-		//   role: "member",                 // 用户角色：owner/member
+		//   role: "owner",                  // 用户角色：owner/member
 		//   account: {                      // 账号详细信息
-		//     account: "member10",          // 账号名
-		//     name: "成员10",               // 显示名称
-		//     gender: "other",              // 性别：male/female/other
-		//     phone: "1390000009",          // 手机号
-		//     email: "member10@example.com", // 邮箱
+		//     nickname: "用户1",             // 显示名称（昵称）
+		//     gender: "female",            // 性别：male/female/other
+		//     phone: "13800000000",         // 手机号
+		//     email: "user1@example.com",    // 邮箱
 		//     avatar: null,                 // 头像URL
-		//     role: "member",               // 角色：admin/member
-		//     id: 28,                       // 账号ID
-		//     created_at: "2025-09-22T05:10:39" // 账号创建时间
+		//     role: "owner",                 // 角色：owner/member
+		//     id: 4,                        // 账号ID
+		//     created_at: "2025-11-04T10:42:34" // 账号创建时间
 		//   },
-		//   id: 10,                         // 统一的用户ID（admin/owner/member的真正ID）
+		//   id: 1,                          // 统一的用户ID（admin/owner/member的真正ID）
 		//   user_id: 1                      // 所属用户ID（家庭主账号ID）
 		// }
 		user: null,
@@ -54,17 +53,15 @@ export const useGlobalStore = defineStore('global', {
 		// [
 		//   // Owner（当前用户）- 第一位
 		//   {
-		//     account_id: 0,                 // 账号ID
 		//     id: 0,                         // 用户ID
 		//     created_at: "2025-09-23T02:30:12.887Z", // 用户创建时间
 		//     account: {                     // 账号详细信息
-		//       account: "string",           // 账号名
-		//       name: "string",              // 显示名称
+		//       nickname: "string",          // 显示名称（昵称）
 		//       gender: "other",             // 性别：male/female/other
 		//       phone: "string",             // 手机号
 		//       email: "string",             // 邮箱
 		//       avatar: "string",            // 头像URL
-		//       role: "member",              // 角色：admin/member
+		//       role: "owner",                // 角色：owner/member
 		//       id: 0,                       // 账号ID
 		//       created_at: "2025-09-23T02:30:12.887Z" // 账号创建时间
 		//     },
@@ -74,17 +71,15 @@ export const useGlobalStore = defineStore('global', {
 		//   // 家庭成员 - 其他成员
 		//   {
 		//     user_id: 1,                    // 所属用户ID（家庭主账号ID）
-		//     account_id: 24,                // 成员账号ID
 		//     id: 6,                         // 成员ID（家庭成员关联ID）
 		//     created_at: "2025-09-22T05:10:39", // 成员创建时间
 		//     account: {                     // 成员账号信息
-		//       account: "member6",          // 账号名
-		//       name: "成员6",               // 显示名称
+		//       nickname: "成员6",            // 显示名称（昵称）
 		//       gender: "other",             // 性别：male/female/other
 		//       phone: "13900000005",        // 手机号
 		//       email: "member6@example.com", // 邮箱
 		//       avatar: null,                // 头像URL
-		//       role: "member",              // 角色：admin/member
+		//       role: "member",              // 角色：owner/member
 		//       id: 24,                      // 账号ID
 		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
 		//     },
@@ -393,7 +388,15 @@ export const useGlobalStore = defineStore('global', {
 				// 认证相关方法
 		setAuth(response) {
 			this.isAuthenticated = true
-			this.user = response.account || response
+			// 保存完整的用户数据（包括 access_token, token_type, role, account, id, user_id）
+			this.user = {
+				access_token: response.access_token,
+				token_type: response.token_type,
+				role: response.role,
+				account: response.account,
+				id: response.id,
+				user_id: response.user_id
+			}
 			this.token = response.access_token
 			// 保存到localStorage
 			this.saveToLocalStorage()
@@ -457,8 +460,7 @@ export const useGlobalStore = defineStore('global', {
 				const updatedAccount = { ...this.user.account }
 				
 				// 只更新有值的字段
-				if (updateData.account) updatedAccount.account = updateData.account
-				if (updateData.name) updatedAccount.name = updateData.name
+				if (updateData.nickname) updatedAccount.nickname = updateData.nickname
 				if (updateData.gender) updatedAccount.gender = updateData.gender
 				if (updateData.phone) updatedAccount.phone = updateData.phone
 				if (updateData.email) updatedAccount.email = updateData.email
@@ -487,8 +489,7 @@ export const useGlobalStore = defineStore('global', {
 				}
 				
 				// 只更新有值的字段到account对象中
-				if (updateData.account) updatedMember.account.account = updateData.account
-				if (updateData.name) updatedMember.account.name = updateData.name
+				if (updateData.nickname) updatedMember.account.nickname = updateData.nickname
 				if (updateData.gender) updatedMember.account.gender = updateData.gender
 				if (updateData.phone) updatedMember.account.phone = updateData.phone
 				if (updateData.email) updatedMember.account.email = updateData.email
@@ -523,7 +524,7 @@ export const useGlobalStore = defineStore('global', {
 		// 更新成员在线状态
 		updateMemberStatus(accountId, status) {
 			const memberIndex = this.members.findIndex(member => 
-				member.account_id === accountId || member.account?.id === accountId || member.id === accountId
+				member.account?.id === accountId || member.id === accountId
 			)
 			if (memberIndex !== -1) {
 				// 更新成员状态（创建新对象以触发响应式更新）

@@ -954,7 +954,7 @@ const handleMemberCreate = async (data) => {
   // 保存当前所有成员的 status
   const statusMap = new Map()
   globalStore.members.forEach(member => {
-    const key = member.account_id || member.account?.id || member.id
+    const key = member.account?.id || member.id
     if (key && member.status) {
       statusMap.set(key, member.status)
     }
