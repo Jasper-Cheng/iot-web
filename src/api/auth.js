@@ -50,17 +50,6 @@ export function getWechatQRCode() {
   })
 }
 
-// 微信登录（通过code）
-export function wechatLogin(code) {
-  return request({
-    url: '/auth/wechat/login',
-    method: 'post',
-    data: {
-      code: code
-    }
-  })
-}
-
 // 微信登录（通过token）
 export function wechatLoginByToken(token) {
   return request({

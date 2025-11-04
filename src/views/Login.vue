@@ -185,7 +185,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
-import { login, register, getWechatQRCode, wechatLogin, wechatLoginByToken, checkWechatLoginStatus } from '../api/auth'
+import { login, register, getWechatQRCode, wechatLoginByToken, checkWechatLoginStatus } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 
@@ -399,19 +399,9 @@ const handleForgotPassword = () => {
   ElMessage.info('你没忘！')
 }
 
-// 处理微信登录
+// 处理微信登录 - 统一使用二维码登录
 const handleWechatLogin = () => {
-  // 方案1: 跳转到微信授权页面（需要后端配置微信OAuth2.0）
-  const wechatAuthUrl = '/api/v1/web/auth/wechat/authorize'
-  
-  // 检查是否支持二维码登录（更通用的方案）
-  if (window.innerWidth >= 768) {
-    // PC端显示二维码
-    initWechatQR()
-  } else {
-    // 移动端跳转到授权页面
-    window.location.href = wechatAuthUrl
-  }
+  initWechatQR()
 }
 
 // 初始化微信二维码
@@ -522,50 +512,9 @@ const closeWechatQR = () => {
   wechatTicket.value = ''
 }
 
-// 处理URL参数中的微信授权code（用于微信OAuth回调）
-const handleWechatCallback = async () => {
-  const urlParams = new URLSearchParams(window.location.search)
-  const code = urlParams.get('code')
-  const state = urlParams.get('state')
-  
-  if (code) {
-    try {
-      isLoading.value = true
-      globalStore.loading.auth = true
-      
-      const response = await wechatLogin(code)
-      
-      // 保存token和用户信息
-      globalStore.token = response.access_token
-      localStorage.setItem('token', response.access_token)
-      
-      globalStore.setAuth({
-        access_token: response.access_token,
-        account: response
-      })
-      
-      ElMessage.success('微信登录成功')
-      
-      // 清除URL参数
-      window.history.replaceState({}, document.title, window.location.pathname)
-      
-      // 跳转到首页或指定页面
-      const redirect = urlParams.get('redirect') || '/home'
-      router.push(redirect)
-    } catch (error) {
-      console.error('微信登录失败:', error)
-      ElMessage.error('微信登录失败，请重试')
-    } finally {
-      isLoading.value = false
-      globalStore.loading.auth = false
-    }
-  }
-}
-
-// 组件挂载时恢复记住的凭据并检查微信回调
+// 组件挂载时恢复记住的凭据
 onMounted(() => {
   restoreRememberedCredentials()
-  handleWechatCallback()
 })
 
 // 组件卸载时清理定时器
