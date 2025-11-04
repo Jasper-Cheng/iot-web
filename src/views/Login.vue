@@ -162,7 +162,12 @@
           </div>
           <div v-else-if="wechatQRCode" class="qr-image-container">
             <img :src="wechatQRCode" alt="微信登录二维码" class="qr-image" />
-            <p class="qr-tip">请使用微信扫描二维码</p>
+            <p class="qr-tip" :class="{
+              'qr-tip-scanned': wechatStatus === 'scanned',
+              'qr-tip-waiting': wechatStatus === 'waiting'
+            }">
+              {{ wechatStatusMessage || '请使用微信扫描二维码' }}
+            </p>
           </div>
           <div v-else class="qr-error">
             <p>二维码加载失败，请重试</p>
@@ -178,9 +183,10 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
-import { login, register, getWechatQRCode, wechatLoginByToken, checkWechatLoginStatus } from '../api/auth'
+import { login, register, getWechatQRCode, checkWechatLoginStatus } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
+import QRCode from 'qrcode'
 
 const router = useRouter()
 const globalStore = useGlobalStore()
@@ -252,7 +258,9 @@ const isRegister = ref(false)
 const showWechatQR = ref(false)
 const wechatQRCode = ref('')
 const wechatQRLoading = ref(false)
-const wechatTicket = ref('')
+const wechatSceneId = ref('')
+const wechatStatus = ref('') // waiting, scanned, expired, confirmed
+const wechatStatusMessage = ref('')
 let wechatPollingTimer = null
 
 // 关闭登录弹窗
@@ -402,17 +410,32 @@ const initWechatQR = async () => {
   showWechatQR.value = true
   wechatQRLoading.value = true
   wechatQRCode.value = ''
-  wechatTicket.value = ''
+  wechatSceneId.value = ''
+  wechatStatus.value = ''
+  wechatStatusMessage.value = ''
   
   try {
     const response = await getWechatQRCode()
-    if (response.qrcode_url) {
-      wechatQRCode.value = response.qrcode_url
-      wechatTicket.value = response.ticket || ''
+    console.log("response", response)
+    if (response.qrcode_url && response.scene_id) {
+      wechatSceneId.value = response.scene_id
       
-      // 开始轮询检查登录状态
-      if (wechatTicket.value) {
+      // 将 qrcode_url 转换为二维码图片
+      try {
+        const qrCodeDataURL = await QRCode.toDataURL(response.qrcode_url, {
+          width: 260,
+          margin: 2
+        })
+        wechatQRCode.value = qrCodeDataURL
+        wechatStatus.value = 'waiting'
+        wechatStatusMessage.value = '等待扫码'
+        
+        // 开始轮询检查登录状态
         startWechatPolling()
+      } catch (qrError) {
+        console.error('生成二维码图片失败:', qrError)
+        ElMessage.error('生成二维码失败，请重试')
+        wechatQRCode.value = ''
       }
     } else {
       ElMessage.error('获取二维码失败')
@@ -434,16 +457,20 @@ const startWechatPolling = () => {
   }
   
   wechatPollingTimer = setInterval(async () => {
-    if (!wechatTicket.value) {
+    if (!wechatSceneId.value) {
       stopWechatPolling()
       return
     }
     
     try {
-      const response = await checkWechatLoginStatus(wechatTicket.value)
+      const response = await checkWechatLoginStatus(wechatSceneId.value)
+      
+      // 更新状态显示
+      wechatStatus.value = response.status
+      wechatStatusMessage.value = response.message || ''
       
       if (response.status === 'confirmed' && response.token) {
-        // 登录成功
+        // 登录成功，直接使用返回的 token 信息
         stopWechatPolling()
         await completeWechatLogin(response.token)
       } else if (response.status === 'expired') {
@@ -467,21 +494,13 @@ const stopWechatPolling = () => {
 }
 
 // 完成微信登录
-const completeWechatLogin = async (token) => {
+const completeWechatLogin = async (tokenData) => {
   try {
     isLoading.value = true
     globalStore.loading.auth = true
     
-    const response = await wechatLoginByToken(token)
-    
-    // 保存token和用户信息
-    globalStore.token = response.access_token
-    localStorage.setItem('token', response.access_token)
-    
-    globalStore.setAuth({
-      access_token: response.access_token,
-      account: response
-    })
+    console.log("tokenData", tokenData)
+    globalStore.setAuth(tokenData)
     
     ElMessage.success('微信登录成功')
     closeWechatQR()
@@ -502,7 +521,9 @@ const closeWechatQR = () => {
   showWechatQR.value = false
   stopWechatPolling()
   wechatQRCode.value = ''
-  wechatTicket.value = ''
+  wechatSceneId.value = ''
+  wechatStatus.value = ''
+  wechatStatusMessage.value = ''
 }
 
 // 组件挂载时恢复记住的凭据
@@ -1087,6 +1108,15 @@ onUnmounted(() => {
   font-size: 14px;
   text-align: center;
   margin: 0;
+}
+
+.qr-tip-scanned {
+  color: #07c160;
+  font-weight: 500;
+}
+
+.qr-tip-waiting {
+  color: var(--color-login-text-muted, #666);
 }
 
 .qr-error {

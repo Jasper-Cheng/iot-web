@@ -44,29 +44,18 @@ export function logout() {
 // 获取微信登录二维码
 export function getWechatQRCode() {
   return request({
-    url: '/auth/wechat/qrcode',
+    url: '/auth/login/qrcode',
     method: 'get'
   })
 }
 
-// 微信登录（通过token）
-export function wechatLoginByToken(token) {
-  return request({
-    url: '/auth/wechat/login',
-    method: 'post',
-    data: {
-      token: token
-    }
-  })
-}
-
 // 检查微信登录状态（轮询）
-export function checkWechatLoginStatus(ticket) {
+export function checkWechatLoginStatus(sceneId) {
   return request({
-    url: '/auth/wechat/status',
+    url: '/auth/login/check_status',
     method: 'get',
     params: {
-      ticket: ticket
+      scene_id: sceneId
     }
   })
 }
