@@ -154,9 +154,13 @@ const editingDeviceName = ref('')
 
 // 积分相关方法
 const loadUserPoints = async () => {
-  const response = await getPointsBalance()
-  // 更新全局状态中的积分
-  globalStore.userPoints = response.available_balance || 0
+  try {
+    const response = await getPointsBalance()
+    // 更新全局状态中的积分
+    globalStore.userPoints = response.available_balance || 0
+  } catch (error) {
+    console.error('获取积分余额失败:', error)
+  }
 }
 
 // 处理签到成功
@@ -313,11 +317,15 @@ const confirmEditName = async () => {
 
   isEditingName.value = true
   
-  await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim()).finally(() => {
+  try {
+    await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim())
+    closeEditNameModal()
+  } catch (error) {
+    console.error('修改设备名称失败:', error)
+    ElMessage.error(error.response?.data?.detail || '修改设备名称失败，请重试')
+  } finally {
     isEditingName.value = false
-  })
-  
-  closeEditNameModal()
+  }
 }
 
 </script>

@@ -279,31 +279,29 @@ const handleLogin = async () => {
   isLoading.value = true
   globalStore.loading.auth = true
   
-  console.log("formData", formData)
-  // 调用登录API
-  const response = await login({
-    phone: formData.phone,
-    password: formData.password
-  }).finally(() => {
+  try {
+    // 调用登录API
+    const response = await login({
+      phone: formData.phone,
+      password: formData.password
+    })
+
+    // 使用 setAuth 方法统一设置认证状态
+    // login API 已经返回 user_id，直接使用 response 即可
+    globalStore.setAuth(response)
+    
+    // 保存记住的凭据
+    saveRememberedCredentials()
+    
+    // 跳转到首页
+    router.push('/home')
+  } catch (error) {
+    console.error('登录失败:', error)
+    errorMessage.value = error.response?.data?.detail || '登录失败，请重试'
+  } finally {
     isLoading.value = false
     globalStore.loading.auth = false
-  }).catch(() => {
-    return null
-  })
-  if (!response) {
-    return
   }
-  console.log("response", response)
-
-  // 使用 setAuth 方法统一设置认证状态
-  // login API 已经返回 user_id，直接使用 response 即可
-  globalStore.setAuth(response)
-  
-  // 保存记住的凭据
-  saveRememberedCredentials()
-  
-  // 跳转到首页
-  router.push('/home')
 }
 
 // 切换模式
@@ -333,40 +331,45 @@ const handleRegister = async () => {
   isLoading.value = true
   globalStore.loading.auth = true
   
-  // 调用注册API
-  const response = await register({
-    password: registerData.password,
-    phone: registerData.phone,
-    nickname: registerData.nickname,
-    gender: registerData.gender,
-    email: registerData.email,
-    avatar: registerData.avatar
-  }).finally(() => {
+  try {
+    // 调用注册API
+    const response = await register({
+      password: registerData.password,
+      phone: registerData.phone,
+      nickname: registerData.nickname,
+      gender: registerData.gender,
+      email: registerData.email,
+      avatar: registerData.avatar
+    })
+    
+    // 注册成功，显示成功消息
+    ElMessage.success('注册成功，请登录')
+    
+    // 将注册的手机号和密码填写到登录表单
+    formData.phone = registerData.phone
+    formData.password = registerData.password
+    
+    // 切换到登录模式
+    isRegister.value = false
+    
+    // 清空注册表单
+    Object.assign(registerData, {
+      nickname: '',
+      avatar: '',
+      phone: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'owner',
+      gender: 'other'
+    })
+  } catch (error) {
+    console.error('注册失败:', error)
+    errorMessage.value = error.response?.data?.detail || '注册失败，请重试'
+  } finally {
     isLoading.value = false
     globalStore.loading.auth = false
-  })
-  
-  // 注册成功，显示成功消息
-  ElMessage.success('注册成功，请登录')
-  
-  // 将注册的手机号和密码填写到登录表单
-  formData.phone = registerData.phone
-  formData.password = registerData.password
-  
-  // 切换到登录模式
-  isRegister.value = false
-  
-  // 清空注册表单
-  Object.assign(registerData, {
-    nickname: '',
-    avatar: '',
-    phone: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'owner',
-    gender: 'other'
-  })
+  }
 }
 
 

@@ -35,7 +35,6 @@ request.interceptors.response.use(
     return response.data
   },
   error => {
-    console.error('Response error:', error)
     
     if (error.response) {
       const { status, data } = error.response

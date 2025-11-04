@@ -386,12 +386,17 @@ const confirmDeleteDevice = async () => {
   const device = devicePendingDelete.value
   if (!device || !device.sn) return
   
-  // 调用解绑设备 API，传入 SN
-  await unbindDeviceBySN(device.sn)
-  
-  // 关闭设备详情弹窗和确认弹窗
-  closeDeviceModal()
-  closeDeleteDeviceConfirm()
+  try {
+    // 调用解绑设备 API，传入 SN
+    await unbindDeviceBySN(device.sn)
+    
+    // 关闭设备详情弹窗和确认弹窗
+    closeDeviceModal()
+    closeDeleteDeviceConfirm()
+  } catch (error) {
+    console.error('解绑设备失败:', error)
+    ElMessage.error(error.response?.data?.detail || '解绑设备失败，请重试')
+  }
 }
 
 // 删除房间（将房间内设备移回 All Devices）
@@ -399,10 +404,14 @@ const removeRoom = async () => {
   const room = roomPendingDelete.value
   if (!room) return
 
-  // 调用删除房间 API
-  await deleteRoom(room.id)
-
-  closeDeleteConfirm()
+  try {
+    // 调用删除房间 API
+    await deleteRoom(room.id)
+    closeDeleteConfirm()
+  } catch (error) {
+    console.error('删除房间失败:', error)
+    ElMessage.error(error.response?.data?.detail || '删除房间失败，请重试')
+  }
 }
 
 // 拖拽开始
@@ -586,16 +595,21 @@ const updateRoomDevicesSort = async (roomId) => {
   // 即使房间没有设备，也需要调用 API 来清空房间的设备列表
   // 这样服务器端会正确更新房间的设备关联关系
     
-  // 调用全局状态管理中的批量更新方法
-  const data = {
-    room_id: roomId,
-    devices: roomDevices.map((device, index) => ({
-      device_id: device.device_id,
-      sort_order: index
-    }))
+  try {
+    // 调用全局状态管理中的批量更新方法
+    const data = {
+      room_id: roomId,
+      devices: roomDevices.map((device, index) => ({
+        device_id: device.device_id,
+        sort_order: index
+      }))
+    }
+    
+    await batchUpdateRoomDevices(data)
+  } catch (error) {
+    console.error('更新房间设备排序失败:', error)
+    ElMessage.error(error.response?.data?.detail || '更新房间设备排序失败，请重试')
   }
-  
-  await batchUpdateRoomDevices(data)
 }
 
 // 拖拽时自动滚动页面（向上/向下）
@@ -628,30 +642,35 @@ const closeDeviceModal = () => {
 const removeDevice = async (device) => {
   if (!device || !device.sn) return
   
-  // 调用解绑设备 API，传入 SN
-  await unbindDeviceBySN(device.sn)
-  
-  // 从 localDevices 中移除
-  const localIndex = localDevices.value.findIndex(d => d.id === device.id)
-  if (localIndex > -1) {
-    localDevices.value.splice(localIndex, 1)
-  }
-  
-  // 从 globalStore.rooms 中移除
-  if (device.roomId !== 'unassigned') {
-    const room = globalStore.rooms.find(r => r.id === device.roomId)
-    if (room && room.devices) {
-      room.devices = room.devices.filter(rd => rd.device_id !== device.id)
+  try {
+    // 调用解绑设备 API，传入 SN
+    await unbindDeviceBySN(device.sn)
+    
+    // 从 localDevices 中移除
+    const localIndex = localDevices.value.findIndex(d => d.id === device.id)
+    if (localIndex > -1) {
+      localDevices.value.splice(localIndex, 1)
     }
+    
+    // 从 globalStore.rooms 中移除
+    if (device.roomId !== 'unassigned') {
+      const room = globalStore.rooms.find(r => r.id === device.roomId)
+      if (room && room.devices) {
+        room.devices = room.devices.filter(rd => rd.device_id !== device.id)
+      }
+    }
+    
+    // 从 globalStore.devices 中移除
+    const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
+    if (globalIndex > -1) {
+      globalStore.devices.splice(globalIndex, 1)
+    }
+    
+    closeDeviceModal()
+  } catch (error) {
+    console.error('移除设备失败:', error)
+    ElMessage.error(error.response?.data?.detail || '移除设备失败，请重试')
   }
-  
-  // 从 globalStore.devices 中移除
-  const globalIndex = globalStore.devices.findIndex(d => d.id === device.id)
-  if (globalIndex > -1) {
-    globalStore.devices.splice(globalIndex, 1)
-  }
-  
-  closeDeviceModal()
 }
 
 
@@ -672,12 +691,17 @@ const confirmAddRoom = async () => {
     return
   }
   
-  // 调用创建房间 API
-  await createRoom({name: roomName})
-  
-  // 重置表单
-  newRoomName.value = ''
-  addRoomModalOpen.value = false
+  try {
+    // 调用创建房间 API
+    await createRoom({name: roomName})
+    
+    // 重置表单
+    newRoomName.value = ''
+    addRoomModalOpen.value = false
+  } catch (error) {
+    console.error('创建房间失败:', error)
+    ElMessage.error(error.response?.data?.detail || '创建房间失败，请重试')
+  }
 }
 
 const cancelAddRoom = () => {

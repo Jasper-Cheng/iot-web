@@ -461,24 +461,29 @@ export default {
     async loadVersionInfo() {
       this.isVersionLoading = true;
       
-      const versionList = await getVersionInfo({
-        platform: 'web',
-        limit: 10,
-        order_by: 'created_at',
-        order_desc: true
-      }).finally(() => {
-        this.isVersionLoading = false;
-      });
-      
-      if (Array.isArray(versionList) && versionList.length > 0) {
-        // 确保按创建时间倒序排列（最新的在前）
-        this.versionList = versionList.sort((a, b) => {
-          const dateA = new Date(a.created_at);
-          const dateB = new Date(b.created_at);
-          return dateB - dateA; // 倒序：新的在前
+      try {
+        const versionList = await getVersionInfo({
+          platform: 'web',
+          limit: 10,
+          order_by: 'created_at',
+          order_desc: true
         });
-      } else {
+        
+        if (Array.isArray(versionList) && versionList.length > 0) {
+          // 确保按创建时间倒序排列（最新的在前）
+          this.versionList = versionList.sort((a, b) => {
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateB - dateA; // 倒序：新的在前
+          });
+        } else {
+          this.versionList = [];
+        }
+      } catch (error) {
+        console.error('加载版本信息失败:', error);
         this.versionList = [];
+      } finally {
+        this.isVersionLoading = false;
       }
     },
     
@@ -561,19 +566,25 @@ export default {
     async loadFeedbackList() {
       this.isFeedbackLoading = true;
       
-      const feedbackList = await getFeedbackList({
-        skip: 0,
-        limit: 100,
-        order_by: 'created_at',
-        order_desc: true
-      }).finally(() => {
-        this.isFeedbackLoading = false;
-      });
-      
-      if (Array.isArray(feedbackList)) {
-        this.feedbackList = feedbackList;
-      } else {
+      try {
+        const feedbackList = await getFeedbackList({
+          skip: 0,
+          limit: 100,
+          order_by: 'created_at',
+          order_desc: true
+        });
+        
+        if (Array.isArray(feedbackList)) {
+          this.feedbackList = feedbackList;
+        } else {
+          this.feedbackList = [];
+        }
+      } catch (error) {
+        console.error('加载反馈列表失败:', error);
+        ElMessage.error('加载反馈列表失败，请重试');
         this.feedbackList = [];
+      } finally {
+        this.isFeedbackLoading = false;
       }
     },
     closeFeedbackListDialog() {
@@ -608,33 +619,38 @@ export default {
       // 获取当前版本信息
       const currentVersion = this.versionList.length > 0 ? this.versionList[0] : null;
       
-      // 调用反馈提交API
-      await submitFeedbackAPI({
-        name: this.currentUser.account?.nickname || '',
-        type: this.feedbackForm.type,
-        content: this.feedbackForm.content,
-        source: 'web',
-        contact_info: this.feedbackForm.contact || '',
-        extra: {
-          ip_address: '', // 可以后续添加IP获取逻辑
-          user_agent: navigator.userAgent,
-          device_info: {
-            platform: 'Web',
-            version: currentVersion ? currentVersion.version_code : '',
-            version_name: currentVersion ? currentVersion.version_name : ''
+      try {
+        // 调用反馈提交API
+        await submitFeedbackAPI({
+          name: this.currentUser.account?.nickname || '',
+          type: this.feedbackForm.type,
+          content: this.feedbackForm.content,
+          source: 'web',
+          contact_info: this.feedbackForm.contact || '',
+          extra: {
+            ip_address: '', // 可以后续添加IP获取逻辑
+            user_agent: navigator.userAgent,
+            device_info: {
+              platform: 'Web',
+              version: currentVersion ? currentVersion.version_code : '',
+              version_name: currentVersion ? currentVersion.version_name : ''
+            }
           }
-        }
-      });
-      
-      ElMessage.success('感谢您的反馈，我们会尽快处理！');
-      this.feedbackDialogVisible = false;
-      
-      // 重置表单
-      this.feedbackForm = {
-        type: '',
-        content: '',
-        contact: ''
-      };
+        });
+        
+        ElMessage.success('感谢您的反馈，我们会尽快处理！');
+        this.feedbackDialogVisible = false;
+        
+        // 重置表单
+        this.feedbackForm = {
+          type: '',
+          content: '',
+          contact: ''
+        };
+      } catch (error) {
+        console.error('提交反馈失败:', error);
+        ElMessage.error(error.response?.data?.detail || '提交反馈失败，请重试');
+      }
     }
   }
 };

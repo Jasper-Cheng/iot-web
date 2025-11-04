@@ -1338,9 +1338,12 @@ const getGenderText = (gender) => {
 // 退出登录
 const logout = async () => {
   // 调用退出登录 API（即使失败也继续执行退出流程）
-  logoutApi().catch(() => {
+  try {
+    await logoutApi()
+  } catch (error) {
+    console.error('退出登录失败:', error)
     // request.js 已统一处理错误，这里只确保即使失败也继续执行后续流程
-  })
+  }
   
   //延迟500毫秒后执行退出登录流程
   setTimeout(() => {
@@ -1487,8 +1490,12 @@ const loadMoreReadMessagesDirect = async (skip, limit) => {
 
 // 积分相关方法
 const loadUserPoints = async () => {
-  const response = await getPointsBalance()
-  globalStore.userPoints = response.available_balance || 0
+  try {
+    const response = await getPointsBalance()
+    globalStore.userPoints = response.available_balance || 0
+  } catch (error) {
+    console.error('获取积分余额失败:', error)
+  }
 }
 
 const loadPointsHistory = async (page = 1, append = false) => {
@@ -1496,22 +1503,27 @@ const loadPointsHistory = async (page = 1, append = false) => {
   
   isLoadingPointsHistory.value = true
   
-  const response = await getPointsHistory({
-    skip: (page - 1) * pointsHistoryLimit.value,
-    limit: pointsHistoryLimit.value
-  }).finally(() => {
+  try {
+    const response = await getPointsHistory({
+      skip: (page - 1) * pointsHistoryLimit.value,
+      limit: pointsHistoryLimit.value
+    })
+    
+    if (append) {
+      pointsHistory.value = [...pointsHistory.value, ...response]
+    } else {
+      pointsHistory.value = response
+    }
+    
+    // 判断是否还有更多数据
+    hasMorePointsHistory.value = response.length === pointsHistoryLimit.value
+    pointsHistoryPage.value = page
+  } catch (error) {
+    console.error('获取积分历史失败:', error)
+    ElMessage.error('获取积分历史失败，请重试')
+  } finally {
     isLoadingPointsHistory.value = false
-  })
-  
-  if (append) {
-    pointsHistory.value = [...pointsHistory.value, ...response]
-  } else {
-    pointsHistory.value = response
   }
-  
-  // 判断是否还有更多数据
-  hasMorePointsHistory.value = response.length === pointsHistoryLimit.value
-  pointsHistoryPage.value = page
 }
 
 const openPointsHistoryModal = () => {
@@ -1590,19 +1602,24 @@ const loadMorePointsHistoryDirect = async (skip, limit) => {
   
   isLoadingPointsHistory.value = true
   
-  const response = await getPointsHistory({
-    skip: skip,
-    limit: limit
-  }).finally(() => {
+  try {
+    const response = await getPointsHistory({
+      skip: skip,
+      limit: limit
+    })
+    
+    // 追加到现有积分历史列表
+    pointsHistory.value = [...pointsHistory.value, ...response]
+    
+    // 判断是否还有更多数据
+    hasMorePointsHistory.value = response.length === (limit - skip)
+    pointsHistoryPage.value = Math.floor(skip / 20) + 1
+  } catch (error) {
+    console.error('加载更多积分历史失败:', error)
+    ElMessage.error('加载更多积分历史失败，请重试')
+  } finally {
     isLoadingPointsHistory.value = false
-  })
-  
-  // 追加到现有积分历史列表
-  pointsHistory.value = [...pointsHistory.value, ...response]
-  
-  // 判断是否还有更多数据
-  hasMorePointsHistory.value = response.length === (limit - skip)
-  pointsHistoryPage.value = Math.floor(skip / 20) + 1
+  }
 }
 
 const formatPointsTime = (timestamp) => {
@@ -1621,18 +1638,27 @@ const formatPointsTime = (timestamp) => {
 const markAllAsRead = async () => {
   console.log('标记所有消息为已读')
   
-  // 调用API标记所有消息为已读
-  await markAllMessagesAsRead()
-  
-  closeNotificationMenu()
+  try {
+    // 调用API标记所有消息为已读
+    await markAllMessagesAsRead()
+    closeNotificationMenu()
+  } catch (error) {
+    console.error('标记所有消息为已读失败:', error)
+    ElMessage.error('标记所有消息为已读失败，请重试')
+  }
 }
 
 // 标记单条消息为已读
 const markMessageAsRead = async (message) => {
   console.log('标记消息为已读:', message.id)
   
-  // 调用API标记消息为已读
-  await markMessageAsReadAPI(message.id)
+  try {
+    // 调用API标记消息为已读
+    await markMessageAsReadAPI(message.id)
+  } catch (error) {
+    console.error('标记消息为已读失败:', error)
+    ElMessage.error('标记消息为已读失败，请重试')
+  }
 }
 
 // 格式化时间 - 优先显示updated_at，否则显示created_at
@@ -1698,11 +1724,15 @@ const submitAddDevice = async () => {
 
   isAddingDevice.value = true
   
-  await bindDeviceBySN(deviceForm.value.sn.trim()).finally(() => {
+  try {
+    await bindDeviceBySN(deviceForm.value.sn.trim())
+    closeAddDeviceModal()
+  } catch (error) {
+    console.error('添加设备失败:', error)
+    ElMessage.error(error.response?.data?.detail || '添加设备失败，请重试')
+  } finally {
     isAddingDevice.value = false
-  })
-  
-  closeAddDeviceModal()
+  }
 }
 
 // 关闭注销确认弹窗
@@ -1712,16 +1742,20 @@ const closeDeleteConfirm = () => {
 
 // 确认注销账户
 const confirmDelete = async () => {
-  // 根据用户角色调用不同的API
-  if (globalStore.user?.account?.role === 'member') {
-    // 成员调用删除家庭成员API
-    await deleteFamilyMember(globalStore.user?.id)
-  } else {
-    // 拥有者调用删除用户API
-    await deleteUser()
+  try {
+    // 根据用户角色调用不同的API
+    if (globalStore.user?.account?.role === 'member') {
+      // 成员调用删除家庭成员API
+      await deleteFamilyMember(globalStore.user?.id)
+    } else {
+      // 拥有者调用删除用户API
+      await deleteUser()
+    }
+    showDeleteConfirmModal.value = false
+  } catch (error) {
+    console.error('注销账户失败:', error)
+    ElMessage.error(error.response?.data?.detail || '注销账户失败，请重试')
   }
-  
-  showDeleteConfirmModal.value = false
 }
 
 // 监听未读消息变化，自动更新未读消息列表

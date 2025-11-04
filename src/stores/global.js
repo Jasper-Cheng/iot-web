@@ -175,64 +175,81 @@ export const useGlobalStore = defineStore('global', {
 			this.loading.devices = true
 			this.errors.devices = null
 			
-			const res = await fetchDeviceStatuses().finally(() => {
-				this.loading.devices = false
-			})
-			
-			// API直接返回设备数组，request.js已经提取了response.data
-			const devices = Array.isArray(res) ? res : []
-			
-			// 为每个设备添加映射信息
-			this.devices = devices.map(device => {
-				const cardName = getDeviceCardBySN(device.sn)
+			try {
+				const res = await fetchDeviceStatuses()
 				
-				return {
-					...device,
-					cardName,           // 对应的卡片组件名
-					modelCode: device.sn ? device.sn.split('-')[0] : null  // 模型code
-				}
-			})
+				// API直接返回设备数组，request.js已经提取了response.data
+				const devices = Array.isArray(res) ? res : []
+				
+				// 为每个设备添加映射信息
+				this.devices = devices.map(device => {
+					const cardName = getDeviceCardBySN(device.sn)
+					
+					return {
+						...device,
+						cardName,           // 对应的卡片组件名
+						modelCode: device.sn ? device.sn.split('-')[0] : null  // 模型code
+					}
+				})
+			} catch (error) {
+				console.error('加载设备列表失败:', error)
+				this.errors.devices = error
+				this.devices = []
+			} finally {
+				this.loading.devices = false
+			}
 		},
 		async loadRooms() {
 			this.loading.rooms = true
 			this.errors.rooms = null
 			
-			const res = await getRooms().finally(() => {
-				this.loading.rooms = false
-			})
-			
-			// API直接返回房间数组，request.js已经提取了response.data
-			const rooms = Array.isArray(res) ? res : []
-			
-			// 为每个房间加载设备
-			const roomsWithDevices = await Promise.all(
-				rooms.map(async (room) => {
-					const roomDevicesRes = await getRoomDevices(room.id).catch(() => {
-						// 如果加载失败，返回空数组
-						return []
+			try {
+				const res = await getRooms()
+				
+				// API直接返回房间数组，request.js已经提取了response.data
+				const rooms = Array.isArray(res) ? res : []
+				
+				// 为每个房间加载设备
+				const roomsWithDevices = await Promise.all(
+					rooms.map(async (room) => {
+						try {
+							const roomDevicesRes = await getRoomDevices(room.id)
+							const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
+							
+							return {
+								...room,
+								devices: roomDevices
+							}
+						} catch (error) {
+							console.error(`加载房间 ${room.id} 的设备失败:`, error)
+							// 如果加载失败，返回空数组
+							return {
+								...room,
+								devices: []
+							}
+						}
 					})
-					const roomDevices = Array.isArray(roomDevicesRes) ? roomDevicesRes : []
-					
-					return {
-						...room,
-						devices: roomDevices
-					}
-				})
-			)
-			
-			this.rooms = roomsWithDevices
+				)
+				
+				this.rooms = roomsWithDevices
+			} catch (error) {
+				console.error('加载房间列表失败:', error)
+				this.errors.rooms = error
+				this.rooms = []
+			} finally {
+				this.loading.rooms = false
+			}
 		},
 		async loadMembers() {
 			this.loading.members = true
 			this.errors.members = null
 			
-			// 并行加载成员列表和当前用户信息
-			const [membersRes, userRes] = await Promise.all([
-				getMembers(),
-				getUserDetail()
-			]).finally(() => {
-				this.loading.members = false
-			})
+			try {
+				// 并行加载成员列表和当前用户信息
+				const [membersRes, userRes] = await Promise.all([
+					getMembers(),
+					getUserDetail()
+				])
 			
 			// 根据当前用户角色使用不同数据源更新
 			const currentUserRole = this.user?.role || this.user?.account?.role
@@ -292,46 +309,65 @@ export const useGlobalStore = defineStore('global', {
 			// 合并所有成员（Owner + 其他成员）
 			const allMembers = owner ? [owner, ...members] : members
 			
-			// 为每个成员加载设备权限（owner默认拥有所有权限）
-			const membersWithPermissions = await Promise.all(
-				allMembers.map(async (member, index) => {
-					// 第一位是owner，默认拥有所有权限
-					if (index === 0 && member.isOwner) {
-						return {
-							...member
-							// owner拥有所有设备权限，不需要deviceIds字段
+				// 为每个成员加载设备权限（owner默认拥有所有权限）
+				const membersWithPermissions = await Promise.all(
+					allMembers.map(async (member, index) => {
+						// 第一位是owner，默认拥有所有权限
+						if (index === 0 && member.isOwner) {
+							return {
+								...member
+								// owner拥有所有设备权限，不需要deviceIds字段
+							}
 						}
-					}
-					
-					// 获取成员的设备权限
-					const permissions = await getMemberDevicePermissions(member.id || member.user_id).catch(() => {
-						// 权限加载失败时返回空数组
-						return []
+						
+						// 获取成员的设备权限
+						try {
+							const permissions = await getMemberDevicePermissions(member.id || member.user_id)
+							// 提取device_id组成数组
+							const deviceIds = permissions ? permissions.map(p => p.device_id) : []
+							return {
+								...member,
+								deviceIds: deviceIds // 设备ID数组，用于快速判断权限
+							}
+						} catch (error) {
+							console.error(`加载成员 ${member.id} 的设备权限失败:`, error)
+							// 权限加载失败时返回空数组
+							return {
+								...member,
+								deviceIds: []
+							}
+						}
 					})
-					// 提取device_id组成数组
-					const deviceIds = permissions ? permissions.map(p => p.device_id) : []
-					return {
-						...member,
-						deviceIds: deviceIds // 设备ID数组，用于快速判断权限
-					}
-				})
-			)
-			
-			this.members = membersWithPermissions
+				)
+				
+				this.members = membersWithPermissions
+			} catch (error) {
+				console.error('加载成员列表失败:', error)
+				this.errors.members = error
+				this.members = []
+			} finally {
+				this.loading.members = false
+			}
 		},
 		async loadMessages() {
 			this.loading.messages = true
 			this.errors.messages = null
 			
-			const res = await getDeviceMessages({
-				status: 'new',
-				level: ['normal', 'error', 'fatal']
-			}).finally(() => {
+			try {
+				const res = await getDeviceMessages({
+					status: 'new',
+					level: ['normal', 'error', 'fatal']
+				})
+				
+				// API直接返回消息数组，request.js已经提取了response.data
+				this.messages = Array.isArray(res) ? res : []
+			} catch (error) {
+				console.error('加载消息列表失败:', error)
+				this.errors.messages = error
+				this.messages = []
+			} finally {
 				this.loading.messages = false
-			})
-			
-			// API直接返回消息数组，request.js已经提取了response.data
-			this.messages = Array.isArray(res) ? res : []
+			}
 		},
 		
 		// 加载已读消息（支持分页）
@@ -339,17 +375,23 @@ export const useGlobalStore = defineStore('global', {
 			this.loading.messages = true
 			this.errors.messages = null
 			
-			const res = await getDeviceMessages({
-				status: 'read',
-				limit: params.limit || 20,
-				skip: params.skip || 0,
-				level: ['normal', 'error', 'fatal']
-			}).finally(() => {
+			try {
+				const res = await getDeviceMessages({
+					status: 'read',
+					limit: params.limit || 20,
+					skip: params.skip || 0,
+					level: ['normal', 'error', 'fatal']
+				})
+				
+				// 返回已读消息数组
+				return Array.isArray(res) ? res : []
+			} catch (error) {
+				console.error('加载已读消息失败:', error)
+				this.errors.messages = error
+				return []
+			} finally {
 				this.loading.messages = false
-			})
-			
-			// 返回已读消息数组
-			return Array.isArray(res) ? res : []
+			}
 		},
 		
 		// 加载系统消息（支持分页）
@@ -357,15 +399,21 @@ export const useGlobalStore = defineStore('global', {
 			this.loading.systemMessages = true
 			this.errors.systemMessages = null
 			
-			const res = await getSystemMessages({
-				skip: params.skip || 0,
-				limit: params.limit || 20
-			}).finally(() => {
+			try {
+				const res = await getSystemMessages({
+					skip: params.skip || 0,
+					limit: params.limit || 20
+				})
+				
+				// 返回系统消息数组
+				return Array.isArray(res) ? res : []
+			} catch (error) {
+				console.error('加载系统消息失败:', error)
+				this.errors.systemMessages = error
+				return []
+			} finally {
 				this.loading.systemMessages = false
-			})
-			
-			// 返回系统消息数组
-			return Array.isArray(res) ? res : []
+			}
 		},
 		
 		async loadAll() {
