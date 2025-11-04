@@ -95,40 +95,33 @@
             <label>电话 *</label>
             <input v-model="registerData.phone" type="tel" required placeholder="请输入电话号码">
           </div>
-            <div class="form-group">
-              <label>账户 *</label>
-              <input v-model="registerData.username" type="text" required placeholder="请输入账户">
-            </div>
-        </div>
-        
-        <div class="form-row">
           <div class="form-group">
             <label>密码 *</label>
             <input v-model="registerData.password" type="password" required placeholder="请输入密码">
           </div>
+        </div>
+        
+        <div class="form-row">
           <div class="form-group">
             <label>确认密码 *</label>
             <input v-model="registerData.confirmPassword" type="password" required placeholder="请再次输入密码">
+          </div>
+          <div class="form-group">
+            <label>昵称 *</label>
+            <input v-model="registerData.nickname" type="text" required placeholder="请输入昵称">
           </div>
         </div>
         
         <!-- 基本信息 -->
         <div class="form-row">
           <div class="form-group">
-            <label>姓名 *</label>
-            <input v-model="registerData.name" type="text" required placeholder="请输入姓名">
+            <label>性别 *</label>
+            <select v-model="registerData.gender" required>
+              <option value="other">其他</option>
+              <option value="male">男</option>
+              <option value="female">女</option>
+            </select>
           </div>
-           <div class="form-group">
-             <label>性别 *</label>
-             <select v-model="registerData.gender" required>
-               <option value="other">其他</option>
-               <option value="male">男</option>
-               <option value="female">女</option>
-             </select>
-           </div>
-        </div>
-        
-        <div class="form-row">
           <div class="form-group">
             <label>邮件</label>
             <input v-model="registerData.email" type="email" placeholder="请输入邮箱地址">
@@ -239,8 +232,7 @@ const saveRememberedCredentials = () => {
 
 // 注册数据
 const registerData = reactive({
-  username: '',
-  name: '',
+  nickname: '',
   avatar: '',
   phone: '',
   email: '',
@@ -319,8 +311,8 @@ const handleRegister = async () => {
   errorMessage.value = ''
 
   // 基础校验
-  if (!registerData.username || !registerData.password) {
-    errorMessage.value = '请填写用户名和密码'
+  if (!registerData.phone || !registerData.password || !registerData.nickname) {
+    errorMessage.value = '请填写手机号、密码和昵称'
     return
   }
   if (registerData.password.length < 6) {
@@ -337,10 +329,9 @@ const handleRegister = async () => {
   
   // 调用注册API
   const response = await register({
-    username: registerData.username,
     password: registerData.password,
     phone: registerData.phone,
-    name: registerData.name || registerData.username, // 使用姓名，如果没有则使用用户名
+    nickname: registerData.nickname,
     gender: registerData.gender,
     email: registerData.email,
     avatar: registerData.avatar
@@ -361,8 +352,7 @@ const handleRegister = async () => {
   
   // 清空注册表单
   Object.assign(registerData, {
-    username: '',
-    name: '',
+    nickname: '',
     avatar: '',
     phone: '',
     email: '',
