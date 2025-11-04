@@ -26,12 +26,12 @@
       <!-- 登录表单 -->
       <form v-if="!isRegister" class="login-form" @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">账户</label>
+          <label for="phone">手机号</label>
           <input 
-            type="text" 
-            id="username" 
-            v-model="formData.username"
-            placeholder="请输入账户或手机号"
+            type="tel" 
+            id="phone" 
+            v-model="formData.phone"
+            placeholder="请输入手机号"
             required
           />
         </div>
@@ -194,7 +194,7 @@ const globalStore = useGlobalStore()
 
 // 表单数据
 const formData = reactive({
-  username: '',
+  phone: '',
   password: '',
   rememberMe: false
 })
@@ -209,7 +209,7 @@ const restoreRememberedCredentials = () => {
       
       // 检查是否在15天内
       if (credentials.timestamp && (now - credentials.timestamp) < 15 * 24 * 60 * 60 * 1000) {
-        formData.username = credentials.username || ''
+        formData.phone = credentials.phone || ''
         formData.password = credentials.password || ''
         formData.rememberMe = true
       } else {
@@ -227,7 +227,7 @@ const restoreRememberedCredentials = () => {
 const saveRememberedCredentials = () => {
   if (formData.rememberMe) {
     const credentials = {
-      username: formData.username,
+      phone: formData.phone,
       password: formData.password,
       timestamp: Date.now()
     }
@@ -278,8 +278,8 @@ const handleLogin = async () => {
   errorMessage.value = ''
   
   // 验证输入
-  if (!formData.username || !formData.password) {
-    errorMessage.value = '请输入用户名和密码'
+  if (!formData.phone || !formData.password) {
+    errorMessage.value = '请输入手机号和密码'
     return
   }
   
@@ -289,7 +289,7 @@ const handleLogin = async () => {
   
   // 调用登录API
   const response = await login({
-    username: formData.username,
+    phone: formData.phone,
     password: formData.password
   }).finally(() => {
     isLoading.value = false
@@ -358,8 +358,8 @@ const handleRegister = async () => {
   // 注册成功，显示成功消息
   ElMessage.success('注册成功，请登录')
   
-  // 将注册的账号和密码填写到登录表单
-  formData.username = registerData.username
+  // 将注册的手机号和密码填写到登录表单
+  formData.phone = registerData.phone
   formData.password = registerData.password
   
   // 切换到登录模式

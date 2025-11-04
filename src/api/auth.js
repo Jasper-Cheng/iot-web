@@ -28,7 +28,7 @@ export function login(data) {
     url: '/auth/login',
     method: 'post',
     data: {
-      account: data.username,
+      phone: data.phone,
       password: data.password
     }
   })
