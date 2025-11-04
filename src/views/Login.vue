@@ -96,19 +96,19 @@
             <input v-model="registerData.phone" type="tel" required placeholder="请输入电话号码">
           </div>
           <div class="form-group">
-            <label>密码 *</label>
-            <input v-model="registerData.password" type="password" required placeholder="请输入密码">
+            <label>昵称 *</label>
+            <input v-model="registerData.nickname" type="text" required placeholder="请输入昵称">
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label>确认密码 *</label>
-            <input v-model="registerData.confirmPassword" type="password" required placeholder="请再次输入密码">
+            <label>密码 *</label>
+            <input v-model="registerData.password" type="password" required placeholder="请输入密码">
           </div>
           <div class="form-group">
-            <label>昵称 *</label>
-            <input v-model="registerData.nickname" type="text" required placeholder="请输入昵称">
+            <label>确认密码 *</label>
+            <input v-model="registerData.confirmPassword" type="password" required placeholder="请再次输入密码">
           </div>
         </div>
         
@@ -279,6 +279,7 @@ const handleLogin = async () => {
   isLoading.value = true
   globalStore.loading.auth = true
   
+  console.log("formData", formData)
   // 调用登录API
   const response = await login({
     phone: formData.phone,
@@ -286,7 +287,12 @@ const handleLogin = async () => {
   }).finally(() => {
     isLoading.value = false
     globalStore.loading.auth = false
+  }).catch(() => {
+    return null
   })
+  if (!response) {
+    return
+  }
   console.log("response", response)
 
   // 使用 setAuth 方法统一设置认证状态

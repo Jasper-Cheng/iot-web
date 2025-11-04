@@ -45,26 +45,14 @@ request.interceptors.response.use(
           if (!isHandlingUnauthorized) {
             isHandlingUnauthorized = true
             // 清理本地状态
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
             const currentPath = router.currentRoute?.value?.fullPath || (window.location.pathname + window.location.search)
-
             // 已在登录页则不再跳转
             const alreadyOnLogin = (router.currentRoute?.value?.path === '/login') || window.location.pathname === '/login'
             if (!alreadyOnLogin) {
               ElMessage.error('登录已过期，请重新登录')
-              // 先尝试SPA跳转
               router.push({ path: '/login', query: { redirect: currentPath } }).catch(() => {})
-              // 兜底：确保在极端情况下也能跳转
-              setTimeout(() => {
-                const target = `/login?redirect=${encodeURIComponent(currentPath)}`
-                if (window.location.pathname + window.location.search !== target) {
-                  window.location.replace(target)
-                }
-                isHandlingUnauthorized = false
-              }, 100)
             } else {
-              // 已在登录页，释放锁
+              ElMessage.error('登录失败')
               isHandlingUnauthorized = false
             }
           }
