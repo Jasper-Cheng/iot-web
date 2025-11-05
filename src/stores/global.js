@@ -171,9 +171,7 @@ export const useGlobalStore = defineStore('global', {
 		// 用户积分
 		userPoints: 0,
 		// 是否有新的意见反馈
-		hasNewFeedback: false,
-		// RSA 公钥缓存
-		rsaPublicKey: null
+		hasNewFeedback: false
 	}),
 	actions: {
 		async loadDevices() {
@@ -724,18 +722,12 @@ export const useGlobalStore = defineStore('global', {
 			this.hasNewFeedback = hasNew
 		},
 		
-		// 获取 RSA 公钥（带缓存）
+		// 获取 RSA 公钥（每次请求最新）
 		async getRSAPublicKey() {
-			// 如果已有缓存的公钥，直接返回
-			if (this.rsaPublicKey) {
-				return this.rsaPublicKey
-			}
-			
 			try {
 				const response = await getRSAPublicKey()
 				if (response.public_key) {
-					this.rsaPublicKey = response.public_key
-					return this.rsaPublicKey
+					return response.public_key
 				}
 				throw new Error('公钥格式错误')
 			} catch (error) {
