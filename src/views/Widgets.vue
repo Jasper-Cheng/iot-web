@@ -395,7 +395,6 @@ const confirmDeleteDevice = async () => {
     closeDeleteDeviceConfirm()
   } catch (error) {
     console.error('解绑设备失败:', error)
-    ElMessage.error(error.response?.data?.detail || '解绑设备失败，请重试')
   }
 }
 
@@ -410,7 +409,6 @@ const removeRoom = async () => {
     closeDeleteConfirm()
   } catch (error) {
     console.error('删除房间失败:', error)
-    ElMessage.error(error.response?.data?.detail || '删除房间失败，请重试')
   }
 }
 
@@ -608,7 +606,6 @@ const updateRoomDevicesSort = async (roomId) => {
     await batchUpdateRoomDevices(data)
   } catch (error) {
     console.error('更新房间设备排序失败:', error)
-    ElMessage.error(error.response?.data?.detail || '更新房间设备排序失败，请重试')
   }
 }
 
@@ -669,7 +666,6 @@ const removeDevice = async (device) => {
     closeDeviceModal()
   } catch (error) {
     console.error('移除设备失败:', error)
-    ElMessage.error(error.response?.data?.detail || '移除设备失败，请重试')
   }
 }
 
@@ -700,7 +696,6 @@ const confirmAddRoom = async () => {
     addRoomModalOpen.value = false
   } catch (error) {
     console.error('创建房间失败:', error)
-    ElMessage.error(error.response?.data?.detail || '创建房间失败，请重试')
   }
 }
 

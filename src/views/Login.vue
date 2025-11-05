@@ -546,7 +546,6 @@ const initWechatQR = async () => {
     }
   } catch (error) {
     console.error('获取微信二维码失败:', error)
-    ElMessage.error('获取二维码失败，请重试')
     wechatQRLoading.value = false
   } finally {
     wechatQRLoading.value = false
@@ -618,7 +617,6 @@ const completeWechatLogin = async (tokenData) => {
     router.push('/home')
   } catch (error) {
     console.error('微信登录失败:', error)
-    ElMessage.error('微信登录失败，请重试')
   } finally {
     isLoading.value = false
     globalStore.loading.auth = false
@@ -669,8 +667,6 @@ const handleBindPhone = async () => {
       closeBindPhoneModal()
       // 显示设置密码弹窗（用户可以选择设置或跳过）
       showSetPasswordModal.value = true
-    } else {
-      ElMessage.error('绑定失败，请重试')
     }
   } catch (error) {
     console.error('绑定手机号失败:', error)

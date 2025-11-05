@@ -322,7 +322,6 @@ const confirmEditName = async () => {
     closeEditNameModal()
   } catch (error) {
     console.error('修改设备名称失败:', error)
-    ElMessage.error(error.response?.data?.detail || '修改设备名称失败，请重试')
   } finally {
     isEditingName.value = false
   }

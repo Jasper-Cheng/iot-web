@@ -1522,7 +1522,6 @@ const loadPointsHistory = async (page = 1, append = false) => {
     pointsHistoryPage.value = page
   } catch (error) {
     console.error('获取积分历史失败:', error)
-    ElMessage.error('获取积分历史失败，请重试')
   } finally {
     isLoadingPointsHistory.value = false
   }
@@ -1618,7 +1617,6 @@ const loadMorePointsHistoryDirect = async (skip, limit) => {
     pointsHistoryPage.value = Math.floor(skip / 20) + 1
   } catch (error) {
     console.error('加载更多积分历史失败:', error)
-    ElMessage.error('加载更多积分历史失败，请重试')
   } finally {
     isLoadingPointsHistory.value = false
   }
@@ -1646,7 +1644,6 @@ const markAllAsRead = async () => {
     closeNotificationMenu()
   } catch (error) {
     console.error('标记所有消息为已读失败:', error)
-    ElMessage.error('标记所有消息为已读失败，请重试')
   }
 }
 
@@ -1659,7 +1656,6 @@ const markMessageAsRead = async (message) => {
     await markMessageAsReadAPI(message.id)
   } catch (error) {
     console.error('标记消息为已读失败:', error)
-    ElMessage.error('标记消息为已读失败，请重试')
   }
 }
 
@@ -1731,7 +1727,6 @@ const submitAddDevice = async () => {
     closeAddDeviceModal()
   } catch (error) {
     console.error('添加设备失败:', error)
-    ElMessage.error(error.response?.data?.detail || '添加设备失败，请重试')
   } finally {
     isAddingDevice.value = false
   }
@@ -1756,7 +1751,6 @@ const confirmDelete = async () => {
     showDeleteConfirmModal.value = false
   } catch (error) {
     console.error('注销账户失败:', error)
-    ElMessage.error(error.response?.data?.detail || '注销账户失败，请重试')
   }
 }
 

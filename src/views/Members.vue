@@ -506,7 +506,6 @@ const updateDevicePermission = async (memberId, deviceId, hasPermission) => {
     await batchUpdateMemberDevicePermissions(memberId, member.deviceIds)
   } catch (error) {
     console.error('更新设备权限失败:', error)
-    ElMessage.error(error.response?.data?.detail || '更新设备权限失败，请重试')
     // 恢复本地数据
     if (member) {
       if (hasPermission) {
@@ -550,7 +549,6 @@ const selectAllDevices = async (memberId) => {
       await batchUpdateMemberDevicePermissions(memberId, allDeviceIds)
     } catch (error) {
       console.error('全选设备权限失败:', error)
-      ElMessage.error(error.response?.data?.detail || '全选设备权限失败，请重试')
       // 恢复本地数据
       member.deviceIds = previousDeviceIds
     }
@@ -581,7 +579,6 @@ const deselectAllDevices = async (memberId) => {
       await batchUpdateMemberDevicePermissions(memberId, [])
     } catch (error) {
       console.error('取消所有设备权限失败:', error)
-      ElMessage.error(error.response?.data?.detail || '取消所有设备权限失败，请重试')
       // 恢复本地数据
       member.deviceIds = previousDeviceIds
     }
@@ -701,7 +698,6 @@ const confirmDeleteMember = async () => {
     ElMessage.success('删除成员成功')
   } catch (error) {
     console.error('删除成员失败:', error)
-    ElMessage.error(error.response?.data?.detail || '删除成员失败，请重试')
   }
 }
 

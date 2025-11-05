@@ -581,7 +581,6 @@ export default {
         }
       } catch (error) {
         console.error('加载反馈列表失败:', error);
-        ElMessage.error('加载反馈列表失败，请重试');
         this.feedbackList = [];
       } finally {
         this.isFeedbackLoading = false;
@@ -649,7 +648,6 @@ export default {
         };
       } catch (error) {
         console.error('提交反馈失败:', error);
-        ElMessage.error(error.response?.data?.detail || '提交反馈失败，请重试');
       }
     }
   }

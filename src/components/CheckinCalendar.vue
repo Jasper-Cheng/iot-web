@@ -477,7 +477,6 @@ const handleDayClick = async (day) => {
     ])
   } catch (error) {
     console.error('签到失败:', error)
-    ElMessage.error(error.response?.data?.detail || '签到失败，请重试')
   } finally {
     isLoading.value = false
   }
@@ -530,7 +529,6 @@ const loadCheckinHistory = async (append = false) => {
     hasMoreCheckinHistory.value = response.length === limit
   } catch (error) {
     console.error('加载打卡记录失败:', error)
-    ElMessage.error('加载打卡记录失败，请重试')
   } finally {
     isLoadingCheckinHistory.value = false
   }
