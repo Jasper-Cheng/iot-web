@@ -207,7 +207,7 @@ export function useWebSocketManager() {
           url: `ws://localhost:8000/api/v1/web/ws/user?token=${token}`,
           reconnectInterval: 3000,
           maxReconnectAttempts: 5,
-          heartbeatInterval: 30000
+          heartbeatInterval: 5000
         })
       }
 
