@@ -930,7 +930,7 @@ const handleFamilyMessage = (data) => {
 // 具体的家庭消息处理方法
 // 处理成员权限更新事件
 const handleMemberPermissionUpdate = async (data) => {
-  const { senderId, senderRole, title, message, level, memberId, memberName, deviceCount, deviceIds, deviceNames } = data
+  const { title, message, level, memberId, deviceIds } = data
   console.log(`成员权限更新 [${level}]: ${title} - ${message}`)
   
   // 更新成员设备权限（保留现有的 status）
@@ -948,7 +948,7 @@ const handleMemberPermissionUpdate = async (data) => {
 
 // 处理创建成员事件
 const handleMemberCreate = async (data) => {
-  const { senderId, senderRole, title, message, level, memberId, memberName, memberAccount } = data
+  const { title, message, level } = data
   console.log(`创建成员 [${level}]: ${title} - ${message}`)
   
   // 重新加载成员列表以获取新创建的成员信息
@@ -965,7 +965,7 @@ const handleMemberCreate = async (data) => {
 
 // 处理更新成员信息事件
 const handleMemberUpdate = async (data) => {
-  const { senderId, senderRole, title, message, level, memberId, memberName,  updateData } = data
+  const { title, message, level, memberId, updateData } = data
   console.log(`更新成员信息 [${level}]: ${title} - ${message}`)
   
   // 更新成员信息（保留现有的 status 和其他字段）
@@ -990,7 +990,7 @@ const handleMemberUpdate = async (data) => {
 
 // 处理删除成员事件
 const handleMemberDelete = async (data) => {
-  const { senderId, senderRole, title, message, level, memberId, memberName } = data
+  const { title, message, level, memberId } = data
   console.log(`删除成员 [${level}]: ${title} - ${message}`)
   
   // 检查删除的是否是当前用户
@@ -1031,7 +1031,7 @@ const handleMemberDelete = async (data) => {
 
 // 处理设备消息已读事件
 const handleDeviceMessageRead = (data) => {
-  const { senderId, senderRole, title, message, level, deviceId, deviceName, messageId } = data
+  const { title, message, level, messageId } = data
   console.log(`设备消息已读 [${level}]: ${title} - ${message}`)
   
   // 如果消息在当前未读列表中，移除它
@@ -1052,22 +1052,22 @@ const handleDeviceMessageRead = (data) => {
 
 // 处理所有设备消息已读事件
 const handleDeviceMessageMarkAllRead = (data) => {
-  const { senderId, senderRole, title, message, level, count } = data
+  const { title, message, level } = data
   console.log(`所有设备消息已读 [${level}]: ${title} - ${message}`)
   
      // 清空未读消息列表
      unreadMessages.value = []
     
     // 更新全局消息状态
-    globalStore.messages.forEach(message => {
-      message.status = 'read'
+    globalStore.messages.forEach(msg => {
+      msg.status = 'read'
     })
     ElMessage.success(`所有消息已标记为已读`)
 }
 
 // 处理设备名称更新事件
 const handleDeviceNameUpdate = (data) => {
-  const { senderId, senderRole, title, message, level, deviceId, deviceName, oldName } = data
+  const { title, message, level, deviceId, deviceName } = data
   console.log(`设备名称更新 [${level}]: ${title} - ${message}`)
   
   // 更新全局设备列表中对应设备的名称
@@ -1082,7 +1082,7 @@ const handleDeviceNameUpdate = (data) => {
 
 // 处理设备绑定事件
 const handleDeviceBind = async (data) => {
-  const { senderId, senderRole, title, message, level, deviceId, deviceName, deviceSn } = data
+  const { title, message, level } = data
   console.log(`设备绑定 [${level}]: ${title} - ${message}`)
   
   // 重新加载设备列表以获取新绑定的设备
@@ -1093,7 +1093,7 @@ const handleDeviceBind = async (data) => {
 
 // 处理设备解绑事件
 const handleDeviceUnbind = async (data) => {
-  const { senderId, senderRole, title, message, level, deviceId, deviceName, deviceSn } = data
+  const { title, message, level } = data
   console.log(`设备解绑 [${level}]: ${title} - ${message}`)
   
   // 重新加载设备列表以移除已解绑的设备
@@ -1104,7 +1104,7 @@ const handleDeviceUnbind = async (data) => {
 
 // 处理意见反馈创建事件
 const handleFeedbackCreate = (data) => {
-  const { senderId, senderRole, title, message, level, feedbackId, feedbackType, feedbackContent } = data
+  const { title, message, level } = data
   console.log(`意见反馈创建 [${level}]: ${title} - ${message}`)
   
   // 设置新的反馈提示（小红点）
@@ -1120,7 +1120,7 @@ const handleFeedbackCreate = (data) => {
 
 // 处理房间设备排序更新事件
 const handleRoomDeviceSort = (data) => {
-  const { senderId, senderRole, title, message, level, roomId, roomName, roomDevicesData } = data
+  const { title, message, level, roomId, roomDevicesData } = data
   console.log(`设备排序更新 [${level}]: ${title} - ${message}`)
   
   // 更新房间设备数据（使用响应式更新方法）
@@ -1143,7 +1143,7 @@ const handleRoomDeviceSort = (data) => {
 
 // 处理创建房间事件
 const handleRoomCreate = (data) => {
-  const { senderId, senderRole, title, message, level, roomData } = data
+  const { title, message, level, roomData } = data
   console.log(`创建房间 [${level}]: ${title} - ${message}`)
   
   // 直接将 roomData 添加到房间列表中
@@ -1161,7 +1161,7 @@ const handleRoomCreate = (data) => {
 
 // 处理删除房间事件
 const handleRoomDelete = (data) => {
-  const { senderId, senderRole, title, message, level, roomId, roomName } = data
+  const { title, message, level, roomId } = data
   console.log(`删除房间 [${level}]: ${title} - ${message}`)
   
   // 从房间列表中删除指定房间
@@ -1179,7 +1179,7 @@ const handleRoomDelete = (data) => {
 
 // 处理用户更新事件
 const handleUserUpdate = async (data) => {
-  const { senderId, senderRole, title, message, level, userId, userName, updateData } = data
+  const { title, message, level, userId, updateData } = data
   console.log(`更新用户信息 [${level}]: ${title} - ${message}`)
   
   
@@ -1202,7 +1202,7 @@ const handleUserUpdate = async (data) => {
 
 // 处理删除用户事件
 const handleUserDelete = async (data) => {
-  const { senderId, senderRole, title, message, level, userId, userName } = data
+  const { title, message, level } = data
   console.log(`删除用户 [${level}]: ${title} - ${message}`)
   
   // 显示警告消息
@@ -1225,7 +1225,7 @@ const handleUserDelete = async (data) => {
 
 // 处理用户登录事件
 const handleUserLogin = (data) => {
-  const { senderId, senderRole, title, message, level } = data
+  const { title, message, level } = data
   console.log(`用户登录 [${level}]: ${title} - ${message}`)
   
   // 显示登录通知
@@ -1238,7 +1238,7 @@ const handleUserLogin = (data) => {
 
 // 处理用户登出事件
 const handleUserLogout = (data) => {
-  const { senderId, senderRole, title, message, level, disconnectUserIds } = data
+  const { title, message, level, disconnectUserIds, senderId } = data
   console.log(`用户登出 [${level}]: ${title} - ${message}`)
   
   // 更新登出用户的成员状态为 inactive
@@ -1261,7 +1261,7 @@ const handleUserLogout = (data) => {
 
 // 处理用户连接事件（WebSocket连接）
 const handleUserConnect = (data) => {
-  const { senderId, senderRole, title, message, level, connectUserIds } = data
+  const { title, message, level, connectUserIds, senderId } = data
   console.log(`用户连接 [${level}]: ${title} - ${message}`)
   
   // 更新所有连接用户的成员状态为 active
@@ -1277,7 +1277,7 @@ const handleUserConnect = (data) => {
 
 // 处理用户断开连接事件（WebSocket断开）
 const handleUserDisconnect = (data) => {
-  const { senderId, senderRole, title, message, level, disconnectUserIds } = data
+  const { title, message, level, disconnectUserIds, senderId } = data
   console.log(`用户断开连接 [${level}]: ${title} - ${message}`)
   
   // 更新所有断开连接用户的成员状态为 inactive
