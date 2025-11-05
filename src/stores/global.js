@@ -65,8 +65,7 @@ export const useGlobalStore = defineStore('global', {
 		//       id: 0,                       // 账号ID
 		//       created_at: "2025-09-23T02:30:12.887Z" // 账号创建时间
 		//     },
-		//     isOwner: true,                 // 标识为拥有者（owner拥有所有设备权限，无需deviceIds字段）
-		//     status: "active"               // 在线状态：active/inactive
+		//     isOwner: true                  // 标识为拥有者（owner拥有所有设备权限，无需deviceIds字段）
 		//   },
 		//   // 家庭成员 - 其他成员
 		//   {
@@ -84,12 +83,14 @@ export const useGlobalStore = defineStore('global', {
 		//       created_at: "2025-09-22T05:10:39" // 账号创建时间
 		//     },
 		//     isOwner: false,                // 标识为普通成员
-		//     deviceIds: [58, 59],           // 设备ID数组，用于快速判断权限
-		//     status: "active"               // 在线状态：active/inactive
+		//     deviceIds: [58, 59]            // 设备ID数组，用于快速判断权限
 		//   }
 		// ]
 		members: [],
 		
+		// 成员在线状态映射（memberId -> status）
+		// 格式: { [memberId]: 'active' | 'inactive', ... }
+		memberStatuses: {},
 		
 		// 房间数据
 		// 房间列表数据结构：
@@ -450,6 +451,7 @@ export const useGlobalStore = defineStore('global', {
 			this.isAuthenticated = false
 			this.user = null
 			this.token = null
+			this.memberStatuses = {} // 清除成员状态
 			// 清除localStorage
 			this.clearLocalStorage()
 		},
@@ -567,36 +569,30 @@ export const useGlobalStore = defineStore('global', {
 		},
 		
 		// 更新成员在线状态
-		updateMemberStatus(accountId, status) {
-			const memberIndex = this.members.findIndex(member => 
-				member.account?.id === accountId || member.id === accountId
-			)
-			if (memberIndex !== -1) {
-				// 更新成员状态（创建新对象以触发响应式更新）
-				this.members = [
-					...this.members.slice(0, memberIndex),
-					{
-						...this.members[memberIndex],
-						status: status
-					},
-					...this.members.slice(memberIndex + 1)
-				]
+		updateMemberStatus(id, status) {
+			// 更新独立的 status 存储
+			this.memberStatuses = {
+				...this.memberStatuses,
+				[id]: status
 			}
+		},
+		
+		// 获取成员在线状态
+		getMemberStatus(memberId) {
+			return this.memberStatuses[memberId] || 'inactive'
 		},
 		
 		// 更新成员设备权限
 		updateMemberDevicePermissions(memberId, deviceIds) {
 			const memberIndex = this.members.findIndex(member => member.id === memberId)
 			if (memberIndex !== -1) {
-				// 保留现有的 status，只更新 deviceIds
-				const existingStatus = this.members[memberIndex].status
 				// 更新成员权限（创建新对象以触发响应式更新）
+				// status 不再存储在 members 中，所以不需要保留
 				this.members = [
 					...this.members.slice(0, memberIndex),
 					{
 						...this.members[memberIndex],
-						deviceIds: deviceIds || [],
-						status: existingStatus // 保留现有的 status
+						deviceIds: deviceIds || []
 					},
 					...this.members.slice(memberIndex + 1)
 				]

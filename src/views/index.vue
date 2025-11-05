@@ -951,22 +951,9 @@ const handleMemberCreate = async (data) => {
   const { senderId, senderRole, title, message, level, memberId, memberName, memberAccount } = data
   console.log(`创建成员 [${level}]: ${title} - ${message}`)
   
-  // 保存当前所有成员的 status
-  const statusMap = new Map()
-  globalStore.members.forEach(member => {
-    const key = member.account?.id || member.id
-    if (key && member.status) {
-      statusMap.set(key, member.status)
-    }
-  })
-  
   // 重新加载成员列表以获取新创建的成员信息
+  // memberStatuses 不会被 loadMembers 覆盖，所以不需要保存和恢复状态
   await globalStore.loadMembers()
-  
-  // 恢复原先的 status
-  statusMap.forEach((status, key) => {
-    globalStore.updateMemberStatus(key, status)
-  })
   
   // 显示通知消息
   ElMessage.success({
@@ -1251,8 +1238,18 @@ const handleUserLogin = (data) => {
 
 // 处理用户登出事件
 const handleUserLogout = (data) => {
-  const { senderId, senderRole, title, message, level } = data
+  const { senderId, senderRole, title, message, level, disconnectUserIds } = data
   console.log(`用户登出 [${level}]: ${title} - ${message}`)
+  
+  // 更新登出用户的成员状态为 inactive
+  if (disconnectUserIds && Array.isArray(disconnectUserIds)) {
+    disconnectUserIds.forEach(userId => {
+      globalStore.updateMemberStatus(userId, 'inactive')
+    })
+  } else if (senderId) {
+    // 如果没有 disconnectUserIds，使用 senderId（向后兼容）
+    globalStore.updateMemberStatus(senderId, 'inactive')
+  }
   
   // 显示登出通知
   ElMessage.success({
@@ -1280,11 +1277,16 @@ const handleUserConnect = (data) => {
 
 // 处理用户断开连接事件（WebSocket断开）
 const handleUserDisconnect = (data) => {
-  const { senderId, senderRole, title, message, level } = data
+  const { senderId, senderRole, title, message, level, disconnectUserIds } = data
   console.log(`用户断开连接 [${level}]: ${title} - ${message}`)
   
-  // 更新成员状态为 inactive
-  if (senderId) {
+  // 更新所有断开连接用户的成员状态为 inactive
+  if (disconnectUserIds && Array.isArray(disconnectUserIds)) {
+    disconnectUserIds.forEach(userId => {
+      globalStore.updateMemberStatus(userId, 'inactive')
+    })
+  } else if (senderId) {
+    // 如果没有 disconnectUserIds，使用 senderId（向后兼容）
     globalStore.updateMemberStatus(senderId, 'inactive')
   }
 }

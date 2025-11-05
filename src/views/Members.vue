@@ -434,7 +434,7 @@ const loadData = async () => {
       email: member.account?.email || '',
       avatar: member.account?.avatar || '',
       role: member.isOwner ? 'owner' : (member.account?.role || 'member'),
-      status: member.status || 'inactive',
+      status: globalStore.getMemberStatus(member.id),
       joinDate: member.created_at ? new Date(member.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       devicePermissions: member.devicePermissions || {},
       // 添加设备权限字段
@@ -740,6 +740,17 @@ watch(() => globalStore.members, (newMembers) => {
     loadData()
   }
 }, { immediate: true })
+
+// 监听 memberStatuses 变化，动态更新成员在线状态
+watch(() => globalStore.memberStatuses, (newStatuses) => {
+  // 更新 familyMembers 中对应成员的 status
+  familyMembers.value.forEach(member => {
+    const newStatus = globalStore.getMemberStatus(member.id)
+    if (member.status !== newStatus) {
+      member.status = newStatus
+    }
+  })
+}, { deep: true })
 
 
 onMounted(() => {
