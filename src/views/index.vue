@@ -922,6 +922,9 @@ const handleFamilyMessage = (data) => {
     case 'user.update':
       handleUserUpdate(data.data)
       break
+    case 'force.logout':
+      handleForceLogout(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -1210,6 +1213,34 @@ const handleUserDelete = async (data) => {
   // 断开 WebSocket 连接（不等待结果）
   disconnect().then(() => {
     console.log('WebSocket 连接已断开')
+  }).catch(disconnectError => {
+    console.warn('断开 WebSocket 连接失败:', disconnectError)
+  })
+  
+  // 延迟 500 毫秒后执行退出登录流程
+  setTimeout(() => {
+    // 清除认证状态并跳转
+    globalStore.clearAuth()
+    showUserMenu.value = false
+    router.push('/login')
+  }, 500)
+}
+
+// 处理强制退出事件
+const handleForceLogout = async (data) => {
+  const { title, message, level, reason } = data
+  console.log(`强制退出 [${level}]: ${title} - ${message}`, reason)
+  
+  // 显示警告消息
+  ElMessage.warning({
+    message: message,
+    duration: 5000,
+    showClose: true
+  })
+  
+  // 断开 WebSocket 连接（不等待结果）
+  disconnect().then(() => {
+    console.log('WebSocket 连接已断开（强制退出）')
   }).catch(disconnectError => {
     console.warn('断开 WebSocket 连接失败:', disconnectError)
   })
