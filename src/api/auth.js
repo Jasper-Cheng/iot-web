@@ -82,3 +82,11 @@ export function setPassword(data) {
     }
   })
 }
+
+// 获取 RSA 公钥
+export function getRSAPublicKey() {
+  return request({
+    url: '/auth/rsa_public_key',
+    method: 'get'
+  })
+}

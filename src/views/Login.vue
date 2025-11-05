@@ -386,10 +386,13 @@ const handleLogin = async () => {
   globalStore.loading.auth = true
   
   try {
+    // 加密密码
+    const encryptedPassword = await globalStore.encryptPassword(formData.password)
+    
     // 调用登录API
     const response = await login({
       phone: formData.phone,
-      password: formData.password
+      password: encryptedPassword
     })
 
     // 使用 setAuth 方法统一设置认证状态
@@ -438,9 +441,12 @@ const handleRegister = async () => {
   globalStore.loading.auth = true
   
   try {
+    // 加密密码
+    const encryptedPassword = await globalStore.encryptPassword(registerData.password)
+    
     // 调用注册API
     const response = await register({
-      password: registerData.password,
+      password: encryptedPassword,
       phone: registerData.phone,
       nickname: registerData.nickname,
       gender: registerData.gender,
@@ -706,8 +712,11 @@ const handleSetPassword = async () => {
   isSettingPassword.value = true
   
   try {
+    // 加密密码
+    const encryptedPassword = await globalStore.encryptPassword(setPasswordData.password)
+    
     await setPassword({
-      password: setPasswordData.password
+      password: encryptedPassword
     })
     
     // 设置密码成功，关闭弹窗并跳转（auth已经设置，不需要重新设置）

@@ -599,8 +599,11 @@ const addNewMember = async () => {
     return
   }
   
+  // 加密密码
+  const encryptedPassword = await globalStore.encryptPassword(newMember.value.password)
+  
   const memberData = {
-    password: newMember.value.password,
+    password: encryptedPassword,
     phone: newMember.value.phone,
     nickname: newMember.value.nickname,
     gender: newMember.value.gender,
@@ -631,6 +634,11 @@ const editMember = async () => {
   
   // 构建更新数据（编辑模式）
   const updateData = buildUpdateData(newMember.value, true)
+  
+  // 如果有密码，需要加密
+  if (updateData.password) {
+    updateData.password = await globalStore.encryptPassword(updateData.password)
+  }
   
   try {
     // 根据角色调用不同的API

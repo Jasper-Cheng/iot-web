@@ -4,6 +4,8 @@ import { getMembers, getUserDetail, getMemberDevicePermissions } from '../api/us
 import { getRooms, getRoomDevices, batchUpdateRoomDevices } from '../api/rooms'
 import { getSystemMessages } from '../api/systemMessages'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
+import { getRSAPublicKey } from '../api/auth'
+import forge from 'node-forge'
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
@@ -169,7 +171,9 @@ export const useGlobalStore = defineStore('global', {
 		// 用户积分
 		userPoints: 0,
 		// 是否有新的意见反馈
-		hasNewFeedback: false
+		hasNewFeedback: false,
+		// RSA 公钥缓存
+		rsaPublicKey: null
 	}),
 	actions: {
 		async loadDevices() {
@@ -442,10 +446,6 @@ export const useGlobalStore = defineStore('global', {
 			this.token = response.access_token
 			// 保存到localStorage
 			this.saveToLocalStorage()
-			console.log("response", response)
-			console.log("this.user", this.user)
-			console.log("this.token", this.token)
-			console.log("this.isAuthenticated", this.isAuthenticated)
 		},
 		clearAuth() {
 			this.isAuthenticated = false
@@ -722,6 +722,56 @@ export const useGlobalStore = defineStore('global', {
 		// 设置是否有新的意见反馈
 		setHasNewFeedback(hasNew) {
 			this.hasNewFeedback = hasNew
+		},
+		
+		// 获取 RSA 公钥（带缓存）
+		async getRSAPublicKey() {
+			// 如果已有缓存的公钥，直接返回
+			if (this.rsaPublicKey) {
+				return this.rsaPublicKey
+			}
+			
+			try {
+				const response = await getRSAPublicKey()
+				if (response.public_key) {
+					this.rsaPublicKey = response.public_key
+					return this.rsaPublicKey
+				}
+				throw new Error('公钥格式错误')
+			} catch (error) {
+				console.error('获取 RSA 公钥失败:', error)
+				throw error
+			}
+		},
+		
+		// 加密密码（使用 OAEP 填充）
+		async encryptPassword(password) {
+			if (!password) {
+				return password
+			}
+			
+			try {
+				// 获取公钥
+				const publicKeyPem = await this.getRSAPublicKey()
+				
+				// 使用 node-forge 解析 PEM 格式的公钥
+				const publicKey = forge.pki.publicKeyFromPem(publicKeyPem)
+				
+				// 使用 OAEP 填充方式加密
+				// OAEP 参数：SHA-256 作为哈希函数，MGF1 作为掩码生成函数
+				const encrypted = publicKey.encrypt(password, 'RSA-OAEP', {
+					md: forge.md.sha256.create(),
+					mgf1: forge.mgf.mgf1.create(forge.md.sha256.create())
+				})
+				
+				// 将加密后的数据转换为 Base64 字符串
+				const encryptedBase64 = forge.util.encode64(encrypted)
+				
+				return encryptedBase64
+			} catch (error) {
+				console.error('加密密码失败:', error)
+				throw error
+			}
 		}
 	}
 })
