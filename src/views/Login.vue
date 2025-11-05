@@ -176,6 +176,87 @@
         </div>
       </div>
     </div>
+
+    <!-- 绑定手机号弹窗 -->
+    <div v-if="showBindPhoneModal" class="wechat-qr-overlay" @click.self="closeBindPhoneModal">
+      <div class="wechat-qr-modal bind-phone-modal">
+        <div class="qr-header">
+          <h3>绑定手机号</h3>
+          <button class="qr-close-btn" @click="closeBindPhoneModal">×</button>
+        </div>
+        <div class="bind-phone-content">
+          <p class="bind-phone-tip">为了您的账号安全，首次请绑定手机号</p>
+          <form @submit.prevent="handleBindPhone" class="bind-phone-form">
+            <div class="form-group">
+              <input 
+                type="tel" 
+                id="bindPhone" 
+                v-model="bindPhoneData.phone"
+                placeholder="请输入手机号"
+                required
+              />
+            </div>
+            <div v-if="bindPhoneError" class="error-message">
+              {{ bindPhoneError }}
+            </div>
+            <div class="bind-phone-buttons">
+              <button type="button" class="cancel-btn" @click="closeBindPhoneModal" :disabled="isBindingPhone">
+                取消
+              </button>
+              <button type="submit" class="confirm-btn" :disabled="isBindingPhone">
+                <span v-if="isBindingPhone" class="loading-spinner"></span>
+                {{ isBindingPhone ? '绑定中...' : '确认绑定' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置密码弹窗 -->
+    <div v-if="showSetPasswordModal" class="wechat-qr-overlay" @click.self="closeSetPasswordModal">
+      <div class="wechat-qr-modal bind-phone-modal">
+        <div class="qr-header">
+          <h3>设置密码</h3>
+          <button class="qr-close-btn" @click="handleSkipPassword">×</button>
+        </div>
+        <div class="bind-phone-content">
+          <p class="bind-phone-tip">设置密码后，您可以使用手机号密码登录</p>
+          <form @submit.prevent="handleSetPassword" class="bind-phone-form">
+            <div class="form-group">
+              <input 
+                type="password" 
+                id="setPassword" 
+                v-model="setPasswordData.password"
+                placeholder="请输入密码（至少6位）"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                v-model="setPasswordData.confirmPassword"
+                placeholder="请再次输入密码"
+                required
+              />
+            </div>
+            <div v-if="setPasswordError" class="error-message">
+              {{ setPasswordError }}
+            </div>
+            <div class="bind-phone-buttons">
+              <button type="button" class="cancel-btn" @click="handleSkipPassword" :disabled="isSettingPassword">
+                跳过
+              </button>
+              <button type="submit" class="confirm-btn" :disabled="isSettingPassword">
+                <span v-if="isSettingPassword" class="loading-spinner"></span>
+                {{ isSettingPassword ? '设置中...' : '确认设置' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -183,7 +264,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
-import { login, register, getWechatQRCode, checkWechatLoginStatus } from '../api/auth'
+import { login, register, getWechatQRCode, checkWechatLoginStatus, bindPhoneForWechat, setPassword } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import QRCode from 'qrcode'
@@ -262,6 +343,23 @@ const wechatSceneId = ref('')
 const wechatStatus = ref('') // waiting, scanned, expired, confirmed
 const wechatStatusMessage = ref('')
 let wechatPollingTimer = null
+
+// 绑定手机号相关
+const showBindPhoneModal = ref(false)
+const bindPhoneData = reactive({
+  phone: ''
+})
+const bindPhoneError = ref('')
+const isBindingPhone = ref(false)
+
+// 设置密码相关
+const showSetPasswordModal = ref(false)
+const setPasswordData = reactive({
+  password: '',
+  confirmPassword: ''
+})
+const setPasswordError = ref('')
+const isSettingPassword = ref(false)
 
 // 关闭登录弹窗
 const closeLogin = () => {
@@ -416,7 +514,6 @@ const initWechatQR = async () => {
   
   try {
     const response = await getWechatQRCode()
-    console.log("response", response)
     if (response.qrcode_url && response.scene_id) {
       wechatSceneId.value = response.scene_id
       
@@ -464,15 +561,21 @@ const startWechatPolling = () => {
     
     try {
       const response = await checkWechatLoginStatus(wechatSceneId.value)
-      
+      console.log("response", response)
       // 更新状态显示
       wechatStatus.value = response.status
       wechatStatusMessage.value = response.message || ''
       
-      if (response.status === 'confirmed' && response.token) {
-        // 登录成功，直接使用返回的 token 信息
-        stopWechatPolling()
-        await completeWechatLogin(response.token)
+      if (response.status === 'confirmed') {
+        if (response.need_bind_phone) {
+          // 需要绑定手机号
+          stopWechatPolling()
+          showBindPhoneModal.value = true
+        } else if (response.token) {
+          // 登录成功，直接使用返回的 token 信息
+          stopWechatPolling()
+          await completeWechatLogin(response.token)
+        }
       } else if (response.status === 'expired') {
         // 二维码过期
         stopWechatPolling()
@@ -524,6 +627,121 @@ const closeWechatQR = () => {
   wechatSceneId.value = ''
   wechatStatus.value = ''
   wechatStatusMessage.value = ''
+}
+
+// 处理绑定手机号
+const handleBindPhone = async () => {
+  bindPhoneError.value = ''
+  
+  if (!bindPhoneData.phone) {
+    bindPhoneError.value = '请输入手机号'
+    return
+  }
+  
+  // 简单的手机号验证
+  const phoneRegex = /^1[3-9]\d{9}$/
+  if (!phoneRegex.test(bindPhoneData.phone)) {
+    bindPhoneError.value = '请输入正确的手机号'
+    return
+  }
+  
+  isBindingPhone.value = true
+  
+  try {
+    const response = await bindPhoneForWechat({
+      scene_id: wechatSceneId.value,
+      phone: bindPhoneData.phone
+    })
+    
+    // 绑定成功后，立即设置认证状态（设置密码需要Authorization header）
+    // response 包含 access_token, token_type, role, account, id, user_id
+    if (response.access_token) {
+      // 立即设置认证状态，保存token到store和localStorage
+      globalStore.setAuth(response)
+      
+      // 关闭绑定手机号弹窗
+      closeBindPhoneModal()
+      // 显示设置密码弹窗（用户可以选择设置或跳过）
+      showSetPasswordModal.value = true
+    } else {
+      ElMessage.error('绑定失败，请重试')
+    }
+  } catch (error) {
+    console.error('绑定手机号失败:', error)
+    // 根据文档，错误响应有多种情况，统一显示后端返回的 detail
+    const errorMessage = error.response?.data?.detail || '绑定失败，请重试'
+    bindPhoneError.value = errorMessage
+  } finally {
+    isBindingPhone.value = false
+  }
+}
+
+// 关闭绑定手机号弹窗
+const closeBindPhoneModal = () => {
+  showBindPhoneModal.value = false
+  bindPhoneData.phone = ''
+  bindPhoneError.value = ''
+  // 注意：不在这里关闭二维码弹窗，因为绑定成功后还需要完成登录流程
+}
+
+// 处理设置密码
+const handleSetPassword = async () => {
+  setPasswordError.value = ''
+  
+  if (!setPasswordData.password || !setPasswordData.confirmPassword) {
+    setPasswordError.value = '请输入密码和确认密码'
+    return
+  }
+  
+  if (setPasswordData.password.length < 6) {
+    setPasswordError.value = '密码至少6位'
+    return
+  }
+  
+  if (setPasswordData.password !== setPasswordData.confirmPassword) {
+    setPasswordError.value = '两次输入的密码不一致'
+    return
+  }
+  
+  isSettingPassword.value = true
+  
+  try {
+    await setPassword({
+      password: setPasswordData.password
+    })
+    
+    // 设置密码成功，关闭弹窗并跳转（auth已经设置，不需要重新设置）
+    ElMessage.success('密码设置成功')
+    closeSetPasswordModal()
+    
+    // 关闭二维码弹窗并跳转
+    closeWechatQR()
+    router.push('/home')
+  } catch (error) {
+    console.error('设置密码失败:', error)
+    const errorMessage = error.response?.data?.detail || '设置密码失败，请重试'
+    setPasswordError.value = errorMessage
+    // 设置密码失败不影响登录流程，用户已经登录
+  } finally {
+    isSettingPassword.value = false
+  }
+}
+
+// 跳过设置密码
+const handleSkipPassword = () => {
+  closeSetPasswordModal()
+  
+  // 关闭二维码弹窗并跳转（auth已经设置，不需要重新设置）
+  closeWechatQR()
+  router.push('/home')
+}
+
+// 关闭设置密码弹窗
+const closeSetPasswordModal = () => {
+  showSetPasswordModal.value = false
+  setPasswordData.password = ''
+  setPasswordData.confirmPassword = ''
+  setPasswordError.value = ''
 }
 
 // 组件挂载时恢复记住的凭据
@@ -1151,5 +1369,115 @@ onUnmounted(() => {
 
 .retry-btn:active {
   transform: translateY(0);
+}
+
+/* 绑定手机号弹窗样式 */
+.bind-phone-modal {
+  width: 420px;
+}
+
+.bind-phone-content {
+  padding: 0;
+}
+
+.bind-phone-tip {
+  color: var(--color-login-text-muted, #666);
+  font-size: 14px;
+  text-align: center;
+  margin: 0 0 24px 0;
+}
+
+.bind-phone-form {
+  width: 100%;
+}
+
+.bind-phone-form .form-group {
+  margin-bottom: 16px;
+}
+
+.bind-phone-form .form-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.bind-phone-form .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-login-text-primary, #333);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.bind-phone-form .form-group input {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-login-input-bg, #f5f5f5);
+  border: 2px solid var(--color-login-border, #e0e0e0);
+  border-radius: 12px;
+  color: var(--color-login-text-primary, #333);
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.bind-phone-form .form-group input:focus {
+  outline: none;
+  border-color: var(--color-login-gradient-start, #667eea);
+  background: var(--color-login-input-bg-focus, #ffffff);
+}
+
+.bind-phone-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-btn,
+.confirm-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cancel-btn {
+  background: var(--color-login-input-bg, #f5f5f5);
+  color: var(--color-login-text-primary, #333);
+}
+
+.cancel-btn:hover {
+  background: var(--color-login-border, #e0e0e0);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, var(--color-login-gradient-start, #667eea), var(--color-login-gradient-end, #764ba2));
+  color: white;
+}
+
+.confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+}
+
+.confirm-btn:active {
+  transform: translateY(0);
+}
+
+.confirm-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 </style>

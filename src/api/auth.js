@@ -59,3 +59,26 @@ export function checkWechatLoginStatus(sceneId) {
     }
   })
 }
+
+// 绑定手机号（微信登录后）
+export function bindPhoneForWechat(data) {
+  return request({
+    url: '/auth/login/bind_phone',
+    method: 'post',
+    data: {
+      scene_id: data.scene_id,
+      phone: data.phone
+    }
+  })
+}
+
+// 设置密码（微信登录后）
+export function setPassword(data) {
+  return request({
+    url: '/auth/set_password',
+    method: 'post',
+    data: {
+      password: data.password
+    }
+  })
+}
