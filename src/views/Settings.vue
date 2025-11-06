@@ -624,16 +624,11 @@ export default {
           name: this.currentUser.account?.nickname || '',
           type: this.feedbackForm.type,
           content: this.feedbackForm.content,
-          source: 'web',
           contact_info: this.feedbackForm.contact || '',
           extra: {
             ip_address: '', // 可以后续添加IP获取逻辑
-            user_agent: navigator.userAgent,
-            device_info: {
-              platform: 'Web',
-              version: currentVersion ? currentVersion.version_code : '',
-              version_name: currentVersion ? currentVersion.version_name : ''
-            }
+            version: currentVersion ? currentVersion.version_code : '',
+            version_name: currentVersion ? currentVersion.version_name : ''
           }
         });
         
