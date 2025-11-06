@@ -206,7 +206,7 @@
                 <div class="feedback-header">
                   <div class="feedback-meta">
                     <span class="feedback-name">{{ feedback.name || '匿名用户' }}</span>
-                    <span class="feedback-source">{{ getSourceText(feedback.source) }}</span>
+                    <span class="feedback-source">{{ feedback.source }}</span>
                   </div>
                   <div class="feedback-type-date">
                     <span class="feedback-type">{{ getFeedbackTypeText(feedback.type) }}</span>
@@ -463,7 +463,6 @@ export default {
       
       try {
         const versionList = await getVersionInfo({
-          platform: 'web',
           limit: 10,
           order_by: 'created_at',
           order_desc: true
@@ -537,18 +536,6 @@ export default {
         'completed': 'completed'
       };
       return classMap[status] || 'pending';
-    },
-    // 获取来源文本
-    getSourceText(source) {
-      const sourceMap = {
-        'app': '移动端',
-        'web': 'Web端',
-        'email': '邮件',
-        'phone': '电话',
-        'wechat': '微信',
-        'other': '其他'
-      };
-      return sourceMap[source] || source;
     },
     showFeedbackDialog() {
       this.feedbackDialogVisible = true;
@@ -632,7 +619,6 @@ export default {
           }
         });
         
-        ElMessage.success('感谢您的反馈，我们会尽快处理！');
         this.feedbackDialogVisible = false;
         
         // 重置表单
