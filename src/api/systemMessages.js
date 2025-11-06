@@ -8,7 +8,6 @@ export const getSystemMessages = (params = {}) => {
     params: {
       skip: params.skip || 0,
       limit: params.limit || 20,
-      platform: 'web',
       ...params
     }
   })
