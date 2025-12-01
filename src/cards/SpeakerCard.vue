@@ -684,8 +684,8 @@ const subscribeToDeviceProperties = async () => {
   }
   
   try {
-    // 订阅设备属性更新和通知事件，订阅了propertyUpdate则devicePropertyUpdate会接受到通知，不订阅则属性改变接受不到通知，订阅了eventNotification则deviceEventNotification会接受到通知，不订阅则事件改变接受不到通知
-    await deviceManager.subscribeDeviceEvents(deviceSn.value, ['propertyUpdate'])
+    // 订阅设备事件
+    await deviceManager.subscribeDeviceEvents(deviceSn.value)
     
     // 设置事件通知处理器
     deviceManager.setEventNotificationHandler(deviceSn.value, handleDeviceEventNotification)
@@ -702,8 +702,8 @@ const unsubscribeFromDeviceProperties = async () => {
   }
   
   try {
-    // 取消订阅设备属性更新和通知事件
-    await deviceManager.unsubscribeDeviceEvents(deviceSn.value, ['propertyUpdate'])
+    // 取消订阅设备事件
+    await deviceManager.unsubscribeDeviceEvents(deviceSn.value)
     
     // 清理事件通知处理器
     deviceManager.clearEventNotificationHandler(deviceSn.value)

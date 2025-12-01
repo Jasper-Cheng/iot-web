@@ -64,8 +64,7 @@
  *   "id": "req_004",
  *   "method": "event.subscribe",
  *   "params": {
- *     "deviceSn": "device_123", 
- *     "eventTypes": ["sensorAlert", "statusChange"]
+ *     "deviceSn": "device_123"
  *   },
  *   "timestamp": 1620000000005
  * }
@@ -94,8 +93,7 @@
  *   "id": "req_005",
  *   "method": "event.unsubscribe",
  *   "params": {
- *     "deviceSn": "device_123", 
- *     "eventTypes": ["sensorAlert", "statusChange"]
+ *     "deviceSn": "device_123"
  *   },
  *   "timestamp": 1620000000007
  * }
@@ -361,13 +359,12 @@ export function useWebSocketManager() {
   /**
    * 订阅设备事件
    * @param {string} deviceSn - 设备序列号
-   * @param {Array<string>} eventTypes - 事件类型数组
    */
-  const subscribeDeviceEvents = async (deviceSn, eventTypes) => {
+  const subscribeDeviceEvents = async (deviceSn) => {
     try {
-      await wsManagerSingleton.subscribeDeviceEvents(deviceSn, eventTypes)
+      await wsManagerSingleton.subscribeDeviceEvents(deviceSn)
       subscribedDevicesSingleton.add(deviceSn)
-      console.log(`订阅设备 ${deviceSn} 事件:`, eventTypes)
+      console.log(`订阅设备 ${deviceSn} 事件`)
     } catch (error) {
       console.error(`订阅设备 ${deviceSn} 事件失败:`, error)
       throw error
@@ -377,13 +374,12 @@ export function useWebSocketManager() {
   /**
    * 取消订阅设备事件
    * @param {string} deviceSn - 设备序列号
-   * @param {Array<string>} eventTypes - 事件类型数组
    */
-  const unsubscribeDeviceEvents = async (deviceSn, eventTypes) => {
+  const unsubscribeDeviceEvents = async (deviceSn) => {
     try {
-      await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn, eventTypes)
+      await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn)
       subscribedDevicesSingleton.delete(deviceSn)
-      console.log(`取消订阅设备 ${deviceSn} 事件:`, eventTypes)
+      console.log(`取消订阅设备 ${deviceSn} 事件`)
     } catch (error) {
       console.error(`取消订阅设备 ${deviceSn} 事件失败:`, error)
       throw error
@@ -432,7 +428,7 @@ export function useWebSocketManager() {
         // 并行取消所有设备的订阅
         const unsubscribePromises = Array.from(subscribedDevicesSingleton).map(async (deviceSn) => {
           try {
-            await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn, ['propertyUpdate', 'eventNotification'])
+            await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn)
             console.log(`已取消设备 ${deviceSn} 的订阅`)
           } catch (error) {
             // 如果取消订阅失败，记录警告但不阻止断开连接

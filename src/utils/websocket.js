@@ -457,15 +457,13 @@ class WebSocketManager {
   /**
    * 订阅设备事件
    * @param {string} deviceSn - 设备序列号
-   * @param {Array<string>} eventTypes - 事件类型数组
    * @returns {Promise} 返回订阅结果
    */
-  subscribeDeviceEvents(deviceSn, eventTypes) {
+  subscribeDeviceEvents(deviceSn) {
     return this.send({
       method: 'event.subscribe',
       params: {
-        deviceSn,
-        eventTypes
+        deviceSn
       }
     }, true)
   }
@@ -473,15 +471,13 @@ class WebSocketManager {
   /**
    * 取消订阅设备事件
    * @param {string} deviceSn - 设备序列号
-   * @param {Array<string>} eventTypes - 事件类型数组
    * @returns {Promise} 返回取消订阅结果
    */
-  unsubscribeDeviceEvents(deviceSn, eventTypes) {
+  unsubscribeDeviceEvents(deviceSn) {
     return this.send({
       method: 'event.unsubscribe',
       params: {
-        deviceSn,
-        eventTypes
+        deviceSn
       }
     }, true)
   }
