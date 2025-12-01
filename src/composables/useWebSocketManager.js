@@ -218,17 +218,17 @@ export function useWebSocketManager() {
         })
 
         // 监听设备事件通知
-        wsManagerSingleton.on('eventNotification', (data) => {
+        wsManagerSingleton.on('event.subscribe', (data) => {
           handleEventNotification(data)
         })
 
         // 监听系统消息
-        wsManagerSingleton.on('systemMessage', (data) => {
+        wsManagerSingleton.on('system.message', (data) => {
           handleSystemMessage(data)
         })
 
         // 监听家庭消息
-        wsManagerSingleton.on('familyMessage', (data) => {
+        wsManagerSingleton.on('family.message', (data) => {
           handleFamilyMessage(data)
         })
 

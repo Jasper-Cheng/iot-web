@@ -234,16 +234,18 @@ class WebSocketManager {
         this.emit(`message:${data.method}`, data)
         
         // 为特定方法类型触发更具体的事件
-        if (data.method.startsWith('property.')) {
-          this.emit('propertyUpdate', data)
-        } else if (data.method.startsWith('service.')) {
-          this.emit('serviceResponse', data)
-        } else if (data.method.startsWith('event.')) {
-          this.emit('eventNotification', data)
-        } else if (data.method.startsWith('system.')) {
-          this.emit('systemMessage', data)
-        } else if (data.method.startsWith('family.')) {
-          this.emit('familyMessage', data)
+        if (data.method === 'property.get') {
+          this.emit('property.get', data)
+        } else if (data.method === 'service.invoke') {
+          this.emit('service.invoke', data)
+        } else if (data.method === 'event.subscribe') {
+          this.emit('event.subscribe', data)
+        } else if (data.method === 'event.unsubscribe') {
+          this.emit('event.unsubscribe', data)
+        } else if (data.method === 'system.message') {
+          this.emit('system.message', data)
+        } else if (data.method === 'family.message') {
+          this.emit('family.message', data)
         }
       }
 
