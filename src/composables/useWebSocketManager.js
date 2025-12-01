@@ -9,7 +9,7 @@
  *   "id": "req_001",
  *   "method": "property.get", 
  *   "params": {
- *     "deviceId": "device_123",
+ *     "deviceSn": "device_123",
  *     "propertyNames": ["temperature", "humidity", "status"]
  *   },
  *   "timestamp": 1620000000000
@@ -20,7 +20,7 @@
  *   "id": "req_001",
  *   "method": "property.get",
  *   "params": {
- *     "deviceId": "device_123",
+ *     "deviceSn": "device_123",
  *     "properties": {
  *       "temperature": 25.5,
  *       "humidity": 60,
@@ -35,7 +35,7 @@
  *   "id": "req_003", 
  *   "method": "service.invoke",
  *   "params": {
- *     "deviceId": "device_123",
+ *     "deviceSn": "device_123",
  *     "serviceName": "reboot",
  *     "arguments": {
  *       "delay": 5
@@ -49,7 +49,7 @@
  *   "id": "req_003",
  *   "method": "service.invoke", 
  *   "params": {
- *     "deviceId": "device_123",
+ *     "deviceSn": "device_123",
  *     "serviceName": "reboot", 
  *     "result": {
  *       "status": "success",
@@ -64,7 +64,7 @@
  *   "id": "req_004",
  *   "method": "event.subscribe",
  *   "params": {
- *     "deviceId": "device_123", 
+ *     "deviceSn": "device_123", 
  *     "eventTypes": ["sensorAlert", "statusChange"]
  *   },
  *   "timestamp": 1620000000005
@@ -75,7 +75,7 @@
  *   "id": "evt_001",
  *   "method": "event.notify", 
  *   "params": {
- *     "deviceId": "device_123",
+ *     "deviceSn": "device_123",
  *     "eventType": "sensorAlert",
  *     "data": {
  *       "senderId": "1234567890",
@@ -94,7 +94,7 @@
  *   "id": "req_005",
  *   "method": "event.unsubscribe",
  *   "params": {
- *     "deviceId": "device_123", 
+ *     "deviceSn": "device_123", 
  *     "eventTypes": ["sensorAlert", "statusChange"]
  *   },
  *   "timestamp": 1620000000007
@@ -114,7 +114,7 @@
  *   "params": {
  *     "type": "device_status_change",
  *     "data": {
- *       "deviceId": "device_123",
+ *       "deviceSn": "device_123",
  *       "deviceName": "智能音箱",
  *       "oldStatus": "online",
  *       "newStatus": "offline",
@@ -167,7 +167,7 @@ import { useGlobalStore } from '../stores/global'
 let wsManagerSingleton = null
 const connectionStateSingleton = ref('disconnected')
 const subscribedDevicesSingleton = new Set()
-const eventNotificationHandlersSingleton = new Map() // { deviceId: handler }
+const eventNotificationHandlersSingleton = new Map() // { deviceSn: handler }
 let listenersAttachedSingleton = false
 let systemMessageHandlerSingleton = null
 let familyMessageHandlerSingleton = null
@@ -249,14 +249,14 @@ export function useWebSocketManager() {
    * @param {Object} data - 事件通知数据
    */
   const handleEventNotification = (data) => {
-    const { deviceId, eventType, data: eventData, occurredAt } = data.params
+    const { deviceSn, eventType, data: eventData, occurredAt } = data.params
     
-    if (!deviceId || !eventType) return
+    if (!deviceSn || !eventType) return
 
     // 查找该设备的事件处理器
-    const handler = eventNotificationHandlersSingleton.get(deviceId)
+    const handler = eventNotificationHandlersSingleton.get(deviceSn)
     if (handler) {
-      handler({ deviceId, eventType, eventData, occurredAt })
+      handler({ deviceSn, eventType, eventData, occurredAt })
     } else {
       // no handler
     }
@@ -329,84 +329,84 @@ export function useWebSocketManager() {
 
   /**
    * 获取设备属性
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Array<string>} propertyNames - 属性名称数组
    */
-  const getDeviceProperties = async (deviceId, propertyNames) => {
+  const getDeviceProperties = async (deviceSn, propertyNames) => {
     try {
-      const response = await wsManagerSingleton.getDeviceProperties(deviceId, propertyNames)
+      const response = await wsManagerSingleton.getDeviceProperties(deviceSn, propertyNames)
       return response.params.properties
     } catch (error) {
-      console.error(`获取设备 ${deviceId} 属性失败:`, error)
+      console.error(`获取设备 ${deviceSn} 属性失败:`, error)
       throw error
     }
   }
 
   /**
    * 调用设备服务
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {string} serviceName - 服务名称
    * @param {Object} serviceArgs - 服务参数
    */
-  const invokeDeviceService = async (deviceId, serviceName, serviceArgs = {}) => {
+  const invokeDeviceService = async (deviceSn, serviceName, serviceArgs = {}) => {
     try {
-      const response = await wsManagerSingleton.invokeDeviceService(deviceId, serviceName, serviceArgs)
+      const response = await wsManagerSingleton.invokeDeviceService(deviceSn, serviceName, serviceArgs)
       return response.params.result
     } catch (error) {
-      console.error(`调用设备 ${deviceId} 服务失败:`, error)
+      console.error(`调用设备 ${deviceSn} 服务失败:`, error)
       throw error
     }
   }
 
   /**
    * 订阅设备事件
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Array<string>} eventTypes - 事件类型数组
    */
-  const subscribeDeviceEvents = async (deviceId, eventTypes) => {
+  const subscribeDeviceEvents = async (deviceSn, eventTypes) => {
     try {
-      await wsManagerSingleton.subscribeDeviceEvents(deviceId, eventTypes)
-      subscribedDevicesSingleton.add(deviceId)
-      console.log(`订阅设备 ${deviceId} 事件:`, eventTypes)
+      await wsManagerSingleton.subscribeDeviceEvents(deviceSn, eventTypes)
+      subscribedDevicesSingleton.add(deviceSn)
+      console.log(`订阅设备 ${deviceSn} 事件:`, eventTypes)
     } catch (error) {
-      console.error(`订阅设备 ${deviceId} 事件失败:`, error)
+      console.error(`订阅设备 ${deviceSn} 事件失败:`, error)
       throw error
     }
   }
 
   /**
    * 取消订阅设备事件
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Array<string>} eventTypes - 事件类型数组
    */
-  const unsubscribeDeviceEvents = async (deviceId, eventTypes) => {
+  const unsubscribeDeviceEvents = async (deviceSn, eventTypes) => {
     try {
-      await wsManagerSingleton.unsubscribeDeviceEvents(deviceId, eventTypes)
-      subscribedDevicesSingleton.delete(deviceId)
-      console.log(`取消订阅设备 ${deviceId} 事件:`, eventTypes)
+      await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn, eventTypes)
+      subscribedDevicesSingleton.delete(deviceSn)
+      console.log(`取消订阅设备 ${deviceSn} 事件:`, eventTypes)
     } catch (error) {
-      console.error(`取消订阅设备 ${deviceId} 事件失败:`, error)
+      console.error(`取消订阅设备 ${deviceSn} 事件失败:`, error)
       throw error
     }
   }
 
   /**
    * 设置事件通知处理器
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Function} handler - 事件处理器函数
    */
-  const setEventNotificationHandler = (deviceId, handler) => {
-    eventNotificationHandlersSingleton.set(deviceId, handler)
-    console.log(`已为设备 ${deviceId} 设置了事件处理器`)
+  const setEventNotificationHandler = (deviceSn, handler) => {
+    eventNotificationHandlersSingleton.set(deviceSn, handler)
+    console.log(`已为设备 ${deviceSn} 设置了事件处理器`)
   }
 
   /**
    * 清除事件通知处理器
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    */
-  const clearEventNotificationHandler = (deviceId) => {
-    eventNotificationHandlersSingleton.delete(deviceId)
-    console.log(`清除设备 ${deviceId} 的事件处理器`)
+  const clearEventNotificationHandler = (deviceSn) => {
+    eventNotificationHandlersSingleton.delete(deviceSn)
+    console.log(`清除设备 ${deviceSn} 的事件处理器`)
   }
 
   /**
@@ -430,13 +430,13 @@ export function useWebSocketManager() {
         console.log('断开连接前，先取消所有设备订阅...')
         
         // 并行取消所有设备的订阅
-        const unsubscribePromises = Array.from(subscribedDevicesSingleton).map(async (deviceId) => {
+        const unsubscribePromises = Array.from(subscribedDevicesSingleton).map(async (deviceSn) => {
           try {
-            await wsManagerSingleton.unsubscribeDeviceEvents(deviceId, ['propertyUpdate', 'eventNotification'])
-            console.log(`已取消设备 ${deviceId} 的订阅`)
+            await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn, ['propertyUpdate', 'eventNotification'])
+            console.log(`已取消设备 ${deviceSn} 的订阅`)
           } catch (error) {
             // 如果取消订阅失败，记录警告但不阻止断开连接
-            console.warn(`取消设备 ${deviceId} 订阅失败:`, error.message)
+            console.warn(`取消设备 ${deviceSn} 订阅失败:`, error.message)
           }
         })
         

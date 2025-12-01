@@ -422,15 +422,15 @@ class WebSocketManager {
 
   /**
    * 获取设备属性
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Array<string>} propertyNames - 属性名称数组
    * @returns {Promise} 返回属性值
    */
-  getDeviceProperties(deviceId, propertyNames) {
+  getDeviceProperties(deviceSn, propertyNames) {
     return this.send({
       method: 'property.get',
       params: {
-        deviceId,
+        deviceSn,
         propertyNames
       }
     }, true)
@@ -438,16 +438,16 @@ class WebSocketManager {
 
   /**
    * 调用设备服务
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {string} serviceName - 服务名称
    * @param {Object} serviceArgs - 服务参数
    * @returns {Promise} 返回服务调用结果
    */
-  invokeDeviceService(deviceId, serviceName, serviceArgs = {}) {
+  invokeDeviceService(deviceSn, serviceName, serviceArgs = {}) {
     return this.send({
       method: 'service.invoke',
       params: {
-        deviceId,
+        deviceSn,
         serviceName,
         arguments: serviceArgs
       }
@@ -456,15 +456,15 @@ class WebSocketManager {
 
   /**
    * 订阅设备事件
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Array<string>} eventTypes - 事件类型数组
    * @returns {Promise} 返回订阅结果
    */
-  subscribeDeviceEvents(deviceId, eventTypes) {
+  subscribeDeviceEvents(deviceSn, eventTypes) {
     return this.send({
       method: 'event.subscribe',
       params: {
-        deviceId,
+        deviceSn,
         eventTypes
       }
     }, true)
@@ -472,15 +472,15 @@ class WebSocketManager {
 
   /**
    * 取消订阅设备事件
-   * @param {string} deviceId - 设备ID
+   * @param {string} deviceSn - 设备序列号
    * @param {Array<string>} eventTypes - 事件类型数组
    * @returns {Promise} 返回取消订阅结果
    */
-  unsubscribeDeviceEvents(deviceId, eventTypes) {
+  unsubscribeDeviceEvents(deviceSn, eventTypes) {
     return this.send({
       method: 'event.unsubscribe',
       params: {
-        deviceId,
+        deviceSn,
         eventTypes
       }
     }, true)

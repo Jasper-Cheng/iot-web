@@ -254,8 +254,8 @@ const props = defineProps({
 // 使用设备管理器
 const { deviceManager } = useWebSocketManager()
 
-// 设备ID - 从props中获取
-const deviceId = computed(() => props.device?.id || 'speaker_001')
+// 设备序列号 - 从props中获取
+const deviceSn = computed(() => props.device?.sn || 'speaker_001')
 
 
 // 设备在线状态 - 基于传入的device中的status判断
@@ -401,10 +401,10 @@ const effectiveSpeakerPower = computed(() => {
 
 // 监听设备事件通知
 const handleDeviceEventNotification = (data) => {
-  const { deviceId: updatedDeviceId, eventType, eventData, occurredAt } = data
+  const { deviceSn: updatedDeviceSn, eventType, eventData, occurredAt } = data
   
   // 只处理当前设备的事件通知
-  if (updatedDeviceId !== deviceId.value) {
+  if (updatedDeviceSn !== deviceSn.value) {
     return
   }
   
@@ -484,7 +484,7 @@ const toggleSpeaker = async () => {
   
   try {
     const newPowerState = !deviceProperties.value.power
-    await deviceManager.invokeDeviceService(deviceId.value, 'setPower', { power: newPowerState })
+    await deviceManager.invokeDeviceService(deviceSn.value, 'setPower', { power: newPowerState })
     
     // 本地更新状态
     deviceProperties.value.power = newPowerState
@@ -506,7 +506,7 @@ const togglePlayPause = async () => {
   
   try {
     const newStatus = deviceProperties.value.playing ? 'paused' : 'playing'
-    await deviceManager.invokeDeviceService(deviceId.value, 'setPlayStatus', { status: newStatus })
+    await deviceManager.invokeDeviceService(deviceSn.value, 'setPlayStatus', { status: newStatus })
     
     // 本地更新状态
     deviceProperties.value.playing = newStatus === 'playing'
@@ -525,7 +525,7 @@ const previousSong = async () => {
   if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
   
   try {
-    await deviceManager.invokeDeviceService(deviceId.value, 'previousSong', {})
+    await deviceManager.invokeDeviceService(deviceSn.value, 'previousSong', {})
     
     // 本地更新状态
     currentSongIndex.value = currentSongIndex.value > 0 ? currentSongIndex.value - 1 : playlist.value.length - 1
@@ -540,7 +540,7 @@ const nextSong = async () => {
   if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
   
   try {
-    await deviceManager.invokeDeviceService(deviceId.value, 'nextSong', {})
+    await deviceManager.invokeDeviceService(deviceSn.value, 'nextSong', {})
     
     // 本地更新状态
     currentSongIndex.value = currentSongIndex.value < playlist.value.length - 1 ? currentSongIndex.value + 1 : 0
@@ -661,7 +661,7 @@ const fetchDeviceProperties = async () => {
     // 使用 deviceProperties 中的属性名作为参数传入
     const requestedProperties = Object.keys(deviceProperties.value)
     
-    const properties = await deviceManager.getDeviceProperties(deviceId.value, requestedProperties)
+    const properties = await deviceManager.getDeviceProperties(deviceSn.value, requestedProperties)
     
     // 统一更新设备属性
     if (properties) {
@@ -685,10 +685,10 @@ const subscribeToDeviceProperties = async () => {
   
   try {
     // 订阅设备属性更新和通知事件，订阅了propertyUpdate则devicePropertyUpdate会接受到通知，不订阅则属性改变接受不到通知，订阅了eventNotification则deviceEventNotification会接受到通知，不订阅则事件改变接受不到通知
-    await deviceManager.subscribeDeviceEvents(deviceId.value, ['propertyUpdate'])
+    await deviceManager.subscribeDeviceEvents(deviceSn.value, ['propertyUpdate'])
     
     // 设置事件通知处理器
-    deviceManager.setEventNotificationHandler(deviceId.value, handleDeviceEventNotification)
+    deviceManager.setEventNotificationHandler(deviceSn.value, handleDeviceEventNotification)
   } catch (error) {
     console.error('订阅设备属性更新失败:', error)
   }
@@ -703,14 +703,14 @@ const unsubscribeFromDeviceProperties = async () => {
   
   try {
     // 取消订阅设备属性更新和通知事件
-    await deviceManager.unsubscribeDeviceEvents(deviceId.value, ['propertyUpdate'])
+    await deviceManager.unsubscribeDeviceEvents(deviceSn.value, ['propertyUpdate'])
     
     // 清理事件通知处理器
-    deviceManager.clearEventNotificationHandler(deviceId.value)
+    deviceManager.clearEventNotificationHandler(deviceSn.value)
   } catch (error) {
     // 如果是连接关闭错误，只记录警告而不是错误
     if (error.message === 'Connection closed') {
-      console.warn(`WebSocket连接已关闭，跳过取消订阅设备 ${deviceId.value}`)
+      console.warn(`WebSocket连接已关闭，跳过取消订阅设备 ${deviceSn.value}`)
     } else {
       console.error('取消订阅设备属性更新失败:', error)
     }
@@ -789,7 +789,7 @@ const updateVolume = (event) => {
   // 更新设备属性
   deviceProperties.value.volume = newVolume
   // 调用设备服务更新音量
-  deviceManager.invokeDeviceService(deviceId.value, 'setVolume', { volume: newVolume })
+  deviceManager.invokeDeviceService(deviceSn.value, 'setVolume', { volume: newVolume })
 }
 
 // 更新均衡器模式
@@ -798,7 +798,7 @@ const updateEqualizer = (event) => {
   // 更新设备属性
   deviceProperties.value.equalizer = newEqualizer
   // 调用设备服务更新均衡器
-  deviceManager.invokeDeviceService(deviceId.value, 'setEqualizer', { mode: newEqualizer })
+  deviceManager.invokeDeviceService(deviceSn.value, 'setEqualizer', { mode: newEqualizer })
 }
 
 // 更新低音显示（拖动过程中）
@@ -816,7 +816,7 @@ const updateBass = (event) => {
   // 更新设备属性
   deviceProperties.value.bass = newBass
   // 调用设备服务更新低音
-  deviceManager.invokeDeviceService(deviceId.value, 'setBass', { level: newBass })
+  deviceManager.invokeDeviceService(deviceSn.value, 'setBass', { level: newBass })
 }
 
 // 更新高音显示（拖动过程中）
@@ -834,7 +834,7 @@ const updateTreble = (event) => {
   // 更新设备属性
   deviceProperties.value.treble = newTreble
   // 调用设备服务更新高音
-  deviceManager.invokeDeviceService(deviceId.value, 'setTreble', { level: newTreble })
+  deviceManager.invokeDeviceService(deviceSn.value, 'setTreble', { level: newTreble })
 }
 
 // 添加全局点击事件监听器
