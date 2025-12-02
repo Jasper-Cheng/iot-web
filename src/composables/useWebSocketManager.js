@@ -266,12 +266,13 @@ export function useWebSocketManager() {
   /**
    * 处理设备事件通知（event.notify）
    * @param {Object} data - 事件通知数据
+   * 格式: { params: { deviceSn: "M701001-220403-000001", data: { ... } } }
    */
   const handleEventNotification = (data) => {
-    const { deviceSn, eventType, data: eventData, occurredAt } = data.params || {}
+    const { deviceSn, data: eventData } = data.params || {}
     
-    if (!deviceSn || !eventType) {
-      console.warn('收到事件通知但缺少必要字段:', data)
+    if (!deviceSn) {
+      console.warn('收到事件通知但缺少 deviceSn 字段:', data)
       return
     }
 
@@ -279,12 +280,14 @@ export function useWebSocketManager() {
     const handler = eventNotificationHandlersSingleton.get(deviceSn)
     if (handler) {
       try {
-        handler({ deviceSn, eventType, eventData, occurredAt })
+        // 只传递 eventData（data.params.data），不传递 deviceSn
+        // handler 可以通过闭包访问 deviceSn（在设置时已经绑定）
+        handler(eventData)
       } catch (error) {
         console.error(`处理设备 ${deviceSn} 事件通知时出错:`, error)
       }
     } else {
-      console.log(`收到设备 ${deviceSn} 的事件通知，但没有设置处理器:`, { eventType, eventData })
+      console.log(`收到设备 ${deviceSn} 的事件通知，但没有设置处理器:`, { data: eventData })
     }
   }
 

@@ -400,38 +400,29 @@ const effectiveSpeakerPower = computed(() => {
 
 
 // 监听设备事件通知
-const handleDeviceEventNotification = (data) => {
-  const { deviceSn: updatedDeviceSn, eventType, eventData, occurredAt } = data
-  
-  // 只处理当前设备的事件通知
-  if (updatedDeviceSn !== deviceSn.value) {
+// eventData 格式: { power, volume, mute, source, playing, track, artist, album, ... }
+// eventData 可能包含设备属性的更新数据
+const handleDeviceEventNotification = (eventData) => {
+  if (!eventData || typeof eventData !== 'object') {
     return
   }
   
-  
-  // 处理属性更新事件
-  if (eventType === 'propertyUpdate') {
-    if (eventData) {
-      
-      // 统一更新设备属性
-      Object.keys(eventData).forEach(key => {
-        if (eventData[key] !== undefined) {
-          deviceProperties.value[key] = eventData[key]
-        }
-      })
-      
-      // 同步临时值，确保显示一致性
-      if (tempVolume.value === null && eventData.volume !== undefined) {
-        tempVolume.value = eventData.volume
-      }
-      if (tempBass.value === null && eventData.bass !== undefined) {
-        tempBass.value = eventData.bass
-      }
-      if (tempTreble.value === null && eventData.treble !== undefined) {
-        tempTreble.value = eventData.treble
-      }
+  // 统一更新设备属性
+  Object.keys(eventData).forEach(key => {
+    if (eventData[key] !== undefined) {
+      deviceProperties.value[key] = eventData[key]
     }
-  } else {
+  })
+  
+  // 同步临时值，确保显示一致性
+  if (tempVolume.value === null && eventData.volume !== undefined) {
+    tempVolume.value = eventData.volume
+  }
+  if (tempBass.value === null && eventData.bass !== undefined) {
+    tempBass.value = eventData.bass
+  }
+  if (tempTreble.value === null && eventData.treble !== undefined) {
+    tempTreble.value = eventData.treble
   }
 }
 

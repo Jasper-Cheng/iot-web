@@ -211,19 +211,26 @@ const subscribeToDeviceProperties = async () => {
     await deviceManager.subscribeDeviceEvents(deviceSn.value)
     
     // 设置事件通知处理器
+    // eventData 格式: { co2, hcho, tvoc, pm25, pm10, temp, humi, status, ... }
+    // eventData 可能包含：
+    // 1. 传感器数据: { co2, hcho, tvoc, pm25, pm10, temp, humi, ... }
+    // 2. 设备状态: { status: "online" }
+    // 3. 混合数据: { co2: 517, status: "online", ... }
     deviceManager.setEventNotificationHandler(deviceSn.value, (eventData) => {
       try {
-        const { eventType, eventData: data } = eventData || {}
-        
-        // 处理属性更新事件
-        if (eventType === 'propertyChange' && data && typeof data === 'object') {
-          if (data.co2 !== undefined && typeof data.co2 === 'number') sensors.value.co2 = data.co2
-          if (data.hcho !== undefined && typeof data.hcho === 'number') sensors.value.hcho = data.hcho
-          if (data.tvoc !== undefined && typeof data.tvoc === 'number') sensors.value.tvoc = data.tvoc
-          if (data.pm25 !== undefined && typeof data.pm25 === 'number') sensors.value.pm25 = data.pm25
-          if (data.pm10 !== undefined && typeof data.pm10 === 'number') sensors.value.pm10 = data.pm10
-          if (data.temp !== undefined && typeof data.temp === 'number') sensors.value.temp = data.temp
-          if (data.humi !== undefined && typeof data.humi === 'number') sensors.value.humi = data.humi
+        // 直接处理 eventData 中的数据，更新传感器值
+        // 如果 eventData 只包含 status 字段，不会更新任何传感器值（这是正常的）
+        if (eventData && typeof eventData === 'object') {
+          // 更新传感器数据（只有当字段存在且为数字时才更新）
+          if (eventData.co2 !== undefined && typeof eventData.co2 === 'number') sensors.value.co2 = eventData.co2
+          if (eventData.hcho !== undefined && typeof eventData.hcho === 'number') sensors.value.hcho = eventData.hcho
+          if (eventData.tvoc !== undefined && typeof eventData.tvoc === 'number') sensors.value.tvoc = eventData.tvoc
+          if (eventData.pm25 !== undefined && typeof eventData.pm25 === 'number') sensors.value.pm25 = eventData.pm25
+          if (eventData.pm10 !== undefined && typeof eventData.pm10 === 'number') sensors.value.pm10 = eventData.pm10
+          if (eventData.temp !== undefined && typeof eventData.temp === 'number') sensors.value.temp = eventData.temp
+          if (eventData.humi !== undefined && typeof eventData.humi === 'number') sensors.value.humi = eventData.humi
+          
+          // 注意：status 字段不需要在这里处理，设备状态由 props.device.status 管理
         }
       } catch (error) {
         console.error('处理事件通知时出错:', error)
