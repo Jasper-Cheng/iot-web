@@ -722,6 +722,29 @@ export const useGlobalStore = defineStore('global', {
 			this.hasNewFeedback = hasNew
 		},
 		
+		// 更新设备状态（用于接收 WebSocket 事件通知后的本地同步）
+		updateDeviceStatus(deviceSn, status) {
+			if (!deviceSn || !status) {
+				console.warn('更新设备状态失败: deviceSn 或 status 为空')
+				return
+			}
+			
+			const deviceIndex = this.devices.findIndex(device => device.sn === deviceSn)
+			if (deviceIndex !== -1) {
+				// 更新设备状态（创建新对象以触发响应式更新）
+				this.devices = [
+					...this.devices.slice(0, deviceIndex),
+					{
+						...this.devices[deviceIndex],
+						status: status
+					},
+					...this.devices.slice(deviceIndex + 1)
+				]
+			} else {
+				console.warn(`未找到设备 ${deviceSn}，无法更新状态`)
+			}
+		},
+		
 		// 获取 RSA 公钥（每次请求最新）
 		async getRSAPublicKey() {
 			try {

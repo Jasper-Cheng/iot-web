@@ -127,6 +127,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useWebSocketManager } from '../composables/useWebSocketManager'
+import { useGlobalStore } from '../stores/global'
 
 // 定义 props
 const props = defineProps({
@@ -136,8 +137,9 @@ const props = defineProps({
   }
 })
 
-// 使用设备管理器
+// 使用设备管理器和全局 store
 const { deviceManager } = useWebSocketManager()
+const globalStore = useGlobalStore()
 
 // 设备序列号 - 从props中获取
 const deviceSn = computed(() => props.device?.sn || 'M701001-250922-000123')
@@ -211,16 +213,12 @@ const subscribeToDeviceProperties = async () => {
     await deviceManager.subscribeDeviceEvents(deviceSn.value)
     
     // 设置事件通知处理器
-    // eventData 格式: { co2, hcho, tvoc, pm25, pm10, temp, humi, status, ... }
-    // eventData 可能包含：
-    // 1. 传感器数据: { co2, hcho, tvoc, pm25, pm10, temp, humi, ... }
-    // 2. 设备状态: { status: "online" }
-    // 3. 混合数据: { co2: 517, status: "online", ... }
+    // eventData 是一个对象，格式可能是：
+    // 1. 传感器数据: { co2: 517, hcho: 12, tvoc: 19, pm25: 20, pm10: 24, temp: 26.1, humi: 40.1 }
+    // 2. 设备状态: { status: 'online' } 或 { status: 'offline' }
     deviceManager.setEventNotificationHandler(deviceSn.value, (eventData) => {
       try {
-        // 直接处理 eventData 中的数据，更新传感器值
-        // 如果 eventData 只包含 status 字段，不会更新任何传感器值（这是正常的）
-        if (eventData && typeof eventData === 'object') {
+        if (eventData && typeof eventData === 'object' && !Array.isArray(eventData)) {
           // 更新传感器数据（只有当字段存在且为数字时才更新）
           if (eventData.co2 !== undefined && typeof eventData.co2 === 'number') sensors.value.co2 = eventData.co2
           if (eventData.hcho !== undefined && typeof eventData.hcho === 'number') sensors.value.hcho = eventData.hcho
@@ -230,7 +228,15 @@ const subscribeToDeviceProperties = async () => {
           if (eventData.temp !== undefined && typeof eventData.temp === 'number') sensors.value.temp = eventData.temp
           if (eventData.humi !== undefined && typeof eventData.humi === 'number') sensors.value.humi = eventData.humi
           
-          // 注意：status 字段不需要在这里处理，设备状态由 props.device.status 管理
+          // 处理设备状态更新
+          // eventData.status 是字符串，例如：'online' 或 'offline'
+          if (eventData.status !== undefined && typeof eventData.status === 'string') {
+            // 更新 global store 中对应设备的状态
+            globalStore.updateDeviceStatus(deviceSn.value, eventData.status)
+          }
+        } else if (eventData !== null && eventData !== undefined) {
+          // 如果 eventData 不是对象，记录警告
+          console.warn('EnvironmentMonitorCard: 收到非对象类型的 eventData:', typeof eventData, eventData)
         }
       } catch (error) {
         console.error('处理事件通知时出错:', error)
