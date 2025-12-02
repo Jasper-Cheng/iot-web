@@ -219,6 +219,7 @@ const subscribeToDeviceProperties = async () => {
     deviceManager.setEventNotificationHandler(deviceSn.value, (eventData) => {
       try {
         if (eventData && typeof eventData === 'object' && !Array.isArray(eventData)) {
+            console.log('收到环境监测数据', eventData)
           // 更新传感器数据（只有当字段存在且为数字时才更新）
           if (eventData.co2 !== undefined && typeof eventData.co2 === 'number') sensors.value.co2 = eventData.co2
           if (eventData.hcho !== undefined && typeof eventData.hcho === 'number') sensors.value.hcho = eventData.hcho
