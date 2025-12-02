@@ -215,9 +215,19 @@ export function useWebSocketManager() {
           connectionStateSingleton.value = state
         })
 
-        // 监听设备事件通知
-        wsManagerSingleton.on('event.subscribe', (data) => {
+        // 监听设备事件通知（event.notify是服务器推送的事件通知）
+        wsManagerSingleton.on('event.notify', (data) => {
           handleEventNotification(data)
+        })
+
+        // 监听事件订阅响应（event.subscribe是订阅请求的响应）
+        wsManagerSingleton.on('event.subscribe', (data) => {
+          handleEventSubscribeResponse(data)
+        })
+
+        // 监听事件取消订阅响应（event.unsubscribe是取消订阅请求的响应）
+        wsManagerSingleton.on('event.unsubscribe', (data) => {
+          handleEventUnsubscribeResponse(data)
         })
 
         // 监听系统消息
@@ -243,20 +253,66 @@ export function useWebSocketManager() {
 
 
   /**
-   * 处理设备事件通知
+   * 处理设备事件通知（event.notify）
    * @param {Object} data - 事件通知数据
    */
   const handleEventNotification = (data) => {
-    const { deviceSn, eventType, data: eventData, occurredAt } = data.params
+    const { deviceSn, eventType, data: eventData, occurredAt } = data.params || {}
     
-    if (!deviceSn || !eventType) return
+    if (!deviceSn || !eventType) {
+      console.warn('收到事件通知但缺少必要字段:', data)
+      return
+    }
 
     // 查找该设备的事件处理器
     const handler = eventNotificationHandlersSingleton.get(deviceSn)
     if (handler) {
-      handler({ deviceSn, eventType, eventData, occurredAt })
+      try {
+        handler({ deviceSn, eventType, eventData, occurredAt })
+      } catch (error) {
+        console.error(`处理设备 ${deviceSn} 事件通知时出错:`, error)
+      }
     } else {
-      // no handler
+      console.log(`收到设备 ${deviceSn} 的事件通知，但没有设置处理器:`, { eventType, eventData })
+    }
+  }
+
+  /**
+   * 处理事件订阅响应（event.subscribe）
+   * 注意：这是订阅请求的响应，不是事件通知
+   * @param {Object} data - 订阅响应数据
+   */
+  const handleEventSubscribeResponse = (data) => {
+    const { deviceSn } = data.params || {}
+    if (deviceSn) {
+      // 如果响应成功，设备已经在订阅列表中（由subscribeDeviceEvents添加）
+      if (data.error) {
+        console.error(`设备 ${deviceSn} 事件订阅失败:`, data.error)
+        // 如果订阅失败，从订阅列表中移除
+        subscribedDevicesSingleton.delete(deviceSn)
+      } else {
+        console.log(`设备 ${deviceSn} 事件订阅成功`)
+      }
+    }
+  }
+
+  /**
+   * 处理事件取消订阅响应（event.unsubscribe）
+   * 注意：这是取消订阅请求的响应
+   * @param {Object} data - 取消订阅响应数据
+   */
+  const handleEventUnsubscribeResponse = (data) => {
+    const { deviceSn } = data.params || {}
+    if (deviceSn) {
+      if (data.error) {
+        console.error(`设备 ${deviceSn} 事件取消订阅失败:`, data.error)
+      } else {
+        console.log(`设备 ${deviceSn} 事件取消订阅成功`)
+        // 从订阅列表中移除
+        subscribedDevicesSingleton.delete(deviceSn)
+        // 清除事件处理器（可选，根据业务需求决定）
+        // clearEventNotificationHandler(deviceSn)
+      }
     }
   }
 

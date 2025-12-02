@@ -212,12 +212,13 @@ class WebSocketManager {
       this.log('Message received:', data)
 
       // 处理响应消息（通过ID匹配）
-      if (data.id && this.pendingMessages.has(data.id)) {
+      const isPendingResponse = data.id && this.pendingMessages.has(data.id)
+      if (isPendingResponse) {
         const pending = this.pendingMessages.get(data.id)
         clearTimeout(pending.timeout)
         this.pendingMessages.delete(data.id)
         pending.resolve(data)
-        return
+        // 注意：响应消息也会继续处理，触发事件（用于日志记录等）
       }
 
       // 处理心跳响应
@@ -242,6 +243,9 @@ class WebSocketManager {
           this.emit('event.subscribe', data)
         } else if (data.method === 'event.unsubscribe') {
           this.emit('event.unsubscribe', data)
+        } else if (data.method === 'event.notify') {
+          // event.notify 是服务器主动推送的事件通知，不是请求响应
+          this.emit('event.notify', data)
         } else if (data.method === 'system.message') {
           this.emit('system.message', data)
         } else if (data.method === 'family.message') {
