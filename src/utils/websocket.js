@@ -235,9 +235,7 @@ class WebSocketManager {
         this.emit(`message:${data.method}`, data)
         
         // 为特定方法类型触发更具体的事件
-        if (data.method === 'property.get') {
-          this.emit('property.get', data)
-        } else if (data.method === 'service.invoke') {
+        if (data.method === 'service.invoke') {
           this.emit('service.invoke', data)
         } else if (data.method === 'event.subscribe') {
           this.emit('event.subscribe', data)
@@ -422,22 +420,6 @@ class WebSocketManager {
     if (this.options.debug) {
       console.log('[WebSocketManager]', ...args)
     }
-  }
-
-  /**
-   * 获取设备属性
-   * @param {string} deviceSn - 设备序列号
-   * @param {Array<string>} propertyNames - 属性名称数组
-   * @returns {Promise} 返回属性值
-   */
-  getDeviceProperties(deviceSn, propertyNames) {
-    return this.send({
-      method: 'property.get',
-      params: {
-        deviceSn,
-        propertyNames
-      }
-    }, true)
   }
 
   /**

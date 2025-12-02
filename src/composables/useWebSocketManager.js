@@ -4,35 +4,9 @@
  * 
  * WebSocket消息结构：
  * 
- * 1. 获取设备属性请求：
+ * 1. 调用设备服务请求：
  * {
- *   "id": "req_001",
- *   "method": "property.get", 
- *   "params": {
- *     "deviceSn": "device_123",
- *     "propertyNames": ["temperature", "humidity", "status"]
- *   },
- *   "timestamp": 1620000000000
- * }
- * 
- * 2. 获取设备属性响应：
- * {
- *   "id": "req_001",
- *   "method": "property.get",
- *   "params": {
- *     "deviceSn": "device_123",
- *     "properties": {
- *       "temperature": 25.5,
- *       "humidity": 60,
- *       "status": "online"
- *     }
- *   },
- *   "timestamp": 1620000000001
- * }
- * 
- * 3. 调用设备服务请求：
- * {
- *   "id": "req_003", 
+ *   "id": "req_001", 
  *   "method": "service.invoke",
  *   "params": {
  *     "deviceSn": "device_123",
@@ -41,12 +15,12 @@
  *       "delay": 5
  *     }
  *   },
- *   "timestamp": 1620000000003
+ *   "timestamp": 1620000000000
  * }
  * 
- * 4. 调用设备服务响应：
+ * 2. 调用设备服务响应：
  * {
- *   "id": "req_003",
+ *   "id": "req_001",
  *   "method": "service.invoke", 
  *   "params": {
  *     "deviceSn": "device_123",
@@ -56,56 +30,93 @@
  *       "message": "Device will reboot in 5 seconds"
  *     }
  *   },
- *   "timestamp": 1620000000004
+ *   "timestamp": 1620000000001
  * }
  * 
- * 5. 订阅设备事件请求：
+ * 3. 订阅设备事件请求：
  * {
- *   "id": "req_004",
+ *   "id": "req_002",
  *   "method": "event.subscribe",
  *   "params": {
  *     "deviceSn": "device_123"
  *   },
- *   "timestamp": 1620000000005
+ *   "timestamp": 1620000000002
  * }
  * 
- * 6. 设备事件通知：订阅了才有通知，当调用service.invoke后，属性改变会通知回来
- * {
- *   "id": "evt_001",
- *   "method": "event.notify", 
- *   "params": {
- *     "deviceSn": "device_123",
- *     "eventType": "sensorAlert",
- *     "data": {
- *       "senderId": "1234567890",
- *       "senderRole": "member",
- *       "alertLevel": "high", 
- *       "currentValue": 38.5,
- *       "threshold": 35.0
- *     },
- *     "occurredAt": 1620000000006
- *   },
- *   "timestamp": 1620000000006
- * }
+ * 4. 设备事件通知（event.notify）：
+ *    这是服务器主动推送的事件通知，只有在订阅了设备事件后才会收到。
+ *    当设备属性发生变化、触发告警、状态改变等情况时，服务器会主动推送此消息。
+ *    
+ *    示例1：传感器告警事件
+ *    {
+ *      "id": "evt_001",
+ *      "method": "event.notify", 
+ *      "params": {
+ *        "deviceSn": "device_123",
+ *        "eventType": "sensorAlert",
+ *        "data": {
+ *          "senderId": "1234567890",
+ *          "senderRole": "member",
+ *          "alertLevel": "high", 
+ *          "currentValue": 38.5,
+ *          "threshold": 35.0
+ *        },
+ *        "occurredAt": 1620000000003
+ *      },
+ *      "timestamp": 1620000000003
+ *    }
+ *    
+ *    示例2：属性变化事件（当调用service.invoke后，属性改变会通知回来）
+ *    {
+ *      "id": "evt_002",
+ *      "method": "event.notify",
+ *      "params": {
+ *        "deviceSn": "device_123",
+ *        "eventType": "propertyChange",
+ *        "data": {
+ *          "temperature": 26.5,
+ *          "humidity": 45.2,
+ *          "pm25": 25
+ *        },
+ *        "occurredAt": 1620000000004
+ *      },
+ *      "timestamp": 1620000000004
+ *    }
+ *    
+ *    示例3：设备状态变化事件
+ *    {
+ *      "id": "evt_003",
+ *      "method": "event.notify",
+ *      "params": {
+ *        "deviceSn": "device_123",
+ *        "eventType": "statusChange",
+ *        "data": {
+ *          "oldStatus": "online",
+ *          "newStatus": "offline"
+ *        },
+ *        "occurredAt": 1620000000005
+ *      },
+ *      "timestamp": 1620000000005
+ *    }
  * 
- * 7. 取消订阅设备事件请求：
+ * 5. 取消订阅设备事件请求：
  * {
- *   "id": "req_005",
+ *   "id": "req_003",
  *   "method": "event.unsubscribe",
  *   "params": {
  *     "deviceSn": "device_123"
  *   },
- *   "timestamp": 1620000000007
+ *   "timestamp": 1620000000004
  * }
  * 
- * 8. 心跳包：
+ * 6. 心跳包：
  * {
  *   "id": "ping_001",
  *   "method": "ping",
  *   "timestamp": 1620000000000
  * }
  * 
- * 9. 系统消息（设备状态变更）：
+ * 7. 系统消息（设备状态变更）：
  * {
  *   "id": "sys_001",
  *   "method": "system.message",
@@ -122,7 +133,7 @@
  *   "timestamp": 1620000000000
  * }
  * 
- * 10. 系统消息（系统通知）：
+ * 8. 系统消息（系统通知）：
  * {
  *   "id": "sys_002",
  *   "method": "system.message",
@@ -138,7 +149,7 @@
  *   "timestamp": 1620000000000
  * }
  * 
- * 11. 家庭消息：
+ * 9. 家庭消息：
  * {
  *   "id": "fam_002",
  *   "method": "family.message",
@@ -382,21 +393,6 @@ export function useWebSocketManager() {
 
 
   /**
-   * 获取设备属性
-   * @param {string} deviceSn - 设备序列号
-   * @param {Array<string>} propertyNames - 属性名称数组
-   */
-  const getDeviceProperties = async (deviceSn, propertyNames) => {
-    try {
-      const response = await wsManagerSingleton.getDeviceProperties(deviceSn, propertyNames)
-      return response.params.properties
-    } catch (error) {
-      console.error(`获取设备 ${deviceSn} 属性失败:`, error)
-      throw error
-    }
-  }
-
-  /**
    * 调用设备服务
    * @param {string} deviceSn - 设备序列号
    * @param {string} serviceName - 服务名称
@@ -420,7 +416,7 @@ export function useWebSocketManager() {
     try {
       await wsManagerSingleton.subscribeDeviceEvents(deviceSn)
       subscribedDevicesSingleton.add(deviceSn)
-      console.log(`订阅设备 ${deviceSn} 事件`)
+      // console.log(`订阅设备 ${deviceSn} 事件`)
     } catch (error) {
       console.error(`订阅设备 ${deviceSn} 事件失败:`, error)
       throw error
@@ -522,7 +518,6 @@ export function useWebSocketManager() {
   // 提供设备管理方法给所有子组件
   provide('deviceManager', {
     invokeDeviceService,   // 调用设备服务 (如开关、调节等)
-    getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
     subscribeDeviceEvents, // 订阅设备事件通知
     unsubscribeDeviceEvents, // 取消订阅设备事件
     setEventNotificationHandler, // 设置事件通知处理器
@@ -556,7 +551,6 @@ export function useWebSocketManager() {
   return {
     deviceManager: {
       invokeDeviceService,   // 调用设备服务 (如开关、调节等)
-      getDeviceProperties,   // 获取设备属性 (如温度、湿度等)
       subscribeDeviceEvents, // 订阅设备事件通知
       unsubscribeDeviceEvents, // 取消订阅设备事件
       setEventNotificationHandler, // 设置事件通知处理器

@@ -104,7 +104,7 @@
           </div>
           <div class="sensor-content">
             <div class="label">温度</div>
-            <div class="value">{{ sensors.temp.toFixed(1) }} °C</div>
+            <div class="value">{{ formatTemp }} °C</div>
           </div>
         </div>
         
@@ -116,7 +116,7 @@
           </div>
           <div class="sensor-content">
             <div class="label">湿度</div>
-            <div class="value">{{ sensors.humi.toFixed(1) }} %</div>
+            <div class="value">{{ formatHumi }} %</div>
           </div>
         </div>
       </div>
@@ -148,7 +148,12 @@ const deviceOnline = computed(() => {
 })
 
 // WebSocket连接状态
-const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
+const wsConnected = computed(() => {
+  if (!deviceManager || !deviceManager.connectionState) {
+    return false
+  }
+  return deviceManager.connectionState.value === 'connected'
+})
 
 // 传感器数据
 const sensors = ref({
@@ -161,9 +166,21 @@ const sensors = ref({
   humi: 40.1
 })
 
+// 安全的数值格式化
+const formatTemp = computed(() => {
+  const v = sensors.value.temp
+  return typeof v === 'number' && !isNaN(v) ? v.toFixed(1) : (v || '0.0')
+})
+
+const formatHumi = computed(() => {
+  const v = sensors.value.humi
+  return typeof v === 'number' && !isNaN(v) ? v.toFixed(1) : (v || '0.0')
+})
+
 // 空气质量等级计算
 const airQualityLevel = computed(() => {
   const v = sensors.value.pm25
+  if (typeof v !== 'number' || isNaN(v)) return 'good'
   if (v <= 35) return 'good'
   if (v <= 75) return 'moderate'
   if (v <= 115) return 'unhealthy'
@@ -173,6 +190,7 @@ const airQualityLevel = computed(() => {
 // 空气质量文本
 const airQualityText = computed(() => {
   const v = sensors.value.pm25
+  if (typeof v !== 'number' || isNaN(v)) return '空气优'
   if (v <= 35) return '空气优'
   if (v <= 75) return '良 · 建议通风'
   if (v <= 115) return '轻度污染 · 建议净化'
@@ -181,21 +199,26 @@ const airQualityText = computed(() => {
 
 // 获取设备属性
 const fetchDeviceProperties = async () => {
+  if (!deviceManager || !deviceManager.getDeviceProperties) {
+    console.warn('EnvironmentMonitorCard: deviceManager.getDeviceProperties 不可用')
+    return
+  }
+  
   if (!wsConnected.value || !deviceOnline.value) return
   
   try {
     const propertyNames = ['co2', 'hcho', 'tvoc', 'pm25', 'pm10', 'temp', 'humi']
     const properties = await deviceManager.getDeviceProperties(deviceSn.value, propertyNames)
     
-    if (properties) {
+    if (properties && typeof properties === 'object') {
       // 更新传感器数据
-      if (properties.co2 !== undefined) sensors.value.co2 = properties.co2
-      if (properties.hcho !== undefined) sensors.value.hcho = properties.hcho
-      if (properties.tvoc !== undefined) sensors.value.tvoc = properties.tvoc
-      if (properties.pm25 !== undefined) sensors.value.pm25 = properties.pm25
-      if (properties.pm10 !== undefined) sensors.value.pm10 = properties.pm10
-      if (properties.temp !== undefined) sensors.value.temp = properties.temp
-      if (properties.humi !== undefined) sensors.value.humi = properties.humi
+      if (properties.co2 !== undefined && typeof properties.co2 === 'number') sensors.value.co2 = properties.co2
+      if (properties.hcho !== undefined && typeof properties.hcho === 'number') sensors.value.hcho = properties.hcho
+      if (properties.tvoc !== undefined && typeof properties.tvoc === 'number') sensors.value.tvoc = properties.tvoc
+      if (properties.pm25 !== undefined && typeof properties.pm25 === 'number') sensors.value.pm25 = properties.pm25
+      if (properties.pm10 !== undefined && typeof properties.pm10 === 'number') sensors.value.pm10 = properties.pm10
+      if (properties.temp !== undefined && typeof properties.temp === 'number') sensors.value.temp = properties.temp
+      if (properties.humi !== undefined && typeof properties.humi === 'number') sensors.value.humi = properties.humi
     }
   } catch (error) {
     console.error('获取环境监测数据失败:', error)
@@ -204,6 +227,11 @@ const fetchDeviceProperties = async () => {
 
 // 订阅设备事件
 const subscribeToDeviceProperties = async () => {
+  if (!deviceManager || !deviceManager.subscribeDeviceEvents || !deviceManager.setEventNotificationHandler) {
+    console.warn('EnvironmentMonitorCard: deviceManager 方法不可用')
+    return
+  }
+  
   if (!wsConnected.value || !deviceOnline.value) return
   
   try {
@@ -212,17 +240,21 @@ const subscribeToDeviceProperties = async () => {
     
     // 设置事件通知处理器
     deviceManager.setEventNotificationHandler(deviceSn.value, (eventData) => {
-      const { eventType, eventData: data } = eventData
-      
-      // 处理属性更新事件
-      if (eventType === 'propertyChange' && data) {
-        if (data.co2 !== undefined) sensors.value.co2 = data.co2
-        if (data.hcho !== undefined) sensors.value.hcho = data.hcho
-        if (data.tvoc !== undefined) sensors.value.tvoc = data.tvoc
-        if (data.pm25 !== undefined) sensors.value.pm25 = data.pm25
-        if (data.pm10 !== undefined) sensors.value.pm10 = data.pm10
-        if (data.temp !== undefined) sensors.value.temp = data.temp
-        if (data.humi !== undefined) sensors.value.humi = data.humi
+      try {
+        const { eventType, eventData: data } = eventData || {}
+        
+        // 处理属性更新事件
+        if (eventType === 'propertyChange' && data && typeof data === 'object') {
+          if (data.co2 !== undefined && typeof data.co2 === 'number') sensors.value.co2 = data.co2
+          if (data.hcho !== undefined && typeof data.hcho === 'number') sensors.value.hcho = data.hcho
+          if (data.tvoc !== undefined && typeof data.tvoc === 'number') sensors.value.tvoc = data.tvoc
+          if (data.pm25 !== undefined && typeof data.pm25 === 'number') sensors.value.pm25 = data.pm25
+          if (data.pm10 !== undefined && typeof data.pm10 === 'number') sensors.value.pm10 = data.pm10
+          if (data.temp !== undefined && typeof data.temp === 'number') sensors.value.temp = data.temp
+          if (data.humi !== undefined && typeof data.humi === 'number') sensors.value.humi = data.humi
+        }
+      } catch (error) {
+        console.error('处理事件通知时出错:', error)
       }
     })
   } catch (error) {
@@ -232,6 +264,8 @@ const subscribeToDeviceProperties = async () => {
 
 // 监听WebSocket连接状态和设备在线状态
 const watchConnection = () => {
+  if (!deviceManager) return
+  
   if (wsConnected.value && deviceOnline.value) {
     fetchDeviceProperties()
     subscribeToDeviceProperties()
@@ -239,24 +273,52 @@ const watchConnection = () => {
 }
 
 // 组件挂载时
+let stopWatchers = null
+
 onMounted(() => {
+  if (!deviceManager) {
+    console.warn('EnvironmentMonitorCard: deviceManager 未初始化')
+    return
+  }
+  
   watchConnection()
   
   // 监听连接状态变化
-  watch(() => deviceManager.connectionState.value, () => {
+  const stopWatchConnection = watch(() => {
+    if (!deviceManager || !deviceManager.connectionState) return 'disconnected'
+    return deviceManager.connectionState.value
+  }, () => {
     watchConnection()
-  })
+  }, { immediate: false })
   
   // 监听设备在线状态变化
-  watch(() => deviceOnline.value, () => {
+  const stopWatchDeviceOnline = watch(() => deviceOnline.value, () => {
     watchConnection()
-  })
+  }, { immediate: false })
+  
+  // 保存清理函数
+  stopWatchers = () => {
+    stopWatchConnection()
+    stopWatchDeviceOnline()
+  }
 })
 
 // 组件卸载时
 onBeforeUnmount(() => {
+  // 清理 watch 监听器
+  if (stopWatchers) {
+    stopWatchers()
+    stopWatchers = null
+  }
+  
   // 清除事件处理器
-  deviceManager.clearEventNotificationHandler(deviceSn.value)
+  if (deviceManager && deviceManager.clearEventNotificationHandler) {
+    try {
+      deviceManager.clearEventNotificationHandler(deviceSn.value)
+    } catch (error) {
+      console.error('清除事件处理器失败:', error)
+    }
+  }
   
   // 取消订阅（由 useWebSocketManager 在断开连接时自动处理）
 })
