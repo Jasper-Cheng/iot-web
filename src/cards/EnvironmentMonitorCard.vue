@@ -197,34 +197,6 @@ const airQualityText = computed(() => {
   return '重度污染 · 建议强力净化'
 })
 
-// 获取设备属性
-const fetchDeviceProperties = async () => {
-  if (!deviceManager || !deviceManager.getDeviceProperties) {
-    console.warn('EnvironmentMonitorCard: deviceManager.getDeviceProperties 不可用')
-    return
-  }
-  
-  if (!wsConnected.value || !deviceOnline.value) return
-  
-  try {
-    const propertyNames = ['co2', 'hcho', 'tvoc', 'pm25', 'pm10', 'temp', 'humi']
-    const properties = await deviceManager.getDeviceProperties(deviceSn.value, propertyNames)
-    
-    if (properties && typeof properties === 'object') {
-      // 更新传感器数据
-      if (properties.co2 !== undefined && typeof properties.co2 === 'number') sensors.value.co2 = properties.co2
-      if (properties.hcho !== undefined && typeof properties.hcho === 'number') sensors.value.hcho = properties.hcho
-      if (properties.tvoc !== undefined && typeof properties.tvoc === 'number') sensors.value.tvoc = properties.tvoc
-      if (properties.pm25 !== undefined && typeof properties.pm25 === 'number') sensors.value.pm25 = properties.pm25
-      if (properties.pm10 !== undefined && typeof properties.pm10 === 'number') sensors.value.pm10 = properties.pm10
-      if (properties.temp !== undefined && typeof properties.temp === 'number') sensors.value.temp = properties.temp
-      if (properties.humi !== undefined && typeof properties.humi === 'number') sensors.value.humi = properties.humi
-    }
-  } catch (error) {
-    console.error('获取环境监测数据失败:', error)
-  }
-}
-
 // 订阅设备事件
 const subscribeToDeviceProperties = async () => {
   if (!deviceManager || !deviceManager.subscribeDeviceEvents || !deviceManager.setEventNotificationHandler) {
@@ -267,7 +239,6 @@ const watchConnection = () => {
   if (!deviceManager) return
   
   if (wsConnected.value && deviceOnline.value) {
-    fetchDeviceProperties()
     subscribeToDeviceProperties()
   }
 }
