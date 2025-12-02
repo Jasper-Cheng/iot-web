@@ -58,6 +58,9 @@ export const DEVICE_SN_MAPPING = {
   'AIR002': 'AirPurifierCard',  // 空气净化器
   'AIR003': 'AirPurifierCard',  // 空气净化器
   
+  // 环境监测
+  'M701001': 'EnvironmentMonitorCard',  // 环境监测
+  
   // 没有模型code的组件（设为null）
   'MusicCard': null,            // 音乐播放器
   'SmartSocketCard': null,      // 智能插座
@@ -79,6 +82,7 @@ export const DEVICE_THUMBNAIL_MAPPING = {
   'SpeakerCard': '/thumbnails/devices/smart_speaker.png',
   'AirPurifierCard': '/thumbnails/devices/air_purifier.png',
   'SmartSocketCard': '/thumbnails/devices/smart_socket.png',
+  'EnvironmentMonitorCard': '/thumbnails/devices/air_purifier.png',
 }
 
 // 根据SN获取设备卡片组件名
@@ -230,6 +234,13 @@ export const DEVICE_ICON_MAPPING = {
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="#666" stroke-width="1" fill="none"/>
       <circle cx="8.5" cy="8.5" r="1.5" stroke="#666" stroke-width="1" fill="none"/>
       <path d="M21 15l-5-5L5 21" stroke="#666" stroke-width="1" fill="none"/>
+    </svg>
+  `,
+  'EnvironmentMonitorCard': `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" stroke="#666" stroke-width="1" fill="none"/>
+      <path d="M12 6v6l4 2" stroke="#666" stroke-width="1" fill="none"/>
+      <path d="M8 12h8" stroke="#666" stroke-width="1"/>
     </svg>
   `
 }

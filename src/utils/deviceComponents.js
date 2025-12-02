@@ -5,6 +5,7 @@ import CameraCard from '../cards/CameraCard.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
 import DeviceStatsPanel from '../components/DeviceStatsPanel.vue'
 import EnergyPanel from '../components/EnergyPanel.vue'
+import EnvironmentMonitorCard from '../cards/EnvironmentMonitorCard.vue'
 import FallDetectionCard from '../cards/FallDetectionCard.vue'
 import MusicCard from '../cards/MusicCard.vue'
 import RefrigeratorCard from '../cards/RefrigeratorCard.vue'
@@ -26,6 +27,7 @@ export const DEVICE_COMPONENTS = {
   CameraCard,
   DeviceStatsPanel,
   EnergyPanel,
+  EnvironmentMonitorCard,
   FallDetectionCard,
   MusicCard,
   RefrigeratorCard,
