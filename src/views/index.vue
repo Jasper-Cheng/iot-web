@@ -892,6 +892,9 @@ const handleFamilyMessage = (data) => {
     case 'device.unbind':
       handleDeviceUnbind(data.data)
       break
+    case 'device.alert':
+      handleDeviceAlert(data.data)
+      break
     case 'feedback.create':
       handleFeedbackCreate(data.data)
       break
@@ -1103,6 +1106,54 @@ const handleDeviceUnbind = async (data) => {
   await globalStore.loadDevices()
   
   ElMessage.success(message || '设备解绑成功')
+}
+
+// 处理设备告警事件
+const handleDeviceAlert = async (data) => {
+  const { title, message, level, deviceId, deviceName } = data
+  console.log(`设备告警 [${level}]: ${title} - ${message}`, { deviceId, deviceName })
+  
+  // 重新加载消息列表以获取新的告警消息
+  await globalStore.loadMessages()
+  
+  // 更新未读消息列表
+  updateUnreadMessages()
+  
+  // 根据告警级别显示不同样式的通知消息
+  const alertMessage = deviceName 
+    ? `${deviceName}: ${message || title}` 
+    : (message || title)
+  
+  switch (level) {
+    case 'low':
+      ElMessage.info({
+        message: alertMessage,
+        duration: 3000,
+        showClose: true
+      })
+      break
+    case 'normal':
+      ElMessage.warning({
+        message: alertMessage,
+        duration: 4000,
+        showClose: true
+      })
+      break
+    case 'error':
+    case 'fatal':
+      ElMessage.error({
+        message: alertMessage,
+        duration: 5000,
+        showClose: true
+      })
+      break
+    default:
+      ElMessage.warning({
+        message: alertMessage,
+        duration: 4000,
+        showClose: true
+      })
+  }
 }
 
 // 处理意见反馈创建事件
