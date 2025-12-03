@@ -2374,8 +2374,8 @@ body, html {
 }
 
 .message-icon.level-error {
-  background: var(--color-message-error-bg);
-  color: var(--color-message-error);
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
 }
 
 .message-icon.level-fatal {
@@ -2386,6 +2386,8 @@ body, html {
 .message-icon svg {
   width: 12px;
   height: 12px;
+  stroke: currentColor;
+  fill: none;
 }
 
 .message-content {
@@ -2437,8 +2439,8 @@ body, html {
 }
 
 .message-level.level-error {
-  background: var(--color-message-error-bg);
-  color: var(--color-message-error);
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
 }
 
 .message-level.level-fatal {
@@ -2748,8 +2750,8 @@ body, html {
 }
 
 .message-log-item .message-icon.level-error {
-  background: var(--color-message-error-bg);
-  color: var(--color-message-error);
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
 }
 
 .message-log-item .message-icon.level-fatal {
@@ -2760,6 +2762,8 @@ body, html {
 .message-log-item .message-icon svg {
   width: 12px;
   height: 12px;
+  stroke: currentColor;
+  fill: none;
 }
 
 .message-log-item .message-content {
@@ -2811,8 +2815,8 @@ body, html {
 }
 
 .message-log-item .message-level.level-error {
-  background: var(--color-message-error-bg);
-  color: var(--color-message-error);
+  background: var(--color-message-fatal-bg);
+  color: var(--color-message-fatal);
 }
 
 .message-log-item .message-level.level-fatal {
