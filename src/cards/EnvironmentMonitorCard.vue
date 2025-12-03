@@ -206,7 +206,7 @@ const subscribeToDeviceProperties = async () => {
     return
   }
   
-  if (!wsConnected.value || !deviceOnline.value) return
+  if (!wsConnected.value) return
   
   try {
     // 订阅设备事件
@@ -252,7 +252,7 @@ const subscribeToDeviceProperties = async () => {
 const watchConnection = () => {
   if (!deviceManager) return
   
-  if (wsConnected.value && deviceOnline.value) {
+  if (wsConnected.value) {
     subscribeToDeviceProperties()
   }
 }
