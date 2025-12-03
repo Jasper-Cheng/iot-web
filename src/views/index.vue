@@ -724,7 +724,7 @@ const route = useRoute()
 const globalStore = useGlobalStore()
 
 // 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
-const { systemMessage, familyMessage, disconnect } = useWebSocketManager()
+const { systemMessage, familyMessage, deviceManager, disconnect } = useWebSocketManager()
 
 // 检查注入是否成功
 if (!systemMessage || !familyMessage) {
@@ -1099,8 +1099,30 @@ const handleDeviceBind = async (data) => {
 
 // 处理设备解绑事件
 const handleDeviceUnbind = async (data) => {
-  const { title, message, level } = data
+  const { title, message, level, deviceId, deviceSn } = data
   console.log(`设备解绑 [${level}]: ${title} - ${message}`)
+  
+  // 获取设备序列号
+  let deviceSerialNumber = deviceSn
+  
+  // 如果没有直接提供 deviceSn，通过 deviceId 查找设备
+  if (!deviceSerialNumber && deviceId) {
+    const device = globalStore.devices.find(d => d.id === deviceId)
+    if (device && device.sn) {
+      deviceSerialNumber = device.sn
+    }
+  }
+  
+  // 如果找到了设备序列号，取消订阅设备事件
+  if (deviceSerialNumber && deviceManager) {
+    try {
+      await deviceManager.unsubscribeDeviceEvents(deviceSerialNumber)
+      console.log(`已取消订阅设备 ${deviceSerialNumber} 的事件`)
+    } catch (error) {
+      console.warn(`取消订阅设备 ${deviceSerialNumber} 事件失败:`, error)
+      // 即使取消订阅失败，也继续执行解绑流程
+    }
+  }
   
   // 重新加载设备列表以移除已解绑的设备
   await globalStore.loadDevices()
