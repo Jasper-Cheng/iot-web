@@ -182,21 +182,6 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary);
 }
 
-.room-selector {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-}
-
-.room-selector svg { width: 14px; height: 14px; }
-
-.room-selector-wrapper { position: relative; }
-
 .mic-button {
   margin-left: 20px;
   border: 1px solid var(--color-border);
@@ -212,10 +197,6 @@ onBeforeUnmount(() => {
 .camera-view { position: relative; margin-top: 12px; height: 280px; background: var(--color-button-dark); border-radius: 12px; overflow: hidden; }
 .camera-view:hover .fullscreen-button { opacity: 1; }
 
-.room-selector-menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 10px; box-shadow: 0 8px 24px var(--shadow-soft); z-index: 1000; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
-.room-selector-item { padding: 6px 10px; background: transparent; border: 1px solid transparent; color: var(--color-text-primary); width: 100%; text-align: left; border-radius: 8px; }
-.room-selector-item:hover { background: var(--color-hover); }
-.room-selector-item.selected { border-color: var(--color-primary); color: var(--color-primary); }
 
 .camera-switch { display: flex; align-items: center; gap: 8px; }
 .camera-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--color-text-secondary); }

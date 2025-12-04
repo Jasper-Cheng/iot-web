@@ -2,28 +2,14 @@
   <div class="home-page">
     <!-- 主要内容区域 -->
     <div class="main-content">
-      <!-- 左侧内容区域（房间导航 + 空调控制） -->
+      <!-- 左侧内容区域（设备列表） -->
       <div class="left-section">
-        <!-- 房间导航栏 -->
-        <div class="room-navigation">
-          <button 
-            v-for="room in rooms" 
-            :key="room.id"
-            :class="['room-btn', { active: room.id === activeRoom }]"
-            @click="setActiveRoom(room.id)"
-          >
-            {{ room.name }}
-          </button>
-        </div>
-
-        <div class="room-content">
-          <!-- 使用v-show避免重新创建组件 -->
+        <div class="devices-content">
+          <!-- 设备列表 -->
           <div 
-            v-for="device in allDevices" 
+            v-for="device in devices" 
             :key="device.id"
-            v-show="isDeviceVisible(device.id)"
-            :class="['device-wrapper', { disabled: !canControlDevice(device.id) }]"
-            :title="!canControlDevice(device.id) ? '您没有权限控制此设备' : ''"
+            class="device-wrapper"
           >
             <keep-alive>
               <component 
@@ -31,18 +17,30 @@
                 :device="device"
               />
             </keep-alive>
-            <!-- 修改设备名称按钮 -->
-            <button 
-              v-if="canControlDevice(device.id)"
-              class="edit-name-btn"
-              @click="openEditNameModal(device)"
-              :title="'修改设备名称'"
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-            </button>
+            <!-- 设备操作按钮组 -->
+            <div class="device-actions">
+              <!-- 修改设备名称按钮 -->
+              <button 
+                class="edit-name-btn"
+                @click="openEditNameModal(device)"
+                :title="'修改设备名称'"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+              </button>
+              <!-- 解绑设备按钮 -->
+              <button 
+                class="unbind-btn"
+                @click="openUnbindModal(device)"
+                :title="'解绑设备'"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -54,7 +52,6 @@
         <CheckinCalendar @checkin-success="handleCheckinSuccess" />
         <ColorControlPanel />
         <!-- <EnergyPanel /> -->
-        <DeviceStatsPanel :rooms="roomsWithDevices" />
       </div>
     </div>
 
@@ -82,6 +79,34 @@
         </div>
       </div>
     </div>
+
+    <!-- 解绑设备确认弹窗 -->
+    <div v-if="showUnbindModal" class="device-modal" @click="closeUnbindModal">
+      <div class="delete-modal-content" @click.stop>
+        <div class="delete-modal-header">
+          <h3>解绑设备</h3>
+          <button class="delete-close-btn" @click="closeUnbindModal">X</button>
+        </div>
+        <div class="delete-modal-body">
+          <!-- 设备缩略图 -->
+          <div v-if="unbindingDevice?.cardName" class="device-thumbnail-container">
+            <img 
+              :src="getThumbnailByCardName(unbindingDevice.cardName)" 
+              :alt="unbindingDevice.name" 
+              class="device-thumbnail-preview"
+            />
+          </div>
+          <p>确定要解绑设备 <strong>{{ unbindingDevice?.name }}</strong> 吗？</p>
+          <p class="warning-text">解绑后，您将无法控制此设备，需要重新绑定才能使用。</p>
+        </div>
+        <div class="delete-modal-footer">
+          <button class="cancel-btn" @click="closeUnbindModal" :disabled="isUnbinding">取消</button>
+          <button class="action-btn danger" @click="confirmUnbind" :disabled="isUnbinding">
+            {{ isUnbinding ? '解绑中...' : '确认解绑' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -89,68 +114,41 @@
 import { ref, computed } from 'vue'
 import { useGlobalStore } from '../stores/global'
 import { getDeviceComponent } from '../utils/deviceComponents'
-import { updateDeviceName } from '../api/devices'
+import { updateDeviceName, unbindDeviceBySN } from '../api/devices'
 import { getPointsBalance } from '../api/points'
 import CheckinCalendar from '../components/CheckinCalendar.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
 import EnergyPanel from '../components/EnergyPanel.vue'
-import DeviceStatsPanel from '../components/DeviceStatsPanel.vue'
 import SmartControlPanel from '../components/SmartControlPanel.vue'
 import { ElMessage } from 'element-plus'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
+import { getThumbnailByCardName } from '../utils/deviceMapping'
 
 // 全局状态
 const globalStore = useGlobalStore()
 
-// 权限检查方法
-const isOwner = computed(() => {
-  return globalStore.user?.role === 'owner' || globalStore.user?.account?.role === 'owner'
+// WebSocket 管理器
+const { deviceManager } = useWebSocketManager()
+
+
+// 设备列表（从 globalStore 加载）
+const devices = computed(() => {
+  const allDevices = globalStore.devices || []
+  // 只显示有 cardName 的设备，按设备ID排序
+  return allDevices
+    .filter(device => device.cardName)
+    .sort((a, b) => a.id - b.id)
 })
-
-const isMember = computed(() => {
-  return globalStore.user?.role === 'member' || globalStore.user?.account?.role === 'member'
-})
-
-// 检查当前用户是否有权限控制指定设备
-const canControlDevice = (deviceId) => {
-  // Owner可以控制所有设备
-  if (isOwner.value) {
-    return true
-  }
-  
-  // Member只能控制自己有权限的设备
-  if (isMember.value) {
-    const currentUser = globalStore.members?.find(member => 
-      member.id === globalStore.user?.id
-    )
-    return currentUser?.deviceIds?.includes(deviceId) || false
-  }
-  
-  return false
-}
-
-// =========================
-// Room navigation data/state
-// - rooms: includes an 'all' option for the navigation only
-// - activeRoom: current nav selection (defaults to 'all')
-// =========================
-const rooms = computed(() => {
-  const allRooms = globalStore.rooms || []
-  return [
-    { id: 'all', name: 'All' },
-    ...allRooms.map(room => ({
-      id: room.id,
-      name: room.name
-    }))
-  ]
-})
-
-// 当前选中的房间
-const activeRoom = ref('all')
 
 // 修改设备名称相关状态
 const showEditNameModal = ref(false)
 const editingDevice = ref(null)
 const editingDeviceName = ref('')
+
+// 解绑设备相关状态
+const showUnbindModal = ref(false)
+const unbindingDevice = ref(null)
+const isUnbinding = ref(false)
 
 // 积分相关方法
 const loadUserPoints = async () => {
@@ -171,128 +169,6 @@ const handleCheckinSuccess = (response) => {
 }
 const isEditingName = ref(false)
 
-
-// 所有设备列表（用于v-for渲染）
-const allDevices = computed(() => {
-  const devices = globalStore.devices || []
-  const filteredDevices = devices.filter(device => device.cardName)
-  
-  if (activeRoom.value === 'all') {
-    // All Devices 按设备ID排序
-    return filteredDevices.sort((a, b) => a.id - b.id)
-  } else {
-    // 房间设备按 sort_order 排序
-    const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
-    if (!selectedRoom) {
-      return filteredDevices.sort((a, b) => a.id - b.id)
-    }
-    
-    const roomDevices = selectedRoom.devices || []
-    
-    // 根据房间中的 sort_order 排序（使用拷贝，避免修改全局状态）
-    const sortedRoomDevices = [...roomDevices].sort((a, b) => {
-      const sortOrderA = a.sort_order ?? 999999
-      const sortOrderB = b.sort_order ?? 999999
-      return sortOrderA - sortOrderB
-    })
-    
-    // 按照房间设备的排序顺序重新排列设备
-    const sortedDevices = []
-    sortedRoomDevices.forEach(roomDevice => {
-      const device = filteredDevices.find(d => d.id === roomDevice.device_id)
-      if (device) {
-        sortedDevices.push(device)
-      }
-    })
-    
-    // 添加不在房间中的设备（按设备ID排序）
-    const roomDeviceIds = new Set(roomDevices.map(rd => rd.device_id))
-    const remainingDevices = filteredDevices.filter(device => !roomDeviceIds.has(device.id))
-      .sort((a, b) => a.id - b.id)
-    
-    return [...sortedDevices, ...remainingDevices]
-  }
-})
-
-// 判断设备是否应该显示
-const isDeviceVisible = (deviceId) => {
-  if (activeRoom.value === 'all') {
-    return true
-  }
-  
-  const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
-  if (!selectedRoom) {
-    return false
-  }
-  
-  const roomDevices = selectedRoom.devices || []
-  return roomDevices.some(roomDevice => roomDevice.device_id === deviceId)
-}
-
-// 过滤后的设备列表（包含实时数据）- 保留用于兼容性
-const filteredDevices = computed(() => {
-  const allDevices = globalStore.devices || []
-  let devices = []
-  
-  if (activeRoom.value === 'all') {
-    // 显示所有设备，按设备ID排序
-    devices = allDevices.filter(device => device.cardName)
-    return devices.sort((a, b) => a.id - b.id)
-  } else {
-    // 显示选中房间的设备
-    const selectedRoom = globalStore.rooms?.find(room => room.id === activeRoom.value)
-    
-    if (!selectedRoom) {
-      return []
-    }
-    
-    const roomDevices = selectedRoom.devices || []
-    
-    // 根据房间中的 sort_order 排序（使用拷贝，避免修改全局状态）
-    const sortedRoomDevices = [...roomDevices].sort((a, b) => {
-      const sortOrderA = a.sort_order ?? 999999
-      const sortOrderB = b.sort_order ?? 999999
-      return sortOrderA - sortOrderB
-    })
-    
-    // 根据排序后的房间设备顺序，获取对应的设备信息
-    devices = sortedRoomDevices.map(roomDevice => {
-      return allDevices.find(device => 
-        device.id === roomDevice.device_id && device.cardName
-      )
-    }).filter(Boolean) // 过滤掉未找到的设备
-    
-    return devices
-  }
-})
-
-
-// 设备管理方法现在由 App.vue 提供，这里不再需要 provide
-
-// 房间设备统计数据
-const roomsWithDevices = computed(() => {
-  const allRooms = globalStore.rooms || []
-  return allRooms.map(room => {
-    const roomDevices = room.devices || []
-    const total = roomDevices.length
-    const online = roomDevices.filter(device => device.status === 'online').length
-    const offline = total - online
-    
-    return {
-      id: room.id,
-      name: room.name,
-      devices: { total, online, offline },
-      color: `var(--room-${room.id})`
-    }
-  })
-})
-
-// =========================
-// Navigation / Mode handlers
-// =========================
-const setActiveRoom = (roomId) => {
-  activeRoom.value = roomId
-}
 
 // =========================
 // 修改设备名称相关方法
@@ -327,6 +203,55 @@ const confirmEditName = async () => {
   }
 }
 
+// =========================
+// 解绑设备相关方法
+// =========================
+const openUnbindModal = (device) => {
+  unbindingDevice.value = device
+  showUnbindModal.value = true
+}
+
+const closeUnbindModal = () => {
+  showUnbindModal.value = false
+  unbindingDevice.value = null
+  isUnbinding.value = false
+}
+
+const confirmUnbind = async () => {
+  if (!unbindingDevice.value || !unbindingDevice.value.sn) {
+    return
+  }
+
+  isUnbinding.value = true
+  
+  try {
+    // 调用解绑设备 API
+    await unbindDeviceBySN(unbindingDevice.value.sn)
+    
+    // 取消订阅设备事件
+    if (deviceManager && unbindingDevice.value.sn) {
+      try {
+        await deviceManager.unsubscribeDeviceEvents(unbindingDevice.value.sn)
+        console.log(`已取消订阅设备 ${unbindingDevice.value.sn} 的事件`)
+      } catch (error) {
+        console.warn(`取消订阅设备 ${unbindingDevice.value.sn} 事件失败:`, error)
+        // 即使取消订阅失败，也继续执行解绑流程
+      }
+    }
+    
+    // 重新加载设备列表
+    await globalStore.loadDevices()
+    
+    closeUnbindModal()
+    ElMessage.success('设备解绑成功')
+  } catch (error) {
+    console.error('解绑设备失败:', error)
+    ElMessage.error('解绑设备失败')
+  } finally {
+    isUnbinding.value = false
+  }
+}
+
 </script>
 
 <style scoped>
@@ -347,42 +272,6 @@ const confirmEditName = async () => {
   display: none; /* Chrome, Safari and Opera */
 }
 
-/* =========================
-   Room navigation bar
-   ========================= */
-.room-navigation {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.room-btn {
-  flex-direction: column;
-  align-items: center;
-  padding:10px 12px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--color-text-secondary);
-  text-align: center;
-  background-color: var(--color-nav-idle);
-  border: 1px solid var(--color-border);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.room-btn:hover {
-  background-color: var(--color-hover);
-  color: var(--color-primary);
-}
-
-.room-btn.active {
-  background-color: var(--color-active);
-  color: var(--color-primary);
-}
-
-/* removed add-room button */
 
 /* =========================
    Main content grid
@@ -466,7 +355,7 @@ const confirmEditName = async () => {
 }
 
 
-.room-content {
+.devices-content {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 两列 */
   gap: 16px;
@@ -478,11 +367,24 @@ const confirmEditName = async () => {
   transition: all 0.3s ease;
 }
 
-/* 修改设备名称按钮 */
-.edit-name-btn {
+/* 设备操作按钮组 */
+.device-actions {
   position: absolute;
   top: 4px;
   right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.device-wrapper:hover .device-actions {
+  opacity: 1;
+}
+
+/* 修改设备名称按钮 */
+.edit-name-btn {
   width: 24px;
   height: 24px;
   background: var(--color-bg-card);
@@ -493,12 +395,6 @@ const confirmEditName = async () => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  z-index: 10;
-  opacity: 0;
-}
-
-.device-wrapper:hover .edit-name-btn {
-  opacity: 1;
 }
 
 .edit-name-btn:hover {
@@ -517,32 +413,36 @@ const confirmEditName = async () => {
   color: var(--color-primary-text);
 }
 
-/* 禁用设备样式 */
-.device-wrapper.disabled {
-  opacity: 0.6;
-  filter: grayscale(80%);
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-.device-wrapper.disabled::after {
-  content: '🔒';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 20px;
-  z-index: 2;
-  color: var(--color-disabled-text);
+/* 解绑设备按钮 */
+.unbind-btn {
+  width: 24px;
+  height: 24px;
   background: var(--color-bg-card);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
 }
+
+.unbind-btn:hover {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+}
+
+.unbind-btn svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-text-secondary);
+}
+
+.unbind-btn:hover svg {
+  color: white;
+}
+
 
 /* 修改设备名称弹窗样式 */
 .device-modal {
@@ -551,7 +451,7 @@ const confirmEditName = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--color-member-modal-overlay);
+  background: var(--color-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -564,7 +464,7 @@ const confirmEditName = async () => {
   padding: 24px;
   min-width: 400px;
   max-width: 500px;
-  box-shadow: var(--color-member-shadow-medium);
+  box-shadow: var(--color-modal-shadow);
 }
 
 .delete-modal-header {
@@ -624,6 +524,40 @@ const confirmEditName = async () => {
   cursor: not-allowed;
 }
 
+.delete-modal-body p {
+  margin: 0 0 12px 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.delete-modal-body .warning-text {
+  color: var(--color-danger) !important;
+  font-weight: 500;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+/* 设备缩略图容器 */
+.device-thumbnail-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.device-thumbnail-preview {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  max-height: 520px;
+}
+
 .delete-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -672,6 +606,17 @@ const confirmEditName = async () => {
 .action-btn.success:hover:not(:disabled) {
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
+}
+
+.action-btn.danger {
+  background: var(--color-danger);
+  color: white;
+  border-color: var(--color-danger);
+}
+
+.action-btn.danger:hover:not(:disabled) {
+  background: var(--color-danger-dark);
+  border-color: var(--color-danger-dark);
 }
 
 .action-btn:disabled {

@@ -396,7 +396,7 @@ const handleLogin = async () => {
     })
 
     // 使用 setAuth 方法统一设置认证状态
-    // login API 已经返回 user_id，直接使用 response 即可
+    // login API 已经返回用户数据，直接使用 response 即可
     globalStore.setAuth(response)
     
     // 保存记住的凭据
@@ -658,7 +658,7 @@ const handleBindPhone = async () => {
     })
     
     // 绑定成功后，立即设置认证状态（设置密码需要Authorization header）
-    // response 包含 access_token, token_type, role, account, id, user_id
+    // response 包含 access_token, token_type, role, account (account 中包含 id)
     if (response.access_token) {
       // 立即设置认证状态，保存token到store和localStorage
       globalStore.setAuth(response)

@@ -3,81 +3,17 @@ import request from '../utils/request'
 // 基础用户API
 export const updateUser = (data) => {
 	return request({
-		url: '/users/',
-		method: 'put',
+		url: '/auth/profile',
+		method: 'patch',
 		data: data
 	})
 }
 
 export const deleteUser = () => {
 	return request({
-		url: '/users/',
+		url: '/auth/account',
 		method: 'delete'
 	})
-}
-
-
-// 成员相关API
-export const getMembers = () => {
-	return request({
-		url: '/members/',
-		method: 'get'
-	})
-}
-
-
-// 用户详情API
-export const getUserDetail = () => {
-	return request({
-		url: '/users/',
-		method: 'get'
-	})
-}
-
-
-export const addFamilyMember = (memberData) => {
-  return request({
-    url: '/members/',
-    method: 'post',
-    data: memberData
-  })
-}
-
-export const updateFamilyMember = (id, memberData) => {
-  return request({
-    url: `/members/${id}`,
-    method: 'put',
-    data: memberData
-  })
-}
-
-export const deleteFamilyMember = (id) => {
-  return request({
-    url: `/members/${id}`,
-    method: 'delete'
-  })
-}
-
-// 获取成员设备控制权限
-export const getMemberDevicePermissions = (memberId) => {
-  return request({
-    url: '/member-device-permissions/',
-    method: 'get',
-    params: {
-      member_id: memberId
-    }
-  })
-}
-
-// 批量更新成员设备权限
-export const batchUpdateMemberDevicePermissions = (memberId, deviceIds) => {
-  return request({
-    url: `/member-device-permissions/member/${memberId}/batch-update`,
-    method: 'put',
-    data: {
-      device_ids: deviceIds
-    }
-  })
 }
 
 // 一键已读所有消息
@@ -85,5 +21,66 @@ export const markAllMessagesAsRead = () => {
   return request({
     url: '/device-messages/mark-all-read',
     method: 'patch'
+  })
+}
+
+// 家庭相关API
+export const getFamilys = (params = {}) => {
+  const requestParams = {}
+  
+  // 支持分页参数
+  if (params.skip !== undefined) {
+    requestParams.skip = params.skip
+  }
+  
+  if (params.limit !== undefined) {
+    requestParams.limit = params.limit
+  }
+  
+  return request({
+    url: '/families/',
+    method: 'get',
+    params: requestParams
+  })
+}
+
+export const createFamily = (data) => {
+  return request({
+    url: '/families/',
+    method: 'post',
+    data: data
+  })
+}
+
+export const deleteFamily = (familyId) => {
+  return request({
+    url: `/families/${familyId}`,
+    method: 'delete'
+  })
+}
+
+export const leaveFamily = (familyMemberId) => {
+  return request({
+    url: `/family-members/${familyMemberId}`,
+    method: 'delete'
+  })
+}
+
+export const getFamilyMembers = (familyId, params = {}) => {
+  const requestParams = {}
+  
+  // 支持分页参数
+  if (params.skip !== undefined) {
+    requestParams.skip = params.skip
+  }
+  
+  if (params.limit !== undefined) {
+    requestParams.limit = params.limit
+  }
+  
+  return request({
+    url: `/family-members/family/${familyId}`,
+    method: 'get',
+    params: requestParams
   })
 }

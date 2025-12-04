@@ -86,21 +86,9 @@
   /* 背景色变体 */
   --color-bg-tertiary: #2a2a2a;              /* 三级背景 */
   
-  /* Members页面专用颜色 */
-  --color-member-online: #10b981;            /* 在线状态 */
-  --color-member-offline: #ef4444;           /* 离线状态 */
-  --color-member-warning-bg: #fef3c7;        /* 警告背景 */
-  --color-member-warning-text: #92400e;      /* 警告文字 */
-  --color-member-info-bg: #dbeafe;           /* 信息背景 */
-  --color-member-info-text: #1e40af;         /* 信息文字 */
-  --color-member-default-bg: #f3f4f6;        /* 默认背景 */
-  --color-member-default-text: #374151;      /* 默认文字 */
-  --color-member-border-danger: #ef4444;     /* 危险边框 */
-  --color-member-text-warning: #f59e0b;      /* 警告文字 */
-  --color-member-bg-warning: rgba(245, 158, 11, 0.1); /* 警告背景 */
-  --color-member-shadow-light: rgba(0, 0, 0, 0.1);    /* 浅阴影 */
-  --color-member-shadow-medium: rgba(0, 0, 0, 0.25);  /* 中等阴影 */
-  --color-member-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
+  /* 模态框颜色（用于解绑设备等弹窗） */
+  --color-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
+  --color-modal-shadow: rgba(0,0,0,0.25);      /* 模态框阴影 */
   
   /* 禁用状态颜色 */
   --color-disabled-bg: #f5f5f5;              /* 禁用背景 */
@@ -128,21 +116,6 @@
   --color-login-error-text: #c33;                      /* 错误文字 */
   --color-login-error-border: #fcc;                    /* 错误边框 */
   --color-login-spinner-border: #ffffff;               /* 加载动画边框 */
-  
-  /* Widgets页面专用颜色 */
-  --color-widgets-preview-border: rgba(0,0,0,0.12);    /* 预览边框 */
-  --color-widgets-preview-shadow: rgba(0,0,0,0.18);    /* 预览阴影 */
-  --color-widgets-card-shadow: rgba(0, 0, 0, 0.1);     /* 卡片阴影 */
-  --color-widgets-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
-  --color-widgets-modal-shadow: rgba(0,0,0,0.25);      /* 模态框阴影 */
-
-  /* 房间主题色（Widgets 使用） */
-  --room-living: #3b82f6;    /* 蓝色 */
-  --room-bedroom: #10b981;   /* 绿色 */
-  --room-kitchen: #f59e0b;   /* 琥珀 */
-  --room-bathroom: #ef4444;  /* 红色 */
-  --room-backyard: #8b5cf6;  /* 紫色 */
-  --room-default: #6b7280;   /* 灰色 */
   
   /* 阴影 */
   --color-shadow-light: rgba(0, 0, 0, 0.2);
@@ -253,21 +226,9 @@
   /* 背景色变体 */
   --color-bg-tertiary: #e5e7eb;              /* 三级背景 */
   
-  /* Members页面专用颜色 */
-  --color-member-online: #059669;
-  --color-member-offline: #dc2626;
-  --color-member-warning-bg: #fef3c7;
-  --color-member-warning-text: #92400e;
-  --color-member-info-bg: #dbeafe;
-  --color-member-info-text: #1e40af;
-  --color-member-default-bg: #f3f4f6;
-  --color-member-default-text: #374151;
-  --color-member-border-danger: #dc2626;
-  --color-member-text-warning: #f59e0b;
-  --color-member-bg-warning: rgba(245, 158, 11, 0.1);
-  --color-member-shadow-light: rgba(0, 0, 0, 0.1);
-  --color-member-shadow-medium: rgba(0, 0, 0, 0.25);
-  --color-member-modal-overlay: rgba(0, 0, 0, 0.5);
+  /* 模态框颜色（用于解绑设备等弹窗） */
+  --color-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
+  --color-modal-shadow: rgba(0,0,0,0.25);      /* 模态框阴影 */
   
   /* 禁用状态颜色 */
   --color-disabled-bg: #f5f5f5;              /* 禁用背景 */
@@ -296,20 +257,9 @@
   --color-login-error-border: #fecaca;
   --color-login-spinner-border: #212529;
   
-  /* Widgets页面专用颜色 */
-  --color-widgets-preview-border: rgba(0,0,0,0.12);
-  --color-widgets-preview-shadow: rgba(0,0,0,0.18);
-  --color-widgets-card-shadow: rgba(0, 0, 0, 0.1);
-  --color-widgets-modal-overlay: rgba(0, 0, 0, 0.5);
-  --color-widgets-modal-shadow: rgba(0,0,0,0.25);
-
-  /* 房间主题色（Widgets 使用） */
-  --room-living: #3b82f6;
-  --room-bedroom: #059669;
-  --room-kitchen: #f59e0b;
-  --room-bathroom: #dc2626;
-  --room-backyard: #8b5cf6;
-  --room-default: #6b7280;
+  /* 模态框颜色（用于解绑设备等弹窗） */
+  --color-modal-overlay: rgba(0, 0, 0, 0.5);   /* 模态框遮罩 */
+  --color-modal-shadow: rgba(0,0,0,0.25);      /* 模态框阴影 */
   
   /* 阴影 */
   --color-shadow-light: rgba(0, 0, 0, 0.1);

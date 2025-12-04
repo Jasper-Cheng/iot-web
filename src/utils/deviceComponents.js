@@ -3,7 +3,6 @@ import AirCoolerCard from '../cards/AirCoolerCard.vue'
 import AirPurifierCard from '../cards/AirPurifierCard.vue'
 import CameraCard from '../cards/CameraCard.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
-import DeviceStatsPanel from '../components/DeviceStatsPanel.vue'
 import EnergyPanel from '../components/EnergyPanel.vue'
 import EnvironmentMonitorCard from '../cards/EnvironmentMonitorCard.vue'
 import FallDetectionCard from '../cards/FallDetectionCard.vue'
@@ -25,7 +24,6 @@ export const DEVICE_COMPONENTS = {
   AirCoolerCard,
   AirPurifierCard,
   CameraCard,
-  DeviceStatsPanel,
   EnergyPanel,
   EnvironmentMonitorCard,
   FallDetectionCard,

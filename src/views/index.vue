@@ -33,18 +33,11 @@
               <path d="M9 13 L15 13" stroke="currentColor" stroke-width="2" fill="none"/>
               <path d="M7 10 L17 10" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
-            <!-- Widgets图标 -->
-            <svg v-else-if="navItem.id === 'widgets'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="4" y="4" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
-              <rect x="14" y="4" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
-              <rect x="4" y="14" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
-              <rect x="14" y="14" width="6" height="6" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            <!-- Members图标 -->
-            <svg v-else-if="navItem.id === 'members'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-              <circle cx="6" cy="16" r="2" stroke="currentColor" stroke-width="2" fill="none"/>
-              <circle cx="18" cy="16" r="2" stroke="currentColor" stroke-width="2" fill="none"/>
+            <!-- Family图标 -->
+            <svg v-else-if="navItem.id === 'family'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" fill="none"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
             <!-- Mall图标 -->
             <svg v-else-if="navItem.id === 'mall'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -87,9 +80,7 @@
         <div class="header-right">
           <button 
             class="add-device-btn" 
-            :class="{ disabled: globalStore.user?.account?.role === 'member' }"
-            :disabled="globalStore.user?.account?.role === 'member'"
-            :title="globalStore.user?.account?.role === 'member' ? '只有拥有者可以添加设备' : '添加设备'"
+            title="添加设备"
             @click="openAddDeviceModal"
           >
             <span class="plus-icon">+</span>
@@ -314,6 +305,13 @@
             <div class="dropdown-divider"></div>
             <div class="dropdown-menu">
               <div class="dropdown-actions">
+                <a href="#" class="dropdown-item" @click.prevent="openEditUserModal">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" fill="none"/>
+                  </svg>
+                  修改信息
+                </a>
                 <a href="#" class="dropdown-item" @click.prevent="logout">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -390,35 +388,91 @@
             <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" stroke="currentColor" stroke-width="2" fill="none"/>
           </svg>
         </div>
-        <h3>{{ globalStore.user?.account?.role === 'member' ? '确认退出家庭' : '确认注销账户' }}</h3>
+        <h3>确认注销账户</h3>
       </div>
       <div class="confirm-content">
-        <template v-if="globalStore.user?.account?.role === 'member'">
-          <p>此操作将<strong>永久删除</strong>您的成员账户，包括：</p>
-          <ul>
-            <li>您的个人设备权限</li>
-            <li>您的个人设置和配置</li>
-            <li>您的历史操作记录</li>
-          </ul>
-          <p class="warning-text">退出家庭后，您将<strong>无法访问</strong>任何家庭设备，请谨慎操作！</p>
-        </template>
-        <template v-else>
-          <p>此操作将<strong>永久删除</strong>您的账户以及所有相关数据，包括：</p>
-          <ul>
-            <li>所有设备数据</li>
-            <li>所有成员信息</li>
-            <li>所有历史记录</li>
-            <li>所有设置和配置</li>
-          </ul>
-          <p class="warning-text">此操作<strong>无法撤销</strong>，请谨慎操作！</p>
-        </template>
+        <p>此操作将<strong>永久删除</strong>您的账户以及所有相关数据，包括：</p>
+        <ul>
+          <li>所有设备数据</li>
+          <li>所有历史记录</li>
+          <li>所有设置和配置</li>
+        </ul>
+        <p class="warning-text">此操作<strong>无法撤销</strong>，请谨慎操作！</p>
       </div>
       <div class="confirm-actions">
         <button class="btn-cancel" @click="closeDeleteConfirm">取消</button>
         <button class="btn-delete" @click="confirmDelete">
-          {{ globalStore.user?.account?.role === 'member' ? '确认退出' : '确认注销' }}
+          确认注销
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- 修改用户信息弹窗 -->
+  <div v-if="showEditUserModal" class="modal-overlay" @click="handleEditUserModalOverlayClick">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h2>修改信息</h2>
+        <button class="close-btn" @click="closeEditUserModal">×</button>
+      </div>
+      <form @submit.prevent="updateUserInfo" class="user-form">
+        <!-- 头像选择区域 -->
+        <div class="avatar-section">
+          <AvatarSelector 
+            v-model="editUserForm.avatar"
+            :current-user-avatar="globalStore.user?.account?.avatar || ''"
+            @change="handleAvatarChange"
+          />
+        </div>
+        
+        <!-- 基本信息 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>昵称 *</label>
+            <input v-model="editUserForm.nickname" type="text" required placeholder="请输入昵称">
+          </div>
+          <div class="form-group">
+            <label>性别 *</label>
+            <select v-model="editUserForm.gender" required>
+              <option value="other">其他</option>
+              <option value="male">男</option>
+              <option value="female">女</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>邮件</label>
+            <input v-model="editUserForm.email" type="email" placeholder="请输入邮箱地址">
+          </div>
+          <div class="form-group">
+            <label>电话 *</label>
+            <input v-model="editUserForm.phone" type="tel" required placeholder="请输入电话号码">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>密码 <span class="field-hint">(至少6位，不填写则不修改)</span></label>
+            <input v-model="editUserForm.password" type="password" placeholder="不填写则默认不修改">
+          </div>
+          <div class="form-group">
+            <label>确认密码</label>
+            <input v-model="editUserForm.confirmPassword" type="password" placeholder="请再次输入密码">
+          </div>
+        </div>
+        
+        <!-- 错误信息显示 -->
+        <div v-if="editUserFormError" class="error-message">
+          {{ editUserFormError }}
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" @click="closeEditUserModal" class="cancel-btn">取消</button>
+          <button type="submit" class="submit-btn" :disabled="isUpdatingUser">更新</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -710,12 +764,13 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
-import { deleteUser, deleteFamilyMember, markAllMessagesAsRead } from '../api/users'
+import { deleteUser, markAllMessagesAsRead, updateUser } from '../api/users'
 import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
 import { getPointsBalance, getPointsHistory } from '../api/points'
 import { logout as logoutApi } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import { useWebSocketManager } from '../composables/useWebSocketManager'
+import AvatarSelector from '../components/AvatarSelector.vue'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
 
@@ -724,7 +779,7 @@ const route = useRoute()
 const globalStore = useGlobalStore()
 
 // 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
-const { systemMessage, familyMessage, deviceManager, disconnect } = useWebSocketManager()
+const { systemMessage, familyMessage, deviceManager, initConnection, disconnect } = useWebSocketManager()
 
 // 检查注入是否成功
 if (!systemMessage || !familyMessage) {
@@ -738,6 +793,20 @@ const showUserMenu = ref(false)
 
 // 控制注销确认弹窗显示
 const showDeleteConfirmModal = ref(false)
+
+// 控制修改用户信息弹窗显示
+const showEditUserModal = ref(false)
+const isUpdatingUser = ref(false)
+const editUserFormError = ref('')
+const editUserForm = ref({
+  nickname: '',
+  gender: 'other',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  avatar: ''
+})
 
 // 控制添加设备弹窗显示
 const showAddDeviceModal = ref(false)
@@ -757,7 +826,7 @@ const unreadMessages = ref([])
 const readMessages = ref([])
 const isLoadingReadMessages = ref(false)
 const readMessagesPage = ref(1)
-const readMessagesLimit = ref(20)
+const readMessagesLimit = ref(50)
 const hasMoreReadMessages = ref(true)
 
 // 积分相关
@@ -865,18 +934,6 @@ const handleFamilyMessage = (data) => {
   // console.log('收到家庭消息:', data)
   // 根据消息类型调用相应的处理函数
   switch (data.type) {
-    case 'member.permission.update':
-      handleMemberPermissionUpdate(data.data)
-      break
-    case 'member.create':
-      handleMemberCreate(data.data)
-      break
-    case 'member.update':
-      handleMemberUpdate(data.data)
-      break
-    case 'member.delete':
-      handleMemberDelete(data.data)
-      break
     case 'device.message.read':
       handleDeviceMessageRead(data.data)
       break
@@ -898,15 +955,6 @@ const handleFamilyMessage = (data) => {
     case 'feedback.create':
       handleFeedbackCreate(data.data)
       break
-    case 'room.device.sort':
-      handleRoomDeviceSort(data.data)
-      break
-    case 'room.create':
-      handleRoomCreate(data.data)
-      break
-    case 'room.delete':
-      handleRoomDelete(data.data)
-      break
     case 'login':
       handleUserLogin(data.data)
       break
@@ -919,11 +967,8 @@ const handleFamilyMessage = (data) => {
     case 'disconnect':
       handleUserDisconnect(data.data)
       break
-    case 'user.delete':
+    case 'account.delete':
       handleUserDelete(data.data)
-      break
-    case 'user.update':
-      handleUserUpdate(data.data)
       break
     case 'force.logout':
       handleForceLogout(data.data)
@@ -934,107 +979,6 @@ const handleFamilyMessage = (data) => {
 }
 
 // 具体的家庭消息处理方法
-// 处理成员权限更新事件
-const handleMemberPermissionUpdate = async (data) => {
-  const { title, message, level, memberId, deviceIds } = data
-  console.log(`成员权限更新 [${level}]: ${title} - ${message}`)
-  
-  // 更新成员设备权限（保留现有的 status）
-  if (memberId && deviceIds) {
-    globalStore.updateMemberDevicePermissions(memberId, deviceIds)
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理创建成员事件
-const handleMemberCreate = async (data) => {
-  const { title, message, level } = data
-  console.log(`创建成员 [${level}]: ${title} - ${message}`)
-  
-  // 重新加载成员列表以获取新创建的成员信息
-  // memberStatuses 不会被 loadMembers 覆盖，所以不需要保存和恢复状态
-  await globalStore.loadMembers()
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理更新成员信息事件
-const handleMemberUpdate = async (data) => {
-  const { title, message, level, memberId, updateData } = data
-  console.log(`更新成员信息 [${level}]: ${title} - ${message}`)
-  
-  // 更新成员信息（保留现有的 status 和其他字段）
-  if (memberId) {
-  
-    // 如果有更新数据，调用更新方法
-    if (Object.keys(updateData).length > 0) {
-      globalStore.updateMemberInfo(memberId, updateData)
-    } else {
-      // 如果没有具体更新数据，重新加载成员列表以确保同步
-      await globalStore.loadMembers()
-    }
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理删除成员事件
-const handleMemberDelete = async (data) => {
-  const { title, message, level, memberId } = data
-  console.log(`删除成员 [${level}]: ${title} - ${message}`)
-  
-  // 检查删除的是否是当前用户
-  const isCurrentUser = memberId === globalStore.user?.id 
-  
-  if (isCurrentUser) {
-    ElMessage.warning('您已被移除，正在退出登录')
-    // 断开 WebSocket 连接（不等待结果）
-    disconnect().then(() => {
-      console.log('WebSocket 连接已断开')
-    }).catch(disconnectError => {
-      console.warn('断开 WebSocket 连接失败:', disconnectError)
-    })
-    
-    // 延迟 500 毫秒后执行退出登录流程
-    setTimeout(() => {
-      // 立即清除认证状态并跳转
-      globalStore.clearAuth()
-      showUserMenu.value = false
-      router.push('/login')
-    }, 500)
-    
-    return
-  }
-  
-  // 从成员列表中删除指定成员
-  if (memberId) {
-    globalStore.removeMemberInfo(memberId)
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
 // 处理设备消息已读事件
 const handleDeviceMessageRead = (data) => {
   const { title, message, level, messageId } = data
@@ -1048,9 +992,11 @@ const handleDeviceMessageRead = (data) => {
     }
     
     // 更新全局消息状态
-    const globalMessage = globalStore.messages.find(m => m.id === messageId)
-    if (globalMessage) {
-      globalMessage.status = 'read'
+    if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+      const globalMessage = globalStore.deviceMessages.find(m => m.id === messageId)
+      if (globalMessage) {
+        globalMessage.status = 'read'
+      }
     }
   }
   ElMessage.success(`消息已标记为已读`)
@@ -1065,9 +1011,11 @@ const handleDeviceMessageMarkAllRead = (data) => {
      unreadMessages.value = []
     
     // 更新全局消息状态
-    globalStore.messages.forEach(msg => {
-      msg.status = 'read'
-    })
+    if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+      globalStore.deviceMessages.forEach(msg => {
+        msg.status = 'read'
+      })
+    }
     ElMessage.success(`所有消息已标记为已读`)
 }
 
@@ -1136,7 +1084,7 @@ const handleDeviceAlert = async (data) => {
   console.log(`设备告警 [${level}]: ${title} - ${message}`, { deviceId, deviceName })
   
   // 重新加载消息列表以获取新的告警消息
-  await globalStore.loadMessages()
+  await globalStore.loadDeviceMessages()
   
   // 更新未读消息列表
   updateUnreadMessages()
@@ -1185,88 +1133,6 @@ const handleFeedbackCreate = (data) => {
   
   // 设置新的反馈提示（小红点）
   globalStore.setHasNewFeedback(true)
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理房间设备排序更新事件
-const handleRoomDeviceSort = (data) => {
-  const { title, message, level, roomId, roomDevicesData } = data
-  console.log(`设备排序更新 [${level}]: ${title} - ${message}`)
-  
-  // 更新房间设备数据（使用响应式更新方法）
-  // roomDevicesData 格式: [{ id, roomId, deviceId, sortOrder }, ...]
-  // 可能是空数组，表示房间应该被清空
-  // 现在消息中直接包含 roomId 和 roomName，无需从 message 中解析
-  if (roomDevicesData && Array.isArray(roomDevicesData)) {
-    // 如果 roomDevicesData 为空数组，使用消息中的 roomId 来清空该房间
-    const extractedRoomId = roomDevicesData.length === 0 ? roomId : null
-    globalStore.updateRoomDevicesSort(roomDevicesData, extractedRoomId)
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理创建房间事件
-const handleRoomCreate = (data) => {
-  const { title, message, level, roomData } = data
-  console.log(`创建房间 [${level}]: ${title} - ${message}`)
-  
-  // 直接将 roomData 添加到房间列表中
-  if (roomData) {
-    globalStore.addRoom(roomData)
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理删除房间事件
-const handleRoomDelete = (data) => {
-  const { title, message, level, roomId } = data
-  console.log(`删除房间 [${level}]: ${title} - ${message}`)
-  
-  // 从房间列表中删除指定房间
-  if (roomId) {
-    globalStore.removeRoom(roomId)
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理用户更新事件
-const handleUserUpdate = async (data) => {
-  const { title, message, level, userId, updateData } = data
-  console.log(`更新用户信息 [${level}]: ${title} - ${message}`)
-  
-  
-  if (userId) {
-    // 更新当前用户信息
-    if (updateData && Object.keys(updateData).length > 0) {
-      globalStore.updateMemberInfo(userId, updateData)
-    } else {
-      globalStore.loadMembers()
-    }
-  }
   
   // 显示通知消息
   ElMessage.success({
@@ -1342,18 +1208,8 @@ const handleUserLogin = (data) => {
 
 // 处理用户登出事件
 const handleUserLogout = (data) => {
-  const { title, message, level, disconnectUserIds, senderId } = data
+  const { title, message, level } = data
   console.log(`用户登出 [${level}]: ${title} - ${message}`)
-  
-  // 更新登出用户的成员状态为 inactive
-  if (disconnectUserIds && Array.isArray(disconnectUserIds)) {
-    disconnectUserIds.forEach(userId => {
-      globalStore.updateMemberStatus(userId, 'inactive')
-    })
-  } else if (senderId) {
-    // 如果没有 disconnectUserIds，使用 senderId（向后兼容）
-    globalStore.updateMemberStatus(senderId, 'inactive')
-  }
   
   // 显示登出通知
   ElMessage.success({
@@ -1365,44 +1221,22 @@ const handleUserLogout = (data) => {
 
 // 处理用户连接事件（WebSocket连接）
 const handleUserConnect = (data) => {
-  const { title, message, level, connectUserIds, senderId } = data
+  const { title, message, level } = data
   console.log(`用户连接 [${level}]: ${title} - ${message}`)
-  
-  // 更新所有连接用户的成员状态为 active
-  if (connectUserIds && Array.isArray(connectUserIds)) {
-    connectUserIds.forEach(userId => {
-      globalStore.updateMemberStatus(userId, 'active')
-    })
-  } else if (senderId) {
-    // 如果没有 connectUserIds，使用 senderId（向后兼容）
-    globalStore.updateMemberStatus(senderId, 'active')
-  }
 }
 
 // 处理用户断开连接事件（WebSocket断开）
 const handleUserDisconnect = (data) => {
-  const { title, message, level, disconnectUserIds, senderId } = data
+  const { title, message, level } = data
   console.log(`用户断开连接 [${level}]: ${title} - ${message}`)
-  
-  // 更新所有断开连接用户的成员状态为 inactive
-  if (disconnectUserIds && Array.isArray(disconnectUserIds)) {
-    disconnectUserIds.forEach(userId => {
-      globalStore.updateMemberStatus(userId, 'inactive')
-    })
-  } else if (senderId) {
-    // 如果没有 disconnectUserIds，使用 senderId（向后兼容）
-    globalStore.updateMemberStatus(senderId, 'inactive')
-  }
 }
 
 
-// Index.vue 现在只作为布局容器，不需要房间和设备数据
 
 // 导航配置
 const navigationItems = ref([
   { id: 'home', name: 'Home', route: '/home', icon: 'home' },
-  { id: 'widgets', name: 'Widgets', route: '/widgets', icon: 'widgets' },
-  { id: 'members', name: 'Members', route: '/members', icon: 'members' },
+  { id: 'family', name: 'Family', route: '/family', icon: 'family' },
   { id: 'mall', name: 'Mall', route: '/mall', icon: 'mall' },
   { id: 'settings', name: '设置', route: '/settings', icon: 'settings' }
 ])
@@ -1424,8 +1258,7 @@ const navigateTo = (navItem) => {
 // 角色文本转换
 const getRoleText = (role) => {
   const roleMap = {
-    'owner': '拥有者',
-    'member': '成员',
+    'user': '用户',
     'admin': '管理员'
   }
   return roleMap[role] || '未知'
@@ -1486,6 +1319,116 @@ const closeUserMenu = () => {
   showUserMenu.value = false
 }
 
+// 打开修改用户信息弹窗
+const openEditUserModal = () => {
+  const user = globalStore.user?.account
+  if (user) {
+    editUserForm.value = {
+      nickname: user.nickname || '',
+      gender: user.gender || 'other',
+      email: user.email || '',
+      phone: user.phone || '',
+      password: '',
+      confirmPassword: '',
+      avatar: user.avatar || ''
+    }
+    editUserFormError.value = ''
+    showEditUserModal.value = true
+    showUserMenu.value = false
+  }
+}
+
+// 关闭修改用户信息弹窗
+const closeEditUserModal = () => {
+  showEditUserModal.value = false
+  editUserFormError.value = ''
+  editUserForm.value = {
+    nickname: '',
+    gender: 'other',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    avatar: ''
+  }
+}
+
+// 处理模态框背景点击
+const handleEditUserModalOverlayClick = (e) => {
+  if (e.target === e.currentTarget) {
+    closeEditUserModal()
+  }
+}
+
+// 处理头像变化
+const handleAvatarChange = (avatar) => {
+  editUserForm.value.avatar = avatar
+}
+
+// 验证密码
+const validatePassword = (password, confirmPassword, isEdit = false) => {
+  // 编辑模式下，密码为空则不验证
+  if (isEdit && !password && !confirmPassword) {
+    return { valid: true }
+  }
+  
+  if (!password || password.length < 6) {
+    return { valid: false, message: '密码长度至少6位' }
+  }
+  
+  if (password !== confirmPassword) {
+    return { valid: false, message: '两次输入的密码不一致' }
+  }
+  
+  return { valid: true }
+}
+
+// 更新用户信息
+const updateUserInfo = async () => {
+  editUserFormError.value = ''
+  
+  // 验证密码
+  const passwordValidation = validatePassword(editUserForm.value.password, editUserForm.value.confirmPassword, true)
+  if (!passwordValidation.valid) {
+    editUserFormError.value = passwordValidation.message
+    return
+  }
+  
+  isUpdatingUser.value = true
+  
+  try {
+    // 构建更新数据
+    const updateData = {
+      nickname: editUserForm.value.nickname,
+      gender: editUserForm.value.gender,
+      email: editUserForm.value.email,
+      phone: editUserForm.value.phone,
+      avatar: editUserForm.value.avatar
+    }
+    
+    // 如果有密码，需要加密
+    if (editUserForm.value.password) {
+      updateData.password = await globalStore.encryptPassword(editUserForm.value.password)
+    }
+
+    await updateUser(updateData)
+    
+    // 本地更新用户信息
+    globalStore.updateUserInfo(updateData)
+    
+    // 更新家庭信息
+    await globalStore.loadFamilys()
+    
+    closeEditUserModal()
+    ElMessage.success('修改信息成功')
+  } catch (error) {
+    console.error('更新用户信息失败:', error)
+    editUserFormError.value = error.response?.data?.detail || '更新用户信息失败，请重试'
+  } finally {
+    isUpdatingUser.value = false
+  }
+}
+
 // 通知相关方法
 const toggleNotificationMenu = () => {
   showNotificationMenu.value = !showNotificationMenu.value
@@ -1518,16 +1461,20 @@ const toggleUserMenuAndCloseNotificationMenu = () => {
 
 // 更新未读消息（从已加载的数据中过滤）
 const updateUnreadMessages = () => {
-  unreadMessages.value = globalStore.messages.filter(msg => msg.status === 'new')
+  if (!globalStore.deviceMessages || !Array.isArray(globalStore.deviceMessages)) {
+    unreadMessages.value = []
+    return
+  }
+  unreadMessages.value = globalStore.deviceMessages.filter(msg => msg.status === 'new')
 }
 
 // 加载已读消息（分页）
 const loadReadMessages = async (page = 1, append = false) => {
-  if (!globalStore.user?.user_id) return
+  if (!globalStore.user) return
   
   isLoadingReadMessages.value = true
   
-  const messages = await globalStore.loadReadMessages({
+  const messages = await globalStore.loadReadDeviceMessages({
     limit: readMessagesLimit.value,
     skip: (page - 1) * readMessagesLimit.value
   }).finally(() => {
@@ -1565,21 +1512,19 @@ const closeMessageLogModal = () => {
 // 加载更多已读消息
 const loadMoreReadMessages = () => {
   if (!isLoadingReadMessages.value && hasMoreReadMessages.value) {
-    // 计算累积的 limit 和 skip
-    const currentSkip = readMessages.value.length
-    const nextLimit = currentSkip + 20  // limit = skip + 20
-    
-    loadMoreReadMessagesDirect(currentSkip, nextLimit)
+    // 加载下一页：skip = 当前已加载的数量，limit = 每页数量
+    const nextPage = readMessagesPage.value + 1
+    loadReadMessages(nextPage, true)
   }
 }
 
 // 直接加载更多消息的函数
 const loadMoreReadMessagesDirect = async (skip, limit) => {
-  if (!globalStore.user?.user_id) return
+  if (!globalStore.user) return
   
   isLoadingReadMessages.value = true
   
-  const messages = await globalStore.loadReadMessages({
+  const messages = await globalStore.loadReadDeviceMessages({
     limit: limit,
     skip: skip
   }).finally(() => {
@@ -1589,9 +1534,9 @@ const loadMoreReadMessagesDirect = async (skip, limit) => {
   // 追加到现有消息列表
   readMessages.value = [...readMessages.value, ...messages]
   
-  // 判断是否还有更多数据
-  hasMoreReadMessages.value = messages.length === (limit - skip)
-  readMessagesPage.value = Math.floor(skip / 20) + 1
+  // 判断是否还有更多数据：如果返回的消息数量等于请求的limit，说明可能还有更多
+  hasMoreReadMessages.value = messages.length === limit
+  readMessagesPage.value = Math.floor(skip / readMessagesLimit.value) + 1
 }
 
 // 积分相关方法
@@ -1658,11 +1603,11 @@ const loadMorePointsHistory = () => {
 
 // 系统消息相关方法
 const loadSystemMessages = async (page = 1, append = false) => {
-  if (!globalStore.user?.user_id) return
+  if (!globalStore.user) return
   
   isLoadingSystemMessages.value = true
   
-  const messages = await globalStore.loadSystemMessages(globalStore.user.user_id, {
+  const messages = await globalStore.loadSystemMessages({
     limit: systemMessagesLimit.value,
     skip: (page - 1) * systemMessagesLimit.value
   }).finally(() => {
@@ -1801,11 +1746,6 @@ const handleDeleteClick = () => {
 
 // 打开添加设备弹窗
 const openAddDeviceModal = () => {
-  // 检查权限
-  if (globalStore.user?.account?.role === 'member') {
-    ElMessage.warning('只有拥有者可以添加设备')
-    return
-  }
   showAddDeviceModal.value = true
   deviceForm.value.sn = ''
 }
@@ -1844,14 +1784,8 @@ const closeDeleteConfirm = () => {
 // 确认注销账户
 const confirmDelete = async () => {
   try {
-    // 根据用户角色调用不同的API
-    if (globalStore.user?.account?.role === 'member') {
-      // 成员调用删除家庭成员API
-      await deleteFamilyMember(globalStore.user?.id)
-    } else {
-      // 拥有者调用删除用户API
-      await deleteUser()
-    }
+    // 调用删除用户API
+    await deleteUser()
     showDeleteConfirmModal.value = false
   } catch (error) {
     console.error('注销账户失败:', error)
@@ -1859,7 +1793,7 @@ const confirmDelete = async () => {
 }
 
 // 监听未读消息变化，自动更新未读消息列表
-watch(() => globalStore.messages, () => {
+watch(() => globalStore.deviceMessages, () => {
   updateUnreadMessages()
 }, { deep: true })
 
@@ -1867,6 +1801,16 @@ watch(() => globalStore.messages, () => {
 onMounted(async () => {
   const theme = initTheme()
   currentTheme.value = theme
+  
+  // 确保用户认证状态已恢复后再初始化 WebSocket 连接
+  // App.vue 的 onMounted 会在 index.vue 之前执行，所以这里应该已经有 token 了
+  // 但为了保险起见，添加一个短暂的延迟确保 restoreAuth 完成
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
+  // 初始化 WebSocket 连接
+  if (globalStore.token) {
+    await initConnection()
+  }
   
   // 加载所有数据
   globalStore.loadAll()
@@ -2960,7 +2904,7 @@ body, html {
   border: 1px solid var(--color-border);
   border-radius: 16px;
   box-shadow: 0 10px 30px var(--shadow-soft);
-  min-width: 320px;
+  min-width: 380px;
   z-index: 9999;
   overflow: hidden;
   margin-top: 0;
@@ -3452,14 +3396,14 @@ body, html {
   border-color: var(--color-danger);
 }
 
-/* 添加设备弹窗样式 - 统一为Widgets样式 */
+/* 添加设备弹窗样式 */
 .device-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--color-widgets-modal-overlay);
+  background: var(--color-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3472,7 +3416,7 @@ body, html {
   padding: 20px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 12px 32px var(--color-widgets-modal-shadow);
+  box-shadow: 0 12px 32px var(--color-modal-shadow);
 }
 
 .delete-modal-header {
@@ -3591,6 +3535,192 @@ body, html {
 .action-btn.success:hover:not(:disabled) {
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
+}
+
+/* 修改用户信息模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-shadow-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  padding: 20px;
+  width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px var(--shadow-soft);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 隐藏滚动条但保持滚动功能 */
+.modal-content::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.modal-content {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.user-form {
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+
+.form-group .field-hint {
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--color-text-secondary);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  flex-shrink: 0;
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.submit-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 头像选择器样式 */
+.avatar-section {
+  margin-bottom: 16px;
+  padding: 4px 0 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 错误信息样式 */
+.error-message {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--color-danger-light);
+  border-radius: 6px;
+  border: 1px solid var(--color-danger);
 }
 
 </style>

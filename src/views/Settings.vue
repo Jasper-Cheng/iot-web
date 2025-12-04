@@ -783,7 +783,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--color-member-modal-overlay);
+  background: var(--color-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -880,7 +880,7 @@ export default {
   padding: 20px;
 }
 
-/* 意见反馈弹窗表单样式 - 参考Members.vue */
+/* 意见反馈弹窗表单样式 */
 .feedback-form .form-group {
   margin-bottom: 20px;
 }

@@ -95,3 +95,25 @@ export const markMessageAsRead = (messageId) => {
     method: 'patch'
   })
 }
+
+// 获取家庭设备
+export const getFamilyDevices = (familyId, params = {}) => {
+  const requestParams = {
+    family_id: familyId
+  }
+  
+  // 支持分页参数
+  if (params.skip !== undefined) {
+    requestParams.skip = params.skip
+  }
+  
+  if (params.limit !== undefined) {
+    requestParams.limit = params.limit
+  }
+  
+  return request({
+    url: '/devices/',
+    method: 'get',
+    params: requestParams
+  })
+}

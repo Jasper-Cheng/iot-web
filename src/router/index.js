@@ -2,8 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Index from '../views/Index.vue'
 import Home from '../views/Home.vue'
-import Widgets from '../views/Widgets.vue'
-import Members from '../views/Members.vue'
+import Family from '../views/Family.vue'
 import Mall from '../views/Mall.vue'
 import Settings from '../views/Settings.vue'
 import { ElMessage } from 'element-plus'
@@ -17,10 +16,10 @@ const routes = [
     children: [
       { path: '', redirect: 'home' },
       { path: 'home', component: Home },
-      { path: 'widgets', component: Widgets },
-      { path: 'members', component: Members },
+      { path: 'family', component: Family },
       { path: 'mall', component: Mall },
-      { path: 'settings', component: Settings }
+      { path: 'settings', component: Settings },
+      { path: 'members', redirect: 'home' } // 重定向已移除的 members 路由
     ]
   },
   { path: '/', redirect: '/login' }

@@ -56,7 +56,7 @@
  *        "eventType": "sensorAlert",
  *        "data": {
  *          "senderId": "1234567890",
- *          "senderRole": "member",
+ *          "senderRole": "user",
  *          "alertLevel": "high", 
  *          "currentValue": 38.5,
  *          "threshold": 35.0
@@ -154,13 +154,13 @@
  *   "id": "fam_002",
  *   "method": "family.message",
  *   "params": {
- *     "type": "delete.member",
+ *     "type": "device.bind",
  *     "data": {
- *       "senderId": "member_123",
- *       "senderRole": "member",
- *       "title": "删除成员",
- *       "message": "成员xx被用户xx删除，请更新",
- *       "level": "urgent"
+ *       "senderId": "user_123",
+ *       "senderRole": "user",
+ *       "title": "设备绑定",
+ *       "message": "设备xx被用户xx绑定",
+ *       "level": "info"
  *     }
  *   },
  *   "timestamp": 1620000000000
@@ -196,9 +196,11 @@ export function useWebSocketManager() {
    */
   const initConnection = async () => {
     try {
-      const userId = globalStore.user?.user_id
       const token = globalStore.token
-      if (!userId || !token) return
+      if (!token) {
+        console.warn('WebSocket连接失败: 缺少token')
+        return
+      }
 
       // 检查是否需要重新创建 WebSocket 管理器（token 变化时）
       const currentToken = wsManagerSingleton?.options?.url?.includes('token=') ? 
@@ -542,13 +544,9 @@ export function useWebSocketManager() {
     connectionState: computed(() => connectionState.value)
   })
 
-  // 组件挂载时初始化连接
-  onMounted(() => {
-    initConnection()
-  })
-
   // 注意：不在组件卸载时断开连接，因为WebSocket连接是全局的
   // 应该由应用级别管理连接的生命周期
+  // initConnection 现在由调用方（index.vue）手动调用，确保在用户认证状态恢复后再连接
 
   // 返回消息管理器对象，供直接使用
   return {
@@ -571,6 +569,7 @@ export function useWebSocketManager() {
       clearFamilyMessageHandler, // 清除家庭消息处理器
       connectionState: computed(() => connectionState.value) // WebSocket 连接状态
     },
+    initConnection,  // 导出初始化连接方法
     disconnect  // 导出断开连接方法
   }
 }

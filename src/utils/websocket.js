@@ -511,17 +511,6 @@ export function clearWebSocketManager() {
  * @returns {WebSocketManager} 新的WebSocket管理器实例
  */
 export function createWebSocketManager(options = {}) {
-  // 如果URL包含用户ID占位符，需要动态替换
-  if (options.url && options.url.includes('{user_id}')) {
-    // user_id只能从外部传入
-    const userId = options.userId
-    if (userId) {
-      options.url = options.url.replace('{user_id}', userId)
-    } else {
-      throw new Error('user_id is required when URL contains {user_id} placeholder')
-    }
-  }
-  
   return new WebSocketManager(options)
 }
 
