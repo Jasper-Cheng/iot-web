@@ -50,7 +50,7 @@
           <div class="family-info">
             <h3 class="family-name">
               {{ family.name }}
-              <span v-if="globalStore.currentFamilyId === family.id" class="family-label">当前管理</span>
+              <span v-if="currentFamilyId === family.id" class="family-label">当前管理</span>
             </h3>
             <p v-if="family.description" class="family-description">{{ family.description }}</p>
             <div class="family-meta">
@@ -60,7 +60,7 @@
           </div>
           <div class="family-actions">
             <button 
-              v-if="globalStore.currentFamilyId === family.id"
+              v-if="currentFamilyId === family.id"
               class="action-btn secondary" 
               @click="switchToPersonalDevices"
               title="切回个人设备管理"
@@ -522,7 +522,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
-import { createFamily, deleteFamily, leaveFamily, getFamilyMembers, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice } from '../api/users'
+import { createFamily, deleteFamily, leaveFamily, getFamilyMembers, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser } from '../api/users'
 import { getFamilyDevices, updateDeviceName, getMyDevices } from '../api/devices'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
@@ -531,16 +531,22 @@ import { getThumbnailByCardName, getDeviceCardBySN } from '../utils/deviceMappin
 const router = useRouter()
 const globalStore = useGlobalStore()
 
+// 获取当前家庭ID
+const currentFamilyId = computed(() => {
+  return globalStore.user?.account?.current_family_id || null
+})
+
 // 家庭列表（选中的家庭排在第一位）
 const familys = computed(() => {
   const allFamilys = globalStore.familys || []
-  if (!globalStore.currentFamilyId) {
+  const familyId = currentFamilyId.value
+  if (!familyId) {
     return allFamilys
   }
   
   // 将选中的家庭移到第一位
   const sortedFamilys = [...allFamilys]
-  const currentFamilyIndex = sortedFamilys.findIndex(f => f.id === globalStore.currentFamilyId)
+  const currentFamilyIndex = sortedFamilys.findIndex(f => f.id === familyId)
   
   if (currentFamilyIndex > 0) {
     // 将选中的家庭移到第一位
@@ -1141,7 +1147,7 @@ const confirmRemoveDevice = async () => {
     }
     
     // 如果当前正在查看该家庭的设备管理，需要更新 globalStore.devices
-    if (globalStore.currentFamilyId === familyId) {
+    if (currentFamilyId.value === familyId) {
       await globalStore.loadDevices()
     }
     
@@ -1239,7 +1245,7 @@ const confirmAddDevicesToFamily = async () => {
     await loadFamilyDevices(familyForAddDevice.value.id, true)
     
     // 如果当前正在查看该家庭的设备管理，需要更新 globalStore.devices
-    if (globalStore.currentFamilyId === familyForAddDevice.value.id) {
+    if (currentFamilyId.value === familyForAddDevice.value.id) {
       await globalStore.loadDevices()
     }
     
@@ -1256,11 +1262,13 @@ const confirmAddDevicesToFamily = async () => {
 // 切换到此家庭设备管理
 const switchToFamilyDevices = async (family) => {
   try {
-    // 设置当前家庭ID并保存到 localStorage
-    globalStore.currentFamilyId = family.id
-    globalStore.saveToLocalStorage()
+    // 更新 account 中的 current_family_id
+    await updateUser({ current_family_id: family.id })
     
-    // 调用 loadAll 重新加载所有数据（loadDevices 会根据 currentFamilyId 加载对应家庭的设备）
+    // 更新本地 user 数据
+    globalStore.updateUserInfo({ current_family_id: family.id })
+    
+    // 调用 loadAll 重新加载所有数据（loadDevices 会根据 current_family_id 加载对应家庭的设备）
     await globalStore.loadAll()
     
     // 跳转到 Home 页面
@@ -1276,9 +1284,11 @@ const switchToFamilyDevices = async (family) => {
 // 切回个人设备管理
 const switchToPersonalDevices = async () => {
   try {
-    // 清除当前家庭ID并保存到 localStorage
-    globalStore.currentFamilyId = null
-    globalStore.saveToLocalStorage()
+    // 清除 account 中的 current_family_id
+    await updateUser({ current_family_id: null })
+    
+    // 更新本地 user 数据
+    globalStore.updateUserInfo({ current_family_id: null })
     
     // 调用 loadAll 重新加载所有数据（loadDevices 会加载所有设备）
     await globalStore.loadAll()
