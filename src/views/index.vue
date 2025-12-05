@@ -80,11 +80,11 @@
         <div class="header-right">
           <button 
             class="add-device-btn" 
-            title="添加设备"
+            title="绑定设备"
             @click="openAddDeviceModal"
           >
             <span class="plus-icon">+</span>
-            Add Device
+            Bind Device
           </button>
           <!-- 主题切换：胶囊+滑块 -->
           <div class="theme-toggle" role="group" aria-label="Theme toggle">
@@ -350,11 +350,11 @@
     </main>
   </div>
 
-  <!-- 添加设备弹窗 -->
+  <!-- 绑定设备弹窗 -->
   <div v-if="showAddDeviceModal" class="device-modal" @click="closeAddDeviceModal">
     <div class="delete-modal-content" @click.stop>
       <div class="delete-modal-header">
-        <h3>添加设备</h3>
+        <h3>绑定设备</h3>
         <button class="delete-close-btn" @click="closeAddDeviceModal">X</button>
       </div>
       <div class="delete-modal-body">
@@ -371,7 +371,7 @@
           取消
         </button>
         <button class="action-btn success" @click="submitAddDevice" :disabled="isAddingDevice || !deviceForm.sn.trim()">
-          {{ isAddingDevice ? '添加中...' : '添加' }}
+          {{ isAddingDevice ? '绑定中...' : '绑定' }}
         </button>
       </div>
     </div>
@@ -808,15 +808,15 @@ const editUserForm = ref({
   avatar: ''
 })
 
-// 控制添加设备弹窗显示
+// 控制绑定设备弹窗显示
 const showAddDeviceModal = ref(false)
 
-// 添加设备表单数据
+// 绑定设备表单数据
 const deviceForm = ref({
   sn: ''
 })
 
-// 添加设备加载状态
+// 绑定设备加载状态
 const isAddingDevice = ref(false)
 
 // 通知相关
@@ -1744,20 +1744,20 @@ const handleDeleteClick = () => {
   showDeleteConfirm()
 }
 
-// 打开添加设备弹窗
+// 打开绑定设备弹窗
 const openAddDeviceModal = () => {
   showAddDeviceModal.value = true
   deviceForm.value.sn = ''
 }
 
-// 关闭添加设备弹窗
+// 关闭绑定设备弹窗
 const closeAddDeviceModal = () => {
   showAddDeviceModal.value = false
   deviceForm.value.sn = ''
   isAddingDevice.value = false
 }
 
-// 提交添加设备表单
+// 提交绑定设备表单
 const submitAddDevice = async () => {
   if (!deviceForm.value.sn.trim()) {
     ElMessage.warning('请输入设备序列号')
@@ -1770,7 +1770,7 @@ const submitAddDevice = async () => {
     await bindDeviceBySN(deviceForm.value.sn.trim())
     closeAddDeviceModal()
   } catch (error) {
-    console.error('添加设备失败:', error)
+    console.error('绑定设备失败:', error)
   } finally {
     isAddingDevice.value = false
   }

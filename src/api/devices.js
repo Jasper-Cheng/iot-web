@@ -1,6 +1,6 @@
 import request from '../utils/request'
 
-export const fetchDeviceStatuses = () => {
+export const getMyDevices = () => {
   return request({
     url: '/devices/',
     method: 'get'
@@ -22,11 +22,15 @@ export const bindDeviceBySN = (sn) => {
   })
 }
 
-export const updateDeviceName = (id, name) => {
+export const updateDeviceName = (id, name, familyId = null) => {
+  const data = { name: name }
+  if (familyId !== null) {
+    data.family_id = familyId
+  }
   return request({
     url: `/devices/${id}/name`,
     method: 'patch',
-    data: { name: name }
+    data: data
   })
 }
 

@@ -84,3 +84,37 @@ export const getFamilyMembers = (familyId, params = {}) => {
     params: requestParams
   })
 }
+
+export const joinFamilyByInviteCode = (inviteCode) => {
+  return request({
+    url: '/family-members/join-by-invite-code',
+    method: 'post',
+    params: {
+      invite_code: inviteCode
+    }
+  })
+}
+
+export const updateFamilyMemberNickname = (familyMemberId, nickname) => {
+  return request({
+    url: `/family-members/${familyMemberId}`,
+    method: 'patch',
+    data: {
+      nickname: nickname
+    }
+  })
+}
+
+export const removeFamilyDevice = (familyId, deviceId) => {
+  return request({
+    url: `/families/${familyId}/devices/${deviceId}`,
+    method: 'delete'
+  })
+}
+
+export const addFamilyDevice = (familyId, deviceId) => {
+  return request({
+    url: `/families/${familyId}/devices/${deviceId}`,
+    method: 'post'
+  })
+}

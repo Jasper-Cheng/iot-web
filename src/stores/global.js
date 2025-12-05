@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { fetchDeviceStatuses, getDeviceMessages } from '../api/devices'
+import { getMyDevices, getDeviceMessages, getFamilyDevices } from '../api/devices'
 import { getFamilys } from '../api/users'
 import { getSystemMessages } from '../api/systemMessages'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
@@ -46,6 +46,9 @@ export const useGlobalStore = defineStore('global', {
 		//   }
 		// ]
 		devices: [],
+		
+		// 当前显示的家庭ID（如果为 null，表示显示所有设备）
+		currentFamilyId: null,
 		
 		// 家庭数据
 		// 家庭列表数据结构：
@@ -125,7 +128,13 @@ export const useGlobalStore = defineStore('global', {
 			this.errors.devices = null
 			
 			try {
-				const res = await fetchDeviceStatuses()
+				let res
+				// 如果设置了 currentFamilyId，加载该家庭的设备；否则加载所有设备
+				if (this.currentFamilyId) {
+					res = await getFamilyDevices(this.currentFamilyId)
+				} else {
+					res = await getMyDevices()
+				}
 				
 				// API直接返回设备数组，request.js已经提取了response.data
 				const devices = Array.isArray(res) ? res : []
@@ -251,6 +260,16 @@ export const useGlobalStore = defineStore('global', {
 			// 保存完整的用户数据（包括 access_token, token_type, role, account）
 			this.user = response
 			this.token = response.access_token
+			
+			// 恢复之前保存的 currentFamilyId（如果存在）
+			const savedFamilyId = localStorage.getItem('currentFamilyId')
+			if (savedFamilyId) {
+				const familyId = parseInt(savedFamilyId, 10)
+				if (!isNaN(familyId)) {
+					this.currentFamilyId = familyId
+				}
+			}
+			
 			// 保存到localStorage
 			this.saveToLocalStorage()
 		},
@@ -258,7 +277,9 @@ export const useGlobalStore = defineStore('global', {
 			this.isAuthenticated = false
 			this.user = null
 			this.token = null
-			// 清除localStorage
+			// 保留 currentFamilyId，不清除它
+			// this.currentFamilyId 保持不变，以便重新登录时恢复
+			// 清除localStorage（但保留 currentFamilyId）
 			this.clearLocalStorage()
 		},
 		// 从localStorage恢复认证状态
@@ -272,6 +293,16 @@ export const useGlobalStore = defineStore('global', {
 					this.isAuthenticated = true
 					this.user = user
 					this.token = token
+					
+					// 恢复当前家庭ID
+					const savedFamilyId = localStorage.getItem('currentFamilyId')
+					if (savedFamilyId) {
+						const familyId = parseInt(savedFamilyId, 10)
+						if (!isNaN(familyId)) {
+							this.currentFamilyId = familyId
+						}
+					}
+					
 					return true
 				} catch (error) {
 					console.error('Failed to parse user data from localStorage:', error)
@@ -291,16 +322,31 @@ export const useGlobalStore = defineStore('global', {
 				if (this.user) {
 					localStorage.setItem('user', JSON.stringify(this.user))
 				}
+				// 保存当前家庭ID
+				if (this.currentFamilyId !== null) {
+					localStorage.setItem('currentFamilyId', String(this.currentFamilyId))
+				} else {
+					localStorage.removeItem('currentFamilyId')
+				}
 			} catch (error) {
 				console.error('Failed to save to localStorage:', error)
 			}
 		},
 		
-		// 清除localStorage
+		// 清除localStorage（保留 currentFamilyId）
 		clearLocalStorage() {
 			try {
+				// 保存 currentFamilyId，以便重新登录时恢复
+				const savedFamilyId = localStorage.getItem('currentFamilyId')
+				
 				localStorage.removeItem('token')
 				localStorage.removeItem('user')
+				// 不清除 currentFamilyId，保留它以便重新登录时恢复
+				
+				// 如果之前有保存的 currentFamilyId，恢复它
+				if (savedFamilyId) {
+					localStorage.setItem('currentFamilyId', savedFamilyId)
+				}
 			} catch (error) {
 				console.error('Failed to clear localStorage:', error)
 			}
