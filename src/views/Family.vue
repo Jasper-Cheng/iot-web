@@ -597,7 +597,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
-import { createFamily, deleteFamily, leaveFamily, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser } from '../api/users'
+import { createFamily, deleteFamily, leaveFamily, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser, updateCurrentFamily } from '../api/users'
 import { updateDeviceName, getMyDevices } from '../api/devices'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
@@ -1257,13 +1257,22 @@ const selectFamily = async (family) => {
     closeSwitchFamilyModal()
     return
   }
-  
+
   try {
-    // 更新 account 中的 current_family_id
-    await updateUser({ current_family_id: family.id })
+    // 调用切换家庭 API
+    const accountData = await updateCurrentFamily(family.id)
     
-    // 更新本地 user 数据
-    globalStore.updateUserInfo({ current_family_id: family.id })
+    // 根据返回的数据更新本地 user 数据
+    if (accountData) {
+      globalStore.updateUserInfo({
+        nickname: accountData.nickname,
+        gender: accountData.gender,
+        phone: accountData.phone,
+        email: accountData.email,
+        avatar: accountData.avatar,
+        current_family_id: accountData.current_family_id
+      })
+    }
     
     // 调用 loadAll 重新加载所有数据（会自动加载当前家庭的成员和设备）
     await globalStore.loadAll()
@@ -1279,11 +1288,20 @@ const selectFamily = async (family) => {
 // 切换到此家庭设备管理
 const switchToFamilyDevices = async (family) => {
   try {
-    // 更新 account 中的 current_family_id
-    await updateUser({ current_family_id: family.id })
+    // 调用切换家庭 API
+    const accountData = await updateCurrentFamily(family.id)
     
-    // 更新本地 user 数据
-    globalStore.updateUserInfo({ current_family_id: family.id })
+    // 根据返回的数据更新本地 user 数据
+    if (accountData) {
+      globalStore.updateUserInfo({
+        nickname: accountData.nickname,
+        gender: accountData.gender,
+        phone: accountData.phone,
+        email: accountData.email,
+        avatar: accountData.avatar,
+        current_family_id: accountData.current_family_id
+      })
+    }
     
     // 调用 loadAll 重新加载所有数据（loadDevices 会根据 current_family_id 加载对应家庭的设备）
     await globalStore.loadAll()
@@ -1301,13 +1319,22 @@ const switchToFamilyDevices = async (family) => {
 // 切回个人设备管理
 const switchToPersonalDevices = async () => {
   try {
-    // 清除 account 中的 current_family_id
-    await updateUser({ current_family_id: null })
+    // 调用切换家庭 API，传入 null 表示切回个人设备管理
+    const accountData = await updateCurrentFamily(null)
     
-    // 更新本地 user 数据
-    globalStore.updateUserInfo({ current_family_id: null })
+    // 根据返回的数据更新本地 user 数据
+    if (accountData) {
+      globalStore.updateUserInfo({
+        nickname: accountData.nickname,
+        gender: accountData.gender,
+        phone: accountData.phone,
+        email: accountData.email,
+        avatar: accountData.avatar,
+        current_family_id: accountData.current_family_id
+      })
+    }
     
-    // 调用 loadAll 重新加载所有数据（loadDevices 会加载所有设备）
+    // 调用 loadAll 重新加载所有数据（loadDevices 会加载个人设备）
     await globalStore.loadAll()
     
     // 跳转到 Home 页面

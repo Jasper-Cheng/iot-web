@@ -764,7 +764,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
-import { deleteUser, markAllMessagesAsRead, updateUser } from '../api/users'
+import { deleteUser, markAllMessagesAsRead, updateUser, updateCurrentFamily } from '../api/users'
 import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../api/devices'
 import { getPointsBalance, getPointsHistory } from '../api/points'
 import { logout as logoutApi } from '../api/auth'
@@ -1328,11 +1328,20 @@ const handleMemberRemove = async (data) => {
   // 如果移除的是当前用户，切回个人设备管理
   if (isCurrentUser && currentFamilyId === familyId) {
     try {
-      // 清除 account 中的 current_family_id
-      await updateUser({ current_family_id: null })
+      // 调用切换家庭 API，传入 null 表示切回个人设备管理
+      const accountData = await updateCurrentFamily(null)
       
-      // 更新本地 user 数据
-      globalStore.updateUserInfo({ current_family_id: null })
+      // 根据返回的数据更新本地 user 数据
+      if (accountData) {
+        globalStore.updateUserInfo({
+          nickname: accountData.nickname,
+          gender: accountData.gender,
+          phone: accountData.phone,
+          email: accountData.email,
+          avatar: accountData.avatar,
+          current_family_id: accountData.current_family_id
+        })
+      }
       
       // 清空家庭成员数据
       globalStore.familyMembers = []

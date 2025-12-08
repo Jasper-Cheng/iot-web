@@ -118,3 +118,14 @@ export const addFamilyDevice = (familyId, deviceId) => {
     method: 'post'
   })
 }
+
+// 切换当前家庭
+export const updateCurrentFamily = (familyId) => {
+  return request({
+    url: '/auth/current-family',
+    method: 'patch',
+    params: {
+      family_id: familyId
+    }
+  })
+}
