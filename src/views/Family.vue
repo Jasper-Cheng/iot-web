@@ -904,14 +904,7 @@ const confirmDeleteFamily = async () => {
   isDeletingFamily.value = true
   try {
     await deleteFamily(familyId)
-    // 如果删除的是当前家庭，清空成员数据（设备会通过 loadDevices 自动更新）
-    if (currentFamilyId.value === familyId) {
-      globalStore.familyMembers = []
-    }
-    // 重新加载家庭列表
-    await globalStore.loadFamilys()
     closeDeleteFamilyModal()
-    ElMessage.success('删除家庭成功')
   } catch (error) {
     console.error('删除家庭失败:', error)
     ElMessage.error(error.response?.data?.detail || '删除家庭失败，请重试')
