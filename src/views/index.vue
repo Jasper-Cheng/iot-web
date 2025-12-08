@@ -934,50 +934,47 @@ const handleFamilyMessage = (data) => {
   // console.log('收到家庭消息:', data)
   // 根据消息类型调用相应的处理函数
   switch (data.type) {
-    case 'device.message.read':
-      handleDeviceMessageRead(data.data)
+    case 'account.update':
+      handleAccountUpdate(data.data)
       break
-    case 'device.message.mark_all_read':
-      handleDeviceMessageMarkAllRead(data.data)
-      break
-    case 'device.name.update':
-      handleDeviceNameUpdate(data.data)
-      break
-    case 'device.bind':
-      handleDeviceBind(data.data)
-      break
-    case 'device.unbind':
-      handleDeviceUnbind(data.data)
+    case 'device.add':
+      handleDeviceAdd(data.data)
       break
     case 'device.alert':
       handleDeviceAlert(data.data)
       break
-    case 'feedback.create':
-      handleFeedbackCreate(data.data)
+    case 'device.bind':
+      handleDeviceBind(data.data)
       break
-    case 'login':
-      handleUserLogin(data.data)
+    case 'device.message.mark_all_read':
+      handleDeviceMessageMarkAllRead(data.data)
       break
-    case 'logout':
-      handleUserLogout(data.data)
+    case 'device.message.read':
+      handleDeviceMessageRead(data.data)
       break
-    case 'connect':
-      handleUserConnect(data.data)
+    case 'device.name.update':
+      handleDeviceNameUpdate(data.data)
       break
-    case 'disconnect':
-      handleUserDisconnect(data.data)
+    case 'device.remove':
+      handleDeviceRemove(data.data)
       break
-    case 'account.delete':
-      handleUserDelete(data.data)
+    case 'device.unbind':
+      handleDeviceUnbind(data.data)
+      break
+    case 'family.delete':
+      handleFamilyDelete(data.data)
       break
     case 'force.logout':
       handleForceLogout(data.data)
       break
+    case 'member.join':
+      handleMemberJoin(data.data)
+      break
+    case 'member.remove':
+      handleMemberRemove(data.data)
+      break
     case 'member.update':
       handleMemberUpdate(data.data)
-      break
-    case 'account.update':
-      handleAccountUpdate(data.data)
       break
     default:
       console.warn('未知的家庭消息类型:', data.type)
@@ -1132,22 +1129,6 @@ const handleDeviceAlert = async (data) => {
   }
 }
 
-// 处理意见反馈创建事件
-const handleFeedbackCreate = (data) => {
-  const { title, message, level } = data
-  console.log(`意见反馈创建 [${level}]: ${title} - ${message}`)
-  
-  // 设置新的反馈提示（小红点）
-  globalStore.setHasNewFeedback(true)
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message,
-    duration: 3000,
-    showClose: true
-  })
-}
-
 // 处理成员信息更新事件
 const handleMemberUpdate = (data) => {
   const { title, message, level, familyId, memberId, oldNickname, newNickname, memberName } = data
@@ -1212,29 +1193,6 @@ const handleAccountUpdate = (data) => {
   }
 }
 
-// 处理删除用户事件
-const handleUserDelete = async (data) => {
-  const { title, message, level } = data
-  console.log(`删除用户 [${level}]: ${title} - ${message}`)
-  
-  // 显示警告消息
-  ElMessage.warning('用户已被删除，正在退出登录')
-  // 断开 WebSocket 连接（不等待结果）
-  disconnect().then(() => {
-    console.log('WebSocket 连接已断开')
-  }).catch(disconnectError => {
-    console.warn('断开 WebSocket 连接失败:', disconnectError)
-  })
-  
-  // 延迟 500 毫秒后执行退出登录流程
-  setTimeout(() => {
-    // 清除认证状态并跳转
-    globalStore.clearAuth()
-    showUserMenu.value = false
-    router.push('/login')
-  }, 500)
-}
-
 // 处理强制退出事件
 const handleForceLogout = async (data) => {
   const { title, message, level, reason } = data
@@ -1263,45 +1221,95 @@ const handleForceLogout = async (data) => {
   }, 500)
 }
 
-// 处理用户登录事件
-const handleUserLogin = (data) => {
+// 处理设备添加事件
+const handleDeviceAdd = async (data) => {
   const { title, message, level } = data
-  console.log(`用户登录 [${level}]: ${title} - ${message}`)
+  console.log(`设备添加 [${level}]: ${title} - ${message}`)
   
-  // 显示登录通知
-  ElMessage.success({
-    message: message,
-    duration: 2000,
-    showClose: true
-  })
-}
-
-// 处理用户登出事件
-const handleUserLogout = (data) => {
-  const { title, message, level } = data
-  console.log(`用户登出 [${level}]: ${title} - ${message}`)
+  // 重新加载设备列表以获取新添加的设备
+  await globalStore.loadDevices()
   
-  // 显示登出通知
-  ElMessage.success({
-    message: message,
-    duration: 2000,
-    showClose: true
-  })
+  ElMessage.success(message || '设备添加成功')
 }
 
-// 处理用户连接事件（WebSocket连接）
-const handleUserConnect = (data) => {
-  const { title, message, level } = data
-  console.log(`用户连接 [${level}]: ${title} - ${message}`)
+// 处理设备移除事件
+const handleDeviceRemove = async (data) => {
+  const { title, message, level, deviceId, deviceSn } = data
+  console.log(`设备移除 [${level}]: ${title} - ${message}`)
+  
+  // 获取设备序列号
+  let deviceSerialNumber = deviceSn
+  
+  // 如果没有直接提供 deviceSn，通过 deviceId 查找设备
+  if (!deviceSerialNumber && deviceId) {
+    const device = globalStore.devices.find(d => d.id === deviceId)
+    if (device && device.sn) {
+      deviceSerialNumber = device.sn
+    }
+  }
+  
+  // 如果找到了设备序列号，取消订阅设备事件
+  if (deviceSerialNumber && deviceManager) {
+    try {
+      await deviceManager.unsubscribeDeviceEvents(deviceSerialNumber)
+      console.log(`已取消订阅设备 ${deviceSerialNumber} 的事件`)
+    } catch (error) {
+      console.warn(`取消订阅设备 ${deviceSerialNumber} 事件失败:`, error)
+    }
+  }
+  
+  // 重新加载设备列表以移除已移除的设备
+  await globalStore.loadDevices()
+  
+  ElMessage.success(message || '设备移除成功')
 }
 
-// 处理用户断开连接事件（WebSocket断开）
-const handleUserDisconnect = (data) => {
-  const { title, message, level } = data
-  console.log(`用户断开连接 [${level}]: ${title} - ${message}`)
+// 处理家庭删除事件
+const handleFamilyDelete = async (data) => {
+  const { title, message, level, familyId } = data
+  console.log(`家庭删除 [${level}]: ${title} - ${message}`)
+  
+  // 如果删除的是当前家庭，清空成员数据
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  if (currentFamilyId === familyId) {
+    globalStore.familyMembers = []
+    // 清空当前家庭ID
+    globalStore.updateUserInfo({ current_family_id: null })
+  }
+  
+  // 重新加载家庭列表
+  await globalStore.loadFamilys()
+  
+  ElMessage.success(message || '家庭已删除')
 }
 
+// 处理成员加入事件
+const handleMemberJoin = async (data) => {
+  const { title, message, level, familyId } = data
+  console.log(`成员加入 [${level}]: ${title} - ${message}`)
+  
+  // 如果当前正在查看该家庭，重新加载成员数据
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  if (currentFamilyId === familyId) {
+    await globalStore.loadFamilyMembers(familyId)
+  }
+  
+  ElMessage.success(message || '成员已加入家庭')
+}
 
+// 处理成员移除事件
+const handleMemberRemove = async (data) => {
+  const { title, message, level, familyId, memberId } = data
+  console.log(`成员移除 [${level}]: ${title} - ${message}`)
+  
+  // 如果当前正在查看该家庭，重新加载成员数据
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  if (currentFamilyId === familyId) {
+    await globalStore.loadFamilyMembers(familyId)
+  }
+  
+  ElMessage.success(message || '成员已移除')
+}
 
 // 导航配置
 const navigationItems = ref([
