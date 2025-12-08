@@ -3,6 +3,17 @@
     <div class="page-header">
       <h2>家庭管理</h2>
       <div class="header-actions">
+        <button 
+          class="switch-family-btn"
+          @click="openSwitchFamilyModal"
+          title="切换家庭"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+          切换家庭
+        </button>
         <span class="family-count">{{ familys.length }}/6</span>
         <button 
           class="create-family-btn"
@@ -22,23 +33,40 @@
       <div class="loading-text">加载中...</div>
     </div>
 
-    <div v-else-if="familys.length === 0" class="empty-container">
-      <div class="empty-text">暂无家庭数据</div>
+    <div v-else-if="!currentFamily" class="empty-container">
+      <div class="empty-content">
+        <div class="empty-text">当前没有选择家庭</div>
+        <div class="empty-actions">
+          <button class="create-family-btn" @click="openCreateFamilyModal">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            创建家庭
+          </button>
+          <button 
+            v-if="familys.length > 0"
+            class="switch-family-btn" 
+            @click="openSwitchFamilyModal"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            选择家庭
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div v-else class="familys-container">
-      <div 
-        v-for="family in familys" 
-        :key="family.id"
-        class="family-card"
-      >
+    <div v-else class="family-container">
+      <div class="family-card">
         <!-- 家庭头部信息 -->
         <div class="family-header">
           <div class="family-avatar">
             <img 
-              v-if="family.avatar" 
-              :src="family.avatar" 
-              :alt="family.name"
+              v-if="currentFamily.avatar" 
+              :src="currentFamily.avatar" 
+              :alt="currentFamily.name"
               @error="$event.target.src = DEFAULT_NO_AVATAR_URL"
             />
             <div v-else class="avatar-placeholder">
@@ -49,18 +77,17 @@
           </div>
           <div class="family-info">
             <h3 class="family-name">
-              {{ family.name }}
-              <span v-if="currentFamilyId === family.id" class="family-label">当前管理</span>
+              {{ currentFamily.name }}
+              <span class="family-label">当前管理</span>
             </h3>
-            <p v-if="family.description" class="family-description">{{ family.description }}</p>
+            <p v-if="currentFamily.description" class="family-description">{{ currentFamily.description }}</p>
             <div class="family-meta">
-              <span class="invite-code">邀请码: {{ family.invite_code }}</span>
-              <span class="created-time">{{ formatDate(family.created_at) }}</span>
+              <span class="invite-code">邀请码: {{ currentFamily.invite_code }}</span>
+              <span class="created-time">{{ formatDate(currentFamily.created_at) }}</span>
             </div>
           </div>
           <div class="family-actions">
             <button 
-              v-if="currentFamilyId === family.id"
               class="action-btn secondary" 
               @click="switchToPersonalDevices"
               title="切回个人设备管理"
@@ -73,21 +100,9 @@
               切回个人设备管理
             </button>
             <button 
-              v-else
-              class="action-btn primary"
-              @click="switchToFamilyDevices(family)"
-              title="切换此家庭设备管理"
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-              切换此家庭设备管理
-            </button>
-            <button 
-              v-if="isCreator(family)"
+              v-if="isCreator(currentFamily)"
               class="action-btn danger" 
-              @click="openDeleteFamilyModal(family)"
+              @click="openDeleteFamilyModal(currentFamily)"
               title="删除家庭"
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -103,10 +118,10 @@
           <div class="section-header">
             <h4>家庭成员</h4>
             <div class="section-header-actions">
-              <span class="member-count">{{ familyMembers(family.id).length }} 人</span>
+              <span class="member-count">{{ familyMembers(currentFamily.id).length }} 人</span>
               <button 
                 class="invite-member-btn"
-                @click="generateInviteLink(family)"
+                @click="generateInviteLink(currentFamily)"
                 title="邀请成员"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -117,12 +132,12 @@
               </button>
             </div>
           </div>
-          <div v-if="familyMembers(family.id).length === 0" class="empty-members">
+          <div v-if="familyMembers(currentFamily.id).length === 0" class="empty-members">
             暂无成员
           </div>
           <div v-else class="members-list">
             <div 
-              v-for="member in familyMembers(family.id)" 
+              v-for="member in familyMembers(currentFamily.id)" 
               :key="member.id"
               class="member-item"
             >
@@ -138,7 +153,7 @@
                   <button 
                     v-if="isCurrentUser(member)"
                     class="member-edit-btn-inline"
-                    @click="openEditMemberNicknameModal(family, member)"
+                    @click="openEditMemberNicknameModal(currentFamily, member)"
                     title="编辑我在家庭的昵称"
                   >
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -171,9 +186,9 @@
               </div>
               <div class="member-actions">
                 <button 
-                  v-if="isCurrentUser(member) || isCreator(family)"
+                  v-if="isCurrentUser(member) || isCreator(currentFamily)"
                   class="member-leave-btn"
-                  @click="handleMemberLeave(family, member)"
+                  @click="handleMemberLeave(currentFamily, member)"
                   :title="isCurrentUser(member) ? '退出家庭' : '移除成员'"
                 >
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -190,10 +205,10 @@
           <div class="section-header">
             <h4>家庭设备</h4>
             <div class="section-header-actions">
-              <span class="device-count">{{ familyDevices(family.id).length }} 台</span>
+              <span class="device-count">{{ familyDevices(currentFamily.id).length }} 台</span>
               <button 
                 class="add-device-btn"
-                @click="openAddDeviceToFamilyModal(family)"
+                @click="openAddDeviceToFamilyModal(currentFamily)"
                 title="添加设备到家庭"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -203,12 +218,12 @@
               </button>
             </div>
           </div>
-          <div v-if="familyDevices(family.id).length === 0" class="empty-devices">
+          <div v-if="familyDevices(currentFamily.id).length === 0" class="empty-devices">
             暂无设备
           </div>
           <div v-else class="devices-list">
             <div 
-              v-for="device in familyDevices(family.id)" 
+              v-for="device in familyDevices(currentFamily.id)" 
               :key="device.id"
               class="device-item"
             >
@@ -235,7 +250,7 @@
                   <span class="device-value">{{ device.name }}</span>
                   <button 
                     class="device-edit-btn-inline"
-                    @click="openEditDeviceNameModal(family, device)"
+                    @click="openEditDeviceNameModal(currentFamily, device)"
                     title="编辑设备名称"
                   >
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -248,9 +263,9 @@
                   <span class="device-label">序列号：</span>
                   <span class="device-value device-sn-value">{{ device.sn }}</span>
                 </div>
-                <div class="device-info-item" v-if="getDeviceOwner(family.id, device)">
+                <div class="device-info-item" v-if="getDeviceOwner(currentFamily.id, device)">
                   <span class="device-label">来自：</span>
-                  <span class="device-value">{{ getDeviceOwner(family.id, device) }}</span>
+                  <span class="device-value">{{ getDeviceOwner(currentFamily.id, device) }}</span>
                 </div>
                 <div class="device-info-item">
                   <span class="device-label">状态：</span>
@@ -262,7 +277,7 @@
               </div>
               <button 
                 class="device-remove-btn"
-                @click="openRemoveDeviceModal(family, device)"
+                @click="openRemoveDeviceModal(currentFamily, device)"
                 title="移除设备"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -270,6 +285,66 @@
                 </svg>
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 切换家庭弹窗 -->
+    <div v-if="showSwitchFamilyModal" class="modal-overlay" @click="closeSwitchFamilyModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>切换家庭</h2>
+          <button class="close-btn" @click="closeSwitchFamilyModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="familys.length === 0" class="empty-text">暂无家庭，请先创建家庭</div>
+          <div v-else class="family-select-list">
+            <div 
+              v-for="family in familys" 
+              :key="family.id"
+              class="family-select-item"
+              :class="{ 'active': currentFamilyId === family.id }"
+              @click="selectFamily(family)"
+            >
+              <div class="family-select-avatar">
+                <img 
+                  v-if="family.avatar" 
+                  :src="family.avatar" 
+                  :alt="family.name"
+                  @error="$event.target.src = DEFAULT_NO_AVATAR_URL"
+                />
+                <div v-else class="avatar-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="family-select-info">
+                <div class="family-select-name">
+                  {{ family.name }}
+                  <span v-if="currentFamilyId === family.id" class="current-badge">当前</span>
+                </div>
+                <div v-if="family.description" class="family-select-description">{{ family.description }}</div>
+                <div class="family-select-meta">
+                  <span class="invite-code">邀请码: {{ family.invite_code }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="switch-family-actions">
+            <button 
+              v-if="currentFamilyId"
+              class="switch-to-personal-btn"
+              @click="switchToPersonalDevices"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              切回个人设备管理
+            </button>
           </div>
         </div>
       </div>
@@ -536,25 +611,15 @@ const currentFamilyId = computed(() => {
   return globalStore.user?.account?.current_family_id || null
 })
 
-// 家庭列表（选中的家庭排在第一位）
+// 家庭列表
 const familys = computed(() => {
-  const allFamilys = globalStore.familys || []
-  const familyId = currentFamilyId.value
-  if (!familyId) {
-    return allFamilys
-  }
-  
-  // 将选中的家庭移到第一位
-  const sortedFamilys = [...allFamilys]
-  const currentFamilyIndex = sortedFamilys.findIndex(f => f.id === familyId)
-  
-  if (currentFamilyIndex > 0) {
-    // 将选中的家庭移到第一位
-    const [currentFamily] = sortedFamilys.splice(currentFamilyIndex, 1)
-    sortedFamilys.unshift(currentFamily)
-  }
-  
-  return sortedFamilys
+  return globalStore.familys || []
+})
+
+// 当前家庭
+const currentFamily = computed(() => {
+  if (!currentFamilyId.value) return null
+  return familys.value.find(f => f.id === currentFamilyId.value) || null
 })
 
 // 创建家庭相关状态
@@ -566,6 +631,9 @@ const newFamily = ref({
   avatar: '',
   description: ''
 })
+
+// 切换家庭相关状态
+const showSwitchFamilyModal = ref(false)
 
 // 删除家庭相关状态
 const showDeleteFamilyModal = ref(false)
@@ -952,29 +1020,21 @@ const confirmLeaveFamily = async () => {
   }
 }
 
-// 加载所有家庭的成员和设备数据
-const loadAllFamilyData = async () => {
-  // 如果已有数据，直接加载成员和设备数据
-  if (globalStore.familys.length > 0) {
-    const loadPromises = familys.value.map(family => {
-      return Promise.all([
-        loadFamilyMembers(family.id),
-        loadFamilyDevices(family.id)
-      ])
-    })
-    await Promise.all(loadPromises)
+// 加载当前家庭的成员和设备数据
+const loadCurrentFamilyData = async () => {
+  if (currentFamilyId.value) {
+    await Promise.all([
+      loadFamilyMembers(currentFamilyId.value),
+      loadFamilyDevices(currentFamilyId.value)
+    ])
   }
-  // 如果没有数据，不主动加载，等待 index.vue 的 loadAll() 加载
-  // 通过 watch 监听 globalStore.familys 的变化来加载成员和设备数据
 }
 
-// 监听家庭列表变化，自动加载新家庭的成员和设备数据
-watch(() => globalStore.familys, (newFamilys) => {
-  if (newFamilys && newFamilys.length > 0) {
-    newFamilys.forEach(family => {
-      loadFamilyMembers(family.id)
-      loadFamilyDevices(family.id)
-    })
+// 监听当前家庭ID变化，自动加载成员和设备数据
+watch(() => currentFamilyId.value, (newFamilyId) => {
+  if (newFamilyId) {
+    loadFamilyMembers(newFamilyId)
+    loadFamilyDevices(newFamilyId)
   }
 }, { immediate: true })
 
@@ -1259,6 +1319,47 @@ const confirmAddDevicesToFamily = async () => {
   }
 }
 
+// 打开切换家庭弹窗
+const openSwitchFamilyModal = () => {
+  showSwitchFamilyModal.value = true
+}
+
+// 关闭切换家庭弹窗
+const closeSwitchFamilyModal = () => {
+  showSwitchFamilyModal.value = false
+}
+
+// 选择家庭
+const selectFamily = async (family) => {
+  if (family.id === currentFamilyId.value) {
+    closeSwitchFamilyModal()
+    return
+  }
+  
+  try {
+    // 更新 account 中的 current_family_id
+    await updateUser({ current_family_id: family.id })
+    
+    // 更新本地 user 数据
+    globalStore.updateUserInfo({ current_family_id: family.id })
+    
+    // 调用 loadAll 重新加载所有数据（loadDevices 会根据 current_family_id 加载对应家庭的设备）
+    await globalStore.loadAll()
+    
+    // 重新加载当前家庭的成员和设备数据
+    await Promise.all([
+      loadFamilyMembers(family.id),
+      loadFamilyDevices(family.id, true)
+    ])
+    
+    closeSwitchFamilyModal()
+    ElMessage.success(`已切换到家庭"${family.name}"`)
+  } catch (error) {
+    console.error('切换家庭失败:', error)
+    ElMessage.error('切换家庭失败，请重试')
+  }
+}
+
 // 切换到此家庭设备管理
 const switchToFamilyDevices = async (family) => {
   try {
@@ -1305,7 +1406,7 @@ const switchToPersonalDevices = async () => {
 
 // 加载数据
 onMounted(async () => {
-  await loadAllFamilyData()
+  await loadCurrentFamilyData()
 })
 </script>
 
@@ -1381,6 +1482,31 @@ onMounted(async () => {
   height: 16px;
 }
 
+.switch-family-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.switch-family-btn:hover {
+  background: var(--color-hover);
+  border-color: var(--color-border-hover);
+}
+
+.switch-family-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .loading-container,
 .empty-container {
   display: flex;
@@ -1390,10 +1516,7 @@ onMounted(async () => {
   color: var(--color-text-secondary);
 }
 
-.familys-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.family-container {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1401,8 +1524,144 @@ onMounted(async () => {
   -ms-overflow-style: none; /* IE and Edge */
 }
 
-.familys-container::-webkit-scrollbar {
+.family-container::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
+}
+
+.family-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.family-select-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.family-select-item:hover {
+  background: var(--color-hover);
+  border-color: var(--color-border-hover);
+}
+
+.family-select-item.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.family-select-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.family-select-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.family-select-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-select-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-badge {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary-text);
+  background: var(--color-primary);
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.family-select-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.family-select-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.switch-family-actions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.switch-to-personal-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.switch-to-personal-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+}
+
+.switch-to-personal-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .family-card {

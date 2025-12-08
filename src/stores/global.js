@@ -24,6 +24,7 @@ export const useGlobalStore = defineStore('global', {
 		//     avatar: null,                 // 头像URL
 		//     role: "user",                 // 账号角色：user/admin
 		//     id: 4,                        // 账号ID
+		//     current_family_id: 1,          // 当前家庭ID,如果为null，则表示个人设备
 		//     created_at: "2025-12-04T13:29:41" // 账号创建时间
 		//   }
 		// }
