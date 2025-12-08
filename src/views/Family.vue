@@ -118,7 +118,7 @@
           <div class="section-header">
             <h4>家庭成员</h4>
             <div class="section-header-actions">
-              <span class="member-count">{{ familyMembers().length }} 人</span>
+              <span class="member-count">{{ familyMembers.length }} 人</span>
               <button 
                 class="invite-member-btn"
                 @click="generateInviteLink(currentFamily)"
@@ -132,12 +132,12 @@
               </button>
             </div>
           </div>
-          <div v-if="familyMembers().length === 0" class="empty-members">
+          <div v-if="familyMembers.length === 0" class="empty-members">
             暂无成员
           </div>
           <div v-else class="members-list">
             <div 
-              v-for="member in familyMembers()" 
+              v-for="member in familyMembers" 
               :key="member.id"
               class="member-item"
             >
@@ -685,21 +685,21 @@ const selectedDeviceIds = ref([])
 const isLoadingUserDevices = ref(false)
 const userDevices = ref([])
 
-// 获取家庭成员（使用 globalStore 的数据）
-const familyMembers = () => {
+// 获取家庭成员（使用 globalStore 的数据，使用 computed 确保响应式更新）
+const familyMembers = computed(() => {
   // 只返回当前家庭的成员
   if (currentFamilyId.value) {
     return globalStore.familyMembers || []
   }
   return []
-}
+})
 
 // 判断当前用户是否是家庭创建者
 // 根据角色判断：role 为 "creator" 的是创建者
 const isCreator = (family) => {
   if (!family || !globalStore.user?.account) return false
   
-  const members = familyMembers()
+  const members = familyMembers.value
   const currentUserMember = members.find(m => m.account?.id === globalStore.user.account.id)
   
   // 如果当前用户是成员且 role 是 "creator"，则认为是创建者
@@ -717,7 +717,7 @@ const isCreator = (family) => {
 
 // 获取当前用户在指定家庭中的 family_member_id
 const getCurrentUserFamilyMemberId = () => {
-  const members = familyMembers()
+  const members = familyMembers.value
   const currentUserMember = members.find(m => m.account?.id === globalStore.user?.account?.id)
   // 返回的 id 就是 family_member_id
   return currentUserMember?.id || null
@@ -798,7 +798,7 @@ const getDeviceThumbnail = (device) => {
 // 获取设备所属成员
 const getDeviceOwner = (device) => {
   if (!device.account_id) return null
-  const members = familyMembers()
+  const members = familyMembers.value
   const owner = members.find(m => m.account?.id === device.account_id)
   return owner?.nickname || owner?.account?.nickname || null
 }
@@ -1069,12 +1069,7 @@ const confirmEditNickname = async () => {
   editNicknameError.value = ''
 
   try {
-    const updatedMember = await updateFamilyMemberNickname(editingMember.value.id, editingNickname.value.trim())
-    // 更新 globalStore 中的成员数据
-    const memberIndex = globalStore.familyMembers.findIndex(m => m.id === editingMember.value.id)
-    if (memberIndex > -1) {
-      globalStore.familyMembers[memberIndex] = updatedMember
-    }
+    await updateFamilyMemberNickname(editingMember.value.id, editingNickname.value.trim())
     closeEditNicknameModal()
   } catch (error) {
     console.error('修改昵称失败:', error)
@@ -1346,54 +1341,14 @@ const switchToPersonalDevices = async () => {
   }
 }
 
-// 处理成员信息更新事件
-const handleMemberUpdateEvent = (event) => {
-  const { familyId, memberId, newNickname } = event.detail
-  
-  // 如果更新的是当前家庭的成员
-  if (familyId === currentFamilyId.value) {
-    const memberIndex = globalStore.familyMembers.findIndex(m => m.id === memberId)
-    
-    if (memberIndex > -1) {
-      // 更新成员的昵称
-      globalStore.familyMembers[memberIndex] = {
-        ...globalStore.familyMembers[memberIndex],
-        nickname: newNickname
-      }
-      console.log(`已更新成员 ${memberId} 的昵称为: ${newNickname}`)
-    } else {
-      // 如果成员不在缓存中，重新加载成员数据
-      globalStore.loadFamilyMembers(familyId)
-    }
-  }
-}
-
-// 处理账户信息更新事件
-const handleAccountUpdateEvent = (event) => {
-  const { accountId, updatedFields } = event.detail
-  console.log(`收到账户信息更新事件: accountId=${accountId}, updatedFields=`, updatedFields)
-  
-  // 如果当前有选择的家庭，重新加载成员数据以获取最新的账户信息
-  if (currentFamilyId.value) {
-    globalStore.loadFamilyMembers(currentFamilyId.value)
-    console.log(`已重新加载家庭 ${currentFamilyId.value} 的成员数据`)
-  }
-}
-
 // 加载数据
 onMounted(async () => {
   await loadCurrentFamilyData()
-  
-  // 监听成员信息更新事件
-  window.addEventListener('family-member-update', handleMemberUpdateEvent)
-  // 监听账户信息更新事件
-  window.addEventListener('family-account-update', handleAccountUpdateEvent)
 })
 
 // 组件卸载时移除事件监听器
 onUnmounted(() => {
-  window.removeEventListener('family-member-update', handleMemberUpdateEvent)
-  window.removeEventListener('family-account-update', handleAccountUpdateEvent)
+  // 数据更新已在 index.vue 中直接更新 globalStore，无需事件监听
 })
 </script>
 

@@ -1130,22 +1130,35 @@ const handleDeviceAlert = async (data) => {
 }
 
 // 处理成员信息更新事件
+// 处理成员信息更新事件
 const handleMemberUpdate = (data) => {
   const { title, message, level, familyId, memberId, oldNickname, newNickname, memberName } = data
-  console.log(`成员信息更新 [${level}]: ${title} - ${message}`, { familyId, memberId, oldNickname, newNickname })
+  // console.log(`成员信息更新 [${level}]: ${title} - ${message}`, { familyId, memberId, oldNickname, newNickname })
   
-  // 触发自定义事件，通知 Family.vue 更新成员数据
-  // 使用 CustomEvent 来传递更新信息
-  const updateEvent = new CustomEvent('family-member-update', {
-    detail: {
-      familyId,
-      memberId,
-      oldNickname,
-      newNickname,
-      memberName
-    }
-  })
-  window.dispatchEvent(updateEvent)
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  
+  // 检查是否是当前家庭的成员更新
+  if (familyId !== currentFamilyId || !globalStore.familyMembers?.length) {
+    return
+  }
+  
+  // memberId 指的是 member.account_id，使用 account_id 查找成员
+  const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === memberId)
+  if (memberIndex === -1) {
+    return
+  }
+  
+  const member = globalStore.familyMembers[memberIndex]
+  
+  // 更新成员的昵称（使用新数组确保响应式更新）
+  globalStore.familyMembers = [
+    ...globalStore.familyMembers.slice(0, memberIndex),
+    {
+      ...member,
+      nickname: newNickname
+    },
+    ...globalStore.familyMembers.slice(memberIndex + 1)
+  ]
   
   // 显示通知消息
   ElMessage.success({
@@ -1158,39 +1171,42 @@ const handleMemberUpdate = (data) => {
 // 处理账户信息更新事件
 const handleAccountUpdate = (data) => {
   const { title, message, level, accountId, updatedFields } = data
-  console.log(`账户信息更新 [${level}]: ${title} - ${message}`, { accountId, updatedFields })
+  // console.log(`账户信息更新 [${level}]: ${title} - ${message}`, { accountId, updatedFields })
   
   const currentAccountId = globalStore.user?.account?.id
+  const isCurrentUser = accountId === currentAccountId
   
-  // 如果是当前用户的账户更新
-  if (accountId === currentAccountId) {
-    // 触发账户信息更新事件，让需要更新的地方监听
-    const updateEvent = new CustomEvent('account-info-update', {
-      detail: {
-        accountId,
-        updatedFields
-      }
-    })
-    window.dispatchEvent(updateEvent)
-    
-    // 显示通知消息（如果是当前用户，通常是在当前会话中更新的，所以只显示通知）
-    ElMessage.success({
-      message: message || title || '账户信息已更新',
-      duration: 3000,
-      showClose: true
-    })
-  } else {
-    // 如果是其他用户的账户更新，通知 Family.vue 更新成员信息
-    const updateEvent = new CustomEvent('family-account-update', {
-      detail: {
-        accountId,
-        updatedFields
-      }
-    })
-    window.dispatchEvent(updateEvent)
-    
-    console.log(`其他用户 ${accountId} 的账户信息已更新，已通知 Family.vue 更新成员数据`)
+  // 如果是当前用户，更新 globalStore.user
+  if (isCurrentUser) {
+    globalStore.updateUserInfo(updatedFields)
   }
+  
+  // 更新 globalStore.familyMembers 中对应账户的信息
+  if (globalStore.familyMembers?.length) {
+    const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === accountId)
+    if (memberIndex > -1) {
+      const member = globalStore.familyMembers[memberIndex]
+      // 更新账户信息（使用新数组确保响应式更新）
+      globalStore.familyMembers = [
+        ...globalStore.familyMembers.slice(0, memberIndex),
+        {
+          ...member,
+          account: {
+            ...member.account,
+            ...updatedFields
+          }
+        },
+        ...globalStore.familyMembers.slice(memberIndex + 1)
+      ]
+    }
+  }
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: '账户信息已更新',
+    duration: 3000,
+    showClose: true
+  })
 }
 
 // 处理强制退出事件
@@ -1491,14 +1507,8 @@ const updateUserInfo = async () => {
 
     await updateUser(updateData)
     
-    // 本地更新用户信息
-    globalStore.updateUserInfo(updateData)
-    
-    // 更新家庭信息
-    await globalStore.loadFamilys()
     
     closeEditUserModal()
-    ElMessage.success('修改信息成功')
   } catch (error) {
     console.error('更新用户信息失败:', error)
     editUserFormError.value = error.response?.data?.detail || '更新用户信息失败，请重试'
