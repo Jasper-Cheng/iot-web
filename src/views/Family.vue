@@ -151,10 +151,10 @@
                 <div class="member-name">
                   <span class="member-nickname">{{ member.nickname }}</span>
                   <button 
-                    v-if="isCurrentUser(member)"
+                    v-if="isCurrentUser(member) || isCreator(currentFamily)"
                     class="member-edit-btn-inline"
                     @click="openEditMemberNicknameModal(currentFamily, member)"
-                    title="编辑我在家庭的昵称"
+                    :title="isCurrentUser(member) ? '编辑我在家庭的昵称' : '编辑成员昵称'"
                   >
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -448,7 +448,7 @@
     <div v-if="showEditNicknameModal" class="modal-overlay" @click="closeEditNicknameModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>编辑我在家庭"{{ editingFamily?.name }}"的昵称</h2>
+          <h2>{{ isEditingOtherMember ? `编辑成员"${editingMember?.nickname || editingMember?.account?.nickname || '用户'}"在家庭"${editingFamily?.name}"的昵称` : `编辑我在家庭"${editingFamily?.name}"的昵称` }}</h2>
           <button class="close-btn" @click="closeEditNicknameModal">×</button>
         </div>
         <form @submit.prevent="confirmEditNickname" class="family-form">
@@ -655,6 +655,12 @@ const editNicknameError = ref('')
 const editingMember = ref(null)
 const editingFamily = ref(null)
 const editingNickname = ref('')
+
+// 判断是否是创建者编辑其他成员的昵称
+const isEditingOtherMember = computed(() => {
+  if (!editingMember.value || !editingFamily.value) return false
+  return isCreator(editingFamily.value) && !isCurrentUser(editingMember.value)
+})
 
 // 编辑设备名称相关状态
 const showEditDeviceNameModal = ref(false)
