@@ -973,6 +973,12 @@ const handleFamilyMessage = (data) => {
     case 'force.logout':
       handleForceLogout(data.data)
       break
+    case 'member.update':
+      handleMemberUpdate(data.data)
+      break
+    case 'account.update':
+      handleAccountUpdate(data.data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -1140,6 +1146,70 @@ const handleFeedbackCreate = (data) => {
     duration: 3000,
     showClose: true
   })
+}
+
+// 处理成员信息更新事件
+const handleMemberUpdate = (data) => {
+  const { title, message, level, familyId, memberId, oldNickname, newNickname, memberName } = data
+  console.log(`成员信息更新 [${level}]: ${title} - ${message}`, { familyId, memberId, oldNickname, newNickname })
+  
+  // 触发自定义事件，通知 Family.vue 更新成员数据
+  // 使用 CustomEvent 来传递更新信息
+  const updateEvent = new CustomEvent('family-member-update', {
+    detail: {
+      familyId,
+      memberId,
+      oldNickname,
+      newNickname,
+      memberName
+    }
+  })
+  window.dispatchEvent(updateEvent)
+  
+  // 显示通知消息
+  ElMessage.success({
+    message: message || title || '成员信息已更新',
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 处理账户信息更新事件
+const handleAccountUpdate = (data) => {
+  const { title, message, level, accountId, updatedFields } = data
+  console.log(`账户信息更新 [${level}]: ${title} - ${message}`, { accountId, updatedFields })
+  
+  const currentAccountId = globalStore.user?.account?.id
+  
+  // 如果是当前用户的账户更新
+  if (accountId === currentAccountId) {
+    // 触发账户信息更新事件，让需要更新的地方监听
+    const updateEvent = new CustomEvent('account-info-update', {
+      detail: {
+        accountId,
+        updatedFields
+      }
+    })
+    window.dispatchEvent(updateEvent)
+    
+    // 显示通知消息（如果是当前用户，通常是在当前会话中更新的，所以只显示通知）
+    ElMessage.success({
+      message: message || title || '账户信息已更新',
+      duration: 3000,
+      showClose: true
+    })
+  } else {
+    // 如果是其他用户的账户更新，通知 Family.vue 更新成员信息
+    const updateEvent = new CustomEvent('family-account-update', {
+      detail: {
+        accountId,
+        updatedFields
+      }
+    })
+    window.dispatchEvent(updateEvent)
+    
+    console.log(`其他用户 ${accountId} 的账户信息已更新，已通知 Family.vue 更新成员数据`)
+  }
 }
 
 // 处理删除用户事件
@@ -1830,9 +1900,7 @@ const subscribeCurrentFamily = async () => {
   if (currentFamilyId) {
     try {
       await familyMessage.subscribeFamilyMessage(currentFamilyId)
-      console.log(`已订阅家庭 ${currentFamilyId} 的消息`)
     } catch (error) {
-      console.error('订阅家庭消息失败:', error)
     }
   }
 }

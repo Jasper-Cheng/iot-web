@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { getMyDevices, getDeviceMessages, getFamilyDevices } from '../api/devices'
-import { getFamilys } from '../api/users'
+import { getFamilys, getFamilyMembers } from '../api/users'
 import { getSystemMessages } from '../api/systemMessages'
 import { getDeviceCardBySN } from '../utils/deviceMapping'
 import { getRSAPublicKey } from '../api/auth'
@@ -63,6 +63,23 @@ export const useGlobalStore = defineStore('global', {
 		// ]
 		familys: [],
 		
+		// 当前家庭的成员数据
+		// 家庭成员列表数据结构：
+		// [
+		//   {
+		//     id: 1,                       // 家庭成员ID
+		//     nickname: "string",          // 在家庭中的昵称
+		//     role: "creator",             // 角色：creator/member
+		//     account: {                   // 账户信息
+		//       id: 4,
+		//       nickname: "string",
+		//       avatar: "string",
+		//       ...
+		//     }
+		//   }
+		// ]
+		familyMembers: [],
+		
 		// 设备消息数据
 		// 消息列表数据结构：
 		// [
@@ -104,6 +121,7 @@ export const useGlobalStore = defineStore('global', {
 		loading: {
 			devices: false,
 			familys: false,
+			familyMembers: false,
 			deviceMessages: false,
 			systemMessages: false,
 			auth: false
@@ -111,6 +129,7 @@ export const useGlobalStore = defineStore('global', {
 		errors: {
 			devices: null,
 			familys: null,
+			familyMembers: null,
 			deviceMessages: null,
 			systemMessages: null,
 			auth: null
@@ -174,6 +193,26 @@ export const useGlobalStore = defineStore('global', {
 				this.familys = []
 			} finally {
 				this.loading.familys = false
+			}
+		},
+		async loadFamilyMembers(familyId, params = {}) {
+			this.loading.familyMembers = true
+			this.errors.familyMembers = null
+			
+			try {
+				const res = await getFamilyMembers(familyId, {
+					skip: params.skip || 0,
+					limit: params.limit || 100
+				})
+				
+				// API直接返回成员数组，request.js已经提取了response.data
+				this.familyMembers = Array.isArray(res) ? res : []
+			} catch (error) {
+				console.error('加载家庭成员失败:', error)
+				this.errors.familyMembers = error
+				this.familyMembers = []
+			} finally {
+				this.loading.familyMembers = false
 			}
 		},
 		async loadDeviceMessages() {
@@ -246,12 +285,27 @@ export const useGlobalStore = defineStore('global', {
 				return
 			}
 			
-			await Promise.all([
+			const currentFamilyId = this.user?.account?.current_family_id
+			
+			// 基础数据加载
+			const loadPromises = [
 				this.loadDevices(),
 				this.loadFamilys(),
 				this.loadDeviceMessages(),
 				this.loadSystemMessages()
-			])
+			]
+			
+			// 如果有当前家庭ID，加载家庭成员（设备通过 loadDevices 加载）
+			if (currentFamilyId) {
+				loadPromises.push(
+					this.loadFamilyMembers(currentFamilyId)
+				)
+			} else {
+				// 如果没有当前家庭，清空家庭成员数据
+				this.familyMembers = []
+			}
+			
+			await Promise.all(loadPromises)
 		},
 				// 认证相关方法
 		setAuth(response) {

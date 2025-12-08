@@ -118,7 +118,7 @@
           <div class="section-header">
             <h4>家庭成员</h4>
             <div class="section-header-actions">
-              <span class="member-count">{{ familyMembers(currentFamily.id).length }} 人</span>
+              <span class="member-count">{{ familyMembers().length }} 人</span>
               <button 
                 class="invite-member-btn"
                 @click="generateInviteLink(currentFamily)"
@@ -132,12 +132,12 @@
               </button>
             </div>
           </div>
-          <div v-if="familyMembers(currentFamily.id).length === 0" class="empty-members">
+          <div v-if="familyMembers().length === 0" class="empty-members">
             暂无成员
           </div>
           <div v-else class="members-list">
             <div 
-              v-for="member in familyMembers(currentFamily.id)" 
+              v-for="member in familyMembers()" 
               :key="member.id"
               class="member-item"
             >
@@ -205,7 +205,7 @@
           <div class="section-header">
             <h4>家庭设备</h4>
             <div class="section-header-actions">
-              <span class="device-count">{{ familyDevices(currentFamily.id).length }} 台</span>
+              <span class="device-count">{{ familyDevices().length }} 台</span>
               <button 
                 class="add-device-btn"
                 @click="openAddDeviceToFamilyModal(currentFamily)"
@@ -218,12 +218,12 @@
               </button>
             </div>
           </div>
-          <div v-if="familyDevices(currentFamily.id).length === 0" class="empty-devices">
+          <div v-if="familyDevices().length === 0" class="empty-devices">
             暂无设备
           </div>
           <div v-else class="devices-list">
             <div 
-              v-for="device in familyDevices(currentFamily.id)" 
+              v-for="device in familyDevices()" 
               :key="device.id"
               class="device-item"
             >
@@ -263,9 +263,9 @@
                   <span class="device-label">序列号：</span>
                   <span class="device-value device-sn-value">{{ device.sn }}</span>
                 </div>
-                <div class="device-info-item" v-if="getDeviceOwner(currentFamily.id, device)">
+                <div class="device-info-item" v-if="getDeviceOwner(device)">
                   <span class="device-label">来自：</span>
-                  <span class="device-value">{{ getDeviceOwner(currentFamily.id, device) }}</span>
+                  <span class="device-value">{{ getDeviceOwner(device) }}</span>
                 </div>
                 <div class="device-info-item">
                   <span class="device-label">状态：</span>
@@ -593,12 +593,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
-import { createFamily, deleteFamily, leaveFamily, getFamilyMembers, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser } from '../api/users'
-import { getFamilyDevices, updateDeviceName, getMyDevices } from '../api/devices'
+import { createFamily, deleteFamily, leaveFamily, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser } from '../api/users'
+import { updateDeviceName, getMyDevices } from '../api/devices'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { getThumbnailByCardName, getDeviceCardBySN } from '../utils/deviceMapping'
@@ -685,54 +685,13 @@ const selectedDeviceIds = ref([])
 const isLoadingUserDevices = ref(false)
 const userDevices = ref([])
 
-// 存储每个家庭的成员和设备数据
-const familyMembersData = ref(new Map())
-const familyDevicesData = ref(new Map())
-const loadingMembers = ref(new Set())
-const loadingDevices = ref(new Set())
-
-// 加载家庭成员数据
-const loadFamilyMembers = async (familyId) => {
-  if (loadingMembers.value.has(familyId)) return
-  if (familyMembersData.value.has(familyId)) return
-  
-  loadingMembers.value.add(familyId)
-  try {
-    const members = await getFamilyMembers(familyId, { skip: 0, limit: 100 })
-    familyMembersData.value.set(familyId, Array.isArray(members) ? members : [])
-  } catch (error) {
-    console.error(`加载家庭成员失败 (familyId: ${familyId}):`, error)
-    familyMembersData.value.set(familyId, [])
-  } finally {
-    loadingMembers.value.delete(familyId)
+// 获取家庭成员（使用 globalStore 的数据）
+const familyMembers = () => {
+  // 只返回当前家庭的成员
+  if (currentFamilyId.value) {
+    return globalStore.familyMembers || []
   }
-}
-
-// 加载家庭设备数据
-const loadFamilyDevices = async (familyId, force = false) => {
-  if (loadingDevices.value.has(familyId)) return
-  if (!force && familyDevicesData.value.has(familyId)) return
-  
-  // 如果强制刷新，清除缓存
-  if (force) {
-    familyDevicesData.value.delete(familyId)
-  }
-  
-  loadingDevices.value.add(familyId)
-  try {
-    const devices = await getFamilyDevices(familyId)
-    familyDevicesData.value.set(familyId, Array.isArray(devices) ? devices : [])
-  } catch (error) {
-    console.error(`加载家庭设备失败 (familyId: ${familyId}):`, error)
-    familyDevicesData.value.set(familyId, [])
-  } finally {
-    loadingDevices.value.delete(familyId)
-  }
-}
-
-// 获取家庭成员
-const familyMembers = (familyId) => {
-  return familyMembersData.value.get(familyId) || []
+  return []
 }
 
 // 判断当前用户是否是家庭创建者
@@ -740,7 +699,7 @@ const familyMembers = (familyId) => {
 const isCreator = (family) => {
   if (!family || !globalStore.user?.account) return false
   
-  const members = familyMembers(family.id)
+  const members = familyMembers()
   const currentUserMember = members.find(m => m.account?.id === globalStore.user.account.id)
   
   // 如果当前用户是成员且 role 是 "creator"，则认为是创建者
@@ -757,8 +716,8 @@ const isCreator = (family) => {
 }
 
 // 获取当前用户在指定家庭中的 family_member_id
-const getCurrentUserFamilyMemberId = (familyId) => {
-  const members = familyMembers(familyId)
+const getCurrentUserFamilyMemberId = () => {
+  const members = familyMembers()
   const currentUserMember = members.find(m => m.account?.id === globalStore.user?.account?.id)
   // 返回的 id 就是 family_member_id
   return currentUserMember?.id || null
@@ -785,9 +744,13 @@ const handleMemberLeave = (family, member) => {
 }
 
 
-// 获取家庭设备
-const familyDevices = (familyId) => {
-  return familyDevicesData.value.get(familyId) || []
+// 获取家庭设备（使用 globalStore.devices，当有 current_family_id 时，devices 就是家庭设备）
+const familyDevices = () => {
+  // 如果有当前家庭ID，返回 devices（此时 devices 就是家庭设备）
+  if (currentFamilyId.value) {
+    return globalStore.devices || []
+  }
+  return []
 }
 
 // 格式化日期
@@ -833,9 +796,9 @@ const getDeviceThumbnail = (device) => {
 }
 
 // 获取设备所属成员
-const getDeviceOwner = (familyId, device) => {
+const getDeviceOwner = (device) => {
   if (!device.account_id) return null
-  const members = familyMembers(familyId)
+  const members = familyMembers()
   const owner = members.find(m => m.account?.id === device.account_id)
   return owner?.nickname || owner?.account?.nickname || null
 }
@@ -908,13 +871,8 @@ const createFamilyHandler = async () => {
     // 重新加载家庭列表
     await globalStore.loadFamilys()
     
-    // 如果返回了新创建的家庭数据，立即加载其成员和设备数据
-    if (newFamilyData?.id) {
-      await Promise.all([
-        loadFamilyMembers(newFamilyData.id),
-        loadFamilyDevices(newFamilyData.id)
-      ])
-    }
+    // 如果新创建的家庭被设置为当前家庭，loadAll 会自动加载成员和设备
+    // 这里不需要手动加载，因为创建家庭后不会自动切换
     
     closeCreateFamilyModal()
     ElMessage.success('创建家庭成功')
@@ -946,9 +904,10 @@ const confirmDeleteFamily = async () => {
   isDeletingFamily.value = true
   try {
     await deleteFamily(familyId)
-    // 清除缓存的数据
-    familyMembersData.value.delete(familyId)
-    familyDevicesData.value.delete(familyId)
+    // 如果删除的是当前家庭，清空成员数据（设备会通过 loadDevices 自动更新）
+    if (currentFamilyId.value === familyId) {
+      globalStore.familyMembers = []
+    }
     // 重新加载家庭列表
     await globalStore.loadFamilys()
     closeDeleteFamilyModal()
@@ -1005,16 +964,19 @@ const confirmLeaveFamily = async () => {
   isLeavingFamily.value = true
   try {
     await leaveFamily(familyMemberId)
-    // 清除缓存的数据
-    familyMembersData.value.delete(familyId)
-    familyDevicesData.value.delete(familyId)
-    // 重新加载家庭列表和成员数据
+    // 如果退出的是当前家庭，清空成员数据（设备会通过 loadDevices 自动更新）
+    if (currentFamilyId.value === familyId) {
+      globalStore.familyMembers = []
+    }
+    // 重新加载家庭列表
     await globalStore.loadFamilys()
     if (!isRemovingMember.value) {
       // 如果是退出家庭，不需要重新加载成员数据（因为已经不在家庭中了）
     } else {
-      // 如果是移除成员，重新加载成员数据
-      await loadFamilyMembers(familyId)
+      // 如果是移除成员，且当前正在查看该家庭，重新加载成员数据
+      if (currentFamilyId.value === familyId) {
+        await globalStore.loadFamilyMembers(familyId)
+      }
     }
     closeLeaveFamilyModal()
     ElMessage.success(isRemovingMember.value ? '移除成员成功' : '退出家庭成功')
@@ -1026,21 +988,20 @@ const confirmLeaveFamily = async () => {
   }
 }
 
-// 加载当前家庭的成员和设备数据
+// 加载当前家庭的成员数据（设备通过 loadDevices 自动加载）
 const loadCurrentFamilyData = async () => {
   if (currentFamilyId.value) {
-    await Promise.all([
-      loadFamilyMembers(currentFamilyId.value),
-      loadFamilyDevices(currentFamilyId.value)
-    ])
+    await globalStore.loadFamilyMembers(currentFamilyId.value)
   }
 }
 
-// 监听当前家庭ID变化，自动加载成员和设备数据
+// 监听当前家庭ID变化，自动加载成员数据（设备通过 loadDevices 自动加载）
 watch(() => currentFamilyId.value, (newFamilyId) => {
   if (newFamilyId) {
-    loadFamilyMembers(newFamilyId)
-    loadFamilyDevices(newFamilyId)
+    globalStore.loadFamilyMembers(newFamilyId)
+  } else {
+    // 如果没有当前家庭，清空成员数据
+    globalStore.familyMembers = []
   }
 }, { immediate: true })
 
@@ -1109,16 +1070,12 @@ const confirmEditNickname = async () => {
 
   try {
     const updatedMember = await updateFamilyMemberNickname(editingMember.value.id, editingNickname.value.trim())
-    // 更新本地缓存中的成员数据
-    const familyId = editingFamily.value.id
-    const members = familyMembersData.value.get(familyId) || []
-    const memberIndex = members.findIndex(m => m.id === editingMember.value.id)
+    // 更新 globalStore 中的成员数据
+    const memberIndex = globalStore.familyMembers.findIndex(m => m.id === editingMember.value.id)
     if (memberIndex > -1) {
-      members[memberIndex] = updatedMember
-      familyMembersData.value.set(familyId, members)
+      globalStore.familyMembers[memberIndex] = updatedMember
     }
     closeEditNicknameModal()
-    ElMessage.success('昵称修改成功')
   } catch (error) {
     console.error('修改昵称失败:', error)
     editNicknameError.value = error.response?.data?.detail || '修改昵称失败，请重试'
@@ -1165,13 +1122,10 @@ const confirmEditDeviceName = async () => {
 
   try {
     await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim(), editingDeviceFamily.value.id)
-    // 更新本地缓存中的设备数据
-    const familyId = editingDeviceFamily.value.id
-    const devices = familyDevicesData.value.get(familyId) || []
-    const deviceIndex = devices.findIndex(d => d.id === editingDevice.value.id)
+    // 更新 globalStore.devices 中的设备数据
+    const deviceIndex = globalStore.devices.findIndex(d => d.id === editingDevice.value.id)
     if (deviceIndex > -1) {
-      devices[deviceIndex] = { ...devices[deviceIndex], name: editingDeviceName.value.trim() }
-      familyDevicesData.value.set(familyId, devices)
+      globalStore.devices[deviceIndex] = { ...globalStore.devices[deviceIndex], name: editingDeviceName.value.trim() }
     }
     closeEditDeviceNameModal()
   } catch (error) {
@@ -1203,17 +1157,9 @@ const confirmRemoveDevice = async () => {
   isRemovingDevice.value = true
   try {
     await removeFamilyDevice(removingDeviceFamily.value.id, removingDevice.value.id)
-    // 更新本地缓存，从设备列表中移除
-    const familyId = removingDeviceFamily.value.id
-    const devices = familyDevicesData.value.get(familyId) || []
-    const deviceIndex = devices.findIndex(d => d.id === removingDevice.value.id)
-    if (deviceIndex > -1) {
-      devices.splice(deviceIndex, 1)
-      familyDevicesData.value.set(familyId, devices)
-    }
     
-    // 如果当前正在查看该家庭的设备管理，需要更新 globalStore.devices
-    if (currentFamilyId.value === familyId) {
+    // 如果当前正在查看该家庭，重新加载设备列表
+    if (currentFamilyId.value === removingDeviceFamily.value.id) {
       await globalStore.loadDevices()
     }
     
@@ -1244,9 +1190,8 @@ const loadUserDevices = async () => {
 
 // 判断设备是否已在家庭中
 const isDeviceInFamily = (deviceId) => {
-  if (!familyForAddDevice.value) return false
-  const familyDevices = familyDevicesData.value.get(familyForAddDevice.value.id) || []
-  return familyDevices.some(device => device.id === deviceId)
+  if (!familyForAddDevice.value || currentFamilyId.value !== familyForAddDevice.value.id) return false
+  return globalStore.devices.some(device => device.id === deviceId)
 }
 
 // 获取可用的设备列表（已添加到家庭的不可选）
@@ -1307,10 +1252,7 @@ const confirmAddDevicesToFamily = async () => {
     
     await Promise.all(addPromises)
     
-    // 强制重新加载家庭设备数据
-    await loadFamilyDevices(familyForAddDevice.value.id, true)
-    
-    // 如果当前正在查看该家庭的设备管理，需要更新 globalStore.devices
+    // 如果当前正在查看该家庭，重新加载设备列表
     if (currentFamilyId.value === familyForAddDevice.value.id) {
       await globalStore.loadDevices()
     }
@@ -1349,14 +1291,8 @@ const selectFamily = async (family) => {
     // 更新本地 user 数据
     globalStore.updateUserInfo({ current_family_id: family.id })
     
-    // 调用 loadAll 重新加载所有数据（loadDevices 会根据 current_family_id 加载对应家庭的设备）
+    // 调用 loadAll 重新加载所有数据（会自动加载当前家庭的成员和设备）
     await globalStore.loadAll()
-    
-    // 重新加载当前家庭的成员和设备数据
-    await Promise.all([
-      loadFamilyMembers(family.id),
-      loadFamilyDevices(family.id, true)
-    ])
     
     closeSwitchFamilyModal()
     ElMessage.success(`已切换到家庭"${family.name}"`)
@@ -1410,9 +1346,54 @@ const switchToPersonalDevices = async () => {
   }
 }
 
+// 处理成员信息更新事件
+const handleMemberUpdateEvent = (event) => {
+  const { familyId, memberId, newNickname } = event.detail
+  
+  // 如果更新的是当前家庭的成员
+  if (familyId === currentFamilyId.value) {
+    const memberIndex = globalStore.familyMembers.findIndex(m => m.id === memberId)
+    
+    if (memberIndex > -1) {
+      // 更新成员的昵称
+      globalStore.familyMembers[memberIndex] = {
+        ...globalStore.familyMembers[memberIndex],
+        nickname: newNickname
+      }
+      console.log(`已更新成员 ${memberId} 的昵称为: ${newNickname}`)
+    } else {
+      // 如果成员不在缓存中，重新加载成员数据
+      globalStore.loadFamilyMembers(familyId)
+    }
+  }
+}
+
+// 处理账户信息更新事件
+const handleAccountUpdateEvent = (event) => {
+  const { accountId, updatedFields } = event.detail
+  console.log(`收到账户信息更新事件: accountId=${accountId}, updatedFields=`, updatedFields)
+  
+  // 如果当前有选择的家庭，重新加载成员数据以获取最新的账户信息
+  if (currentFamilyId.value) {
+    globalStore.loadFamilyMembers(currentFamilyId.value)
+    console.log(`已重新加载家庭 ${currentFamilyId.value} 的成员数据`)
+  }
+}
+
 // 加载数据
 onMounted(async () => {
   await loadCurrentFamilyData()
+  
+  // 监听成员信息更新事件
+  window.addEventListener('family-member-update', handleMemberUpdateEvent)
+  // 监听账户信息更新事件
+  window.addEventListener('family-account-update', handleAccountUpdateEvent)
+})
+
+// 组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('family-member-update', handleMemberUpdateEvent)
+  window.removeEventListener('family-account-update', handleAccountUpdateEvent)
 })
 </script>
 
