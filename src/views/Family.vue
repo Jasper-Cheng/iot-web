@@ -964,22 +964,8 @@ const confirmLeaveFamily = async () => {
   isLeavingFamily.value = true
   try {
     await leaveFamily(familyMemberId)
-    // 如果退出的是当前家庭，清空成员数据（设备会通过 loadDevices 自动更新）
-    if (currentFamilyId.value === familyId) {
-      globalStore.familyMembers = []
-    }
-    // 重新加载家庭列表
-    await globalStore.loadFamilys()
-    if (!isRemovingMember.value) {
-      // 如果是退出家庭，不需要重新加载成员数据（因为已经不在家庭中了）
-    } else {
-      // 如果是移除成员，且当前正在查看该家庭，重新加载成员数据
-      if (currentFamilyId.value === familyId) {
-        await globalStore.loadFamilyMembers(familyId)
-      }
-    }
+    
     closeLeaveFamilyModal()
-    ElMessage.success(isRemovingMember.value ? '移除成员成功' : '退出家庭成功')
   } catch (error) {
     console.error(isRemovingMember.value ? '移除成员失败' : '退出家庭失败:', error)
     ElMessage.error(error.response?.data?.detail || (isRemovingMember.value ? '移除成员失败，请重试' : '退出家庭失败，请重试'))

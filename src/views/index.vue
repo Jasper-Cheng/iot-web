@@ -1314,17 +1314,48 @@ const handleMemberJoin = async (data) => {
 }
 
 // 处理成员移除事件
+// 处理成员移除事件
 const handleMemberRemove = async (data) => {
   const { title, message, level, familyId, memberId } = data
   console.log(`成员移除 [${level}]: ${title} - ${message}`)
   
-  // 如果当前正在查看该家庭，重新加载成员数据
+  const currentAccountId = globalStore.user?.account?.id
   const currentFamilyId = globalStore.user?.account?.current_family_id
-  if (currentFamilyId === familyId) {
-    await globalStore.loadFamilyMembers(familyId)
-  }
+  const isCurrentUser = memberId === currentAccountId
   
-  ElMessage.success(message || '成员已移除')
+  // 如果移除的是当前用户，切回个人设备管理
+  if (isCurrentUser && currentFamilyId === familyId) {
+    try {
+      // 清除 account 中的 current_family_id
+      await updateUser({ current_family_id: null })
+      
+      // 更新本地 user 数据
+      globalStore.updateUserInfo({ current_family_id: null })
+      
+      // 清空家庭成员数据
+      globalStore.familyMembers = []
+      
+      // 调用 loadAll 重新加载所有数据（loadDevices 会加载所有设备）
+      await globalStore.loadAll()
+      
+      // 如果当前在 Family 页面，跳转到 Home 页面
+      if (route.path === '/family') {
+        router.push('/home')
+      }
+      
+      ElMessage.success('您已被移除，已切回个人设备管理')
+    } catch (error) {
+      console.error('切回个人设备管理失败:', error)
+      ElMessage.error('切回个人设备管理失败，请刷新页面')
+    }
+  } else {
+    // 如果移除的是其他成员，重新加载成员数据
+    if (currentFamilyId === familyId) {
+      await globalStore.loadFamilyMembers(familyId)
+    }
+    
+    ElMessage.success(message || '成员已移除')
+  }
 }
 
 // 导航配置
