@@ -648,6 +648,12 @@ const fetchDeviceProperties = async () => {
     return
   }
   
+  // 检查 deviceManager 和 getDeviceProperties 方法是否存在
+  if (!deviceManager || typeof deviceManager.getDeviceProperties !== 'function') {
+    console.warn('deviceManager.getDeviceProperties 方法不存在，跳过获取设备属性')
+    return
+  }
+  
   try {
     // 使用 deviceProperties 中的属性名作为参数传入
     const requestedProperties = Object.keys(deviceProperties.value)

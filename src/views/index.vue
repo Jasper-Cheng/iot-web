@@ -1285,12 +1285,14 @@ const handleFamilyDelete = async (data) => {
   const { title, message, level, familyId } = data
   console.log(`家庭删除 [${level}]: ${title} - ${message}`)
   
-  // 如果删除的是当前家庭，清空成员数据
+  // 如果删除的是当前家庭，清空成员数据并重新加载设备
   const currentFamilyId = globalStore.user?.account?.current_family_id
   if (currentFamilyId === familyId) {
     globalStore.familyMembers = []
     // 清空当前家庭ID
     globalStore.updateUserInfo({ current_family_id: null })
+    // 重新加载设备列表（会加载个人设备）
+    await globalStore.loadDevices()
   }
   
   // 重新加载家庭列表
@@ -2005,9 +2007,7 @@ watch(() => globalStore.user?.account?.current_family_id, async (newFamilyId, ol
     if (oldFamilyId) {
       try {
         await familyMessage.unsubscribeFamilyMessage(oldFamilyId)
-        console.log(`已取消家庭 ${oldFamilyId} 的订阅`)
       } catch (error) {
-        console.error('取消家庭订阅失败:', error)
       }
     }
     
