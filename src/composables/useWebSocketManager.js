@@ -179,7 +179,8 @@ const subscribedDevicesSingleton = new Set()
 const eventNotificationHandlersSingleton = new Map() // { deviceSn: handler }
 let listenersAttachedSingleton = false
 let systemMessageHandlerSingleton = null
-let familyMessageHandlerSingleton = null
+let subscribedFamilyIdSingleton = null // 当前订阅的家庭ID
+let familyMessageHandlerSingleton = null // 家庭消息处理器
 
 export function useWebSocketManager() {
   // 全局状态
@@ -251,6 +252,16 @@ export function useWebSocketManager() {
         // 监听家庭消息
         wsManagerSingleton.on('family.message', (data) => {
           handleFamilyMessage(data)
+        })
+
+        // 监听家庭订阅响应
+        wsManagerSingleton.on('family.subscribe', (data) => {
+          handleFamilySubscribeResponse(data)
+        })
+
+        // 监听家庭取消订阅响应
+        wsManagerSingleton.on('family.unsubscribe', (data) => {
+          handleFamilyUnsubscribeResponse(data)
         })
 
         listenersAttachedSingleton = true
@@ -372,27 +383,49 @@ export function useWebSocketManager() {
    */
   const handleFamilyMessage = (data) => {
     if (familyMessageHandlerSingleton) {
-      familyMessageHandlerSingleton(data.params)
+      try {
+        familyMessageHandlerSingleton(data.params)
+      } catch (error) {
+        console.error('处理家庭消息时出错:', error)
+      }
     } else {
       console.log('收到家庭消息，但没有设置处理器:', data)
     }
   }
 
   /**
-   * 设置家庭消息处理器
-   * @param {Function} handler - 家庭消息处理器函数
+   * 处理家庭订阅响应
+   * @param {Object} data - 订阅响应数据
    */
-  const setFamilyMessageHandler = (handler) => {
-    familyMessageHandlerSingleton = handler
-    console.log('已设置家庭消息处理器')
+  const handleFamilySubscribeResponse = (data) => {
+    const { familyId } = data.params || {}
+    if (familyId !== undefined) {
+      if (data.error) {
+        console.error(`家庭 ${familyId} 消息订阅失败:`, data.error)
+        subscribedFamilyIdSingleton = null
+      } else {
+        console.log(`家庭 ${familyId} 消息订阅成功`)
+        subscribedFamilyIdSingleton = familyId
+      }
+    }
   }
 
   /**
-   * 清除家庭消息处理器
+   * 处理家庭取消订阅响应
+   * @param {Object} data - 取消订阅响应数据
    */
-  const clearFamilyMessageHandler = () => {
-    familyMessageHandlerSingleton = null
-    console.log('已清除家庭消息处理器')
+  const handleFamilyUnsubscribeResponse = (data) => {
+    const { familyId } = data.params || {}
+    if (familyId !== undefined) {
+      if (data.error) {
+        console.error(`家庭 ${familyId} 消息取消订阅失败:`, data.error)
+      } else {
+        console.log(`家庭 ${familyId} 消息取消订阅成功`)
+        if (subscribedFamilyIdSingleton === familyId) {
+          subscribedFamilyIdSingleton = null
+        }
+      }
+    }
   }
 
 
@@ -470,6 +503,73 @@ export function useWebSocketManager() {
     console.log('清除所有设备的事件处理器')
   }
 
+  /**
+   * 订阅家庭消息
+   * @param {number} familyId - 家庭ID
+   */
+  const subscribeFamilyMessage = async (familyId) => {
+    try {
+      // 如果已经订阅了其他家庭，先取消订阅
+      if (subscribedFamilyIdSingleton !== null && subscribedFamilyIdSingleton !== familyId) {
+        await unsubscribeFamilyMessage(subscribedFamilyIdSingleton)
+      }
+      
+      // 如果已经订阅了当前家庭，直接返回
+      if (subscribedFamilyIdSingleton === familyId) {
+        return
+      }
+      
+      await wsManagerSingleton.subscribeFamilyMessage(familyId)
+      subscribedFamilyIdSingleton = familyId
+      console.log(`订阅家庭 ${familyId} 消息`)
+    } catch (error) {
+      console.error(`订阅家庭 ${familyId} 消息失败:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * 取消订阅家庭消息
+   * @param {number} familyId - 家庭ID
+   */
+  const unsubscribeFamilyMessage = async (familyId) => {
+    try {
+      await wsManagerSingleton.unsubscribeFamilyMessage(familyId)
+      if (subscribedFamilyIdSingleton === familyId) {
+        subscribedFamilyIdSingleton = null
+      }
+      console.log(`取消订阅家庭 ${familyId} 消息`)
+    } catch (error) {
+      console.error(`取消订阅家庭 ${familyId} 消息失败:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * 设置家庭消息处理器
+   * @param {Function} handler - 家庭消息处理器函数
+   */
+  const setFamilyMessageHandler = (handler) => {
+    familyMessageHandlerSingleton = handler
+    console.log('已设置家庭消息处理器')
+  }
+
+  /**
+   * 清除家庭消息处理器
+   */
+  const clearFamilyMessageHandler = () => {
+    familyMessageHandlerSingleton = null
+    console.log('已清除家庭消息处理器')
+  }
+
+  /**
+   * 获取当前订阅的家庭ID
+   * @returns {number|null} 当前订阅的家庭ID
+   */
+  const getSubscribedFamilyId = () => {
+    return subscribedFamilyIdSingleton
+  }
+
 
 
 
@@ -501,8 +601,20 @@ export function useWebSocketManager() {
         console.log('所有设备订阅已取消')
       }
       
+      // 取消家庭消息订阅
+      if (subscribedFamilyIdSingleton !== null) {
+        try {
+          await wsManagerSingleton.unsubscribeFamilyMessage(subscribedFamilyIdSingleton)
+          console.log(`已取消家庭 ${subscribedFamilyIdSingleton} 的订阅`)
+        } catch (error) {
+          console.warn(`取消家庭 ${subscribedFamilyIdSingleton} 订阅失败:`, error.message)
+        }
+        subscribedFamilyIdSingleton = null
+      }
+      
       // 清除所有事件处理器
       clearAllEventNotificationHandlers()
+      clearFamilyMessageHandler()
       // 重置监听器附加状态
       listenersAttachedSingleton = false
       // 重置连接状态
@@ -539,8 +651,11 @@ export function useWebSocketManager() {
 
   // 提供家庭消息管理方法给所有子组件
   provide('familyMessage', {
+    subscribeFamilyMessage,
+    unsubscribeFamilyMessage,
     setFamilyMessageHandler,
     clearFamilyMessageHandler,
+    getSubscribedFamilyId,
     connectionState: computed(() => connectionState.value)
   })
 
@@ -565,8 +680,11 @@ export function useWebSocketManager() {
       connectionState: computed(() => connectionState.value) // WebSocket 连接状态
     },
     familyMessage: {
-      setFamilyMessageHandler,   // 设置家庭消息处理器
-      clearFamilyMessageHandler, // 清除家庭消息处理器
+      subscribeFamilyMessage,      // 订阅家庭消息
+      unsubscribeFamilyMessage,    // 取消订阅家庭消息
+      setFamilyMessageHandler,      // 设置家庭消息处理器
+      clearFamilyMessageHandler,   // 清除家庭消息处理器
+      getSubscribedFamilyId,        // 获取当前订阅的家庭ID
       connectionState: computed(() => connectionState.value) // WebSocket 连接状态
     },
     initConnection,  // 导出初始化连接方法

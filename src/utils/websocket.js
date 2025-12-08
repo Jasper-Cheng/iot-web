@@ -230,26 +230,31 @@ class WebSocketManager {
       // 触发通用消息事件
       this.emit('message', data)
 
-      // 根据method类型触发特定事件
-      if (data.method) {
-        this.emit(`message:${data.method}`, data)
-        
-        // 为特定方法类型触发更具体的事件
-        if (data.method === 'service.invoke') {
-          this.emit('service.invoke', data)
-        } else if (data.method === 'event.subscribe') {
-          this.emit('event.subscribe', data)
-        } else if (data.method === 'event.unsubscribe') {
-          this.emit('event.unsubscribe', data)
-        } else if (data.method === 'event.notify') {
-          // event.notify 是服务器主动推送的事件通知，不是请求响应
-          this.emit('event.notify', data)
-        } else if (data.method === 'system.message') {
-          this.emit('system.message', data)
-        } else if (data.method === 'family.message') {
-          this.emit('family.message', data)
+        // 根据method类型触发特定事件
+        if (data.method) {
+          this.emit(`message:${data.method}`, data)
+          
+          // 为特定方法类型触发更具体的事件
+          if (data.method === 'service.invoke') {
+            this.emit('service.invoke', data)
+          } else if (data.method === 'event.subscribe') {
+            this.emit('event.subscribe', data)
+          } else if (data.method === 'event.unsubscribe') {
+            this.emit('event.unsubscribe', data)
+          } else if (data.method === 'event.notify') {
+            // event.notify 是服务器主动推送的事件通知，不是请求响应
+            this.emit('event.notify', data)
+          } else if (data.method === 'system.message') {
+            this.emit('system.message', data)
+          } else if (data.method === 'family.subscribe') {
+            this.emit('family.subscribe', data)
+          } else if (data.method === 'family.unsubscribe') {
+            this.emit('family.unsubscribe', data)
+          } else if (data.method === 'family.message') {
+            // family.message 是服务器主动推送的家庭消息通知
+            this.emit('family.message', data)
+          }
         }
-      }
 
     } catch (error) {
       this.log('Failed to parse message:', error)
@@ -464,6 +469,34 @@ class WebSocketManager {
       method: 'event.unsubscribe',
       params: {
         deviceSn
+      }
+    }, true)
+  }
+
+  /**
+   * 订阅家庭消息
+   * @param {number} familyId - 家庭ID
+   * @returns {Promise} 返回订阅结果
+   */
+  subscribeFamilyMessage(familyId) {
+    return this.send({
+      method: 'family.subscribe',
+      params: {
+        familyId
+      }
+    }, true)
+  }
+
+  /**
+   * 取消订阅家庭消息
+   * @param {number} familyId - 家庭ID
+   * @returns {Promise} 返回取消订阅结果
+   */
+  unsubscribeFamilyMessage(familyId) {
+    return this.send({
+      method: 'family.unsubscribe',
+      params: {
+        familyId
       }
     }, true)
   }

@@ -1820,11 +1820,28 @@ onMounted(async () => {
   
 })
 
+// 订阅家庭消息的函数
+const subscribeCurrentFamily = async () => {
+  if (!familyMessage || !globalStore.user?.account) {
+    return
+  }
+  
+  const currentFamilyId = globalStore.user.account.current_family_id
+  if (currentFamilyId) {
+    try {
+      await familyMessage.subscribeFamilyMessage(currentFamilyId)
+      console.log(`已订阅家庭 ${currentFamilyId} 的消息`)
+    } catch (error) {
+      console.error('订阅家庭消息失败:', error)
+    }
+  }
+}
+
 // 监听WebSocket连接状态
-watch(() => systemMessage?.connectionState?.value, (newState, oldState) => {
+watch(() => systemMessage?.connectionState?.value, async (newState, oldState) => {
   
   // 检查是否获取到了正确的 manager 对象
-  if (!systemMessage || !familyMessage || !systemMessage.setSystemMessageHandler || !familyMessage.setFamilyMessageHandler) {
+  if (!systemMessage || !familyMessage || !systemMessage.setSystemMessageHandler) {
     console.warn('消息管理器未正确初始化，跳过状态处理')
     return
   }
@@ -1832,9 +1849,12 @@ watch(() => systemMessage?.connectionState?.value, (newState, oldState) => {
   switch (newState) {
     case 'connected':
       console.log('WebSocket已连接，设置消息处理器')
-      // 连接成功时设置处理器
+      // 连接成功时设置系统消息处理器
       systemMessage.setSystemMessageHandler(handleSystemMessage)
+      // 设置家庭消息处理器
       familyMessage.setFamilyMessageHandler(handleFamilyMessage)
+      // 订阅当前家庭的消息
+      await subscribeCurrentFamily()
       break
     case 'connecting':
       console.log('WebSocket正在连接...')
@@ -1853,6 +1873,36 @@ watch(() => systemMessage?.connectionState?.value, (newState, oldState) => {
       break
     default:
       console.log('未知的连接状态:', newState)
+  }
+})
+
+// 监听当前家庭ID变化，切换家庭时重新订阅
+watch(() => globalStore.user?.account?.current_family_id, async (newFamilyId, oldFamilyId) => {
+  if (!familyMessage || !systemMessage?.connectionState?.value || systemMessage.connectionState.value !== 'connected') {
+    return
+  }
+  
+  // 如果家庭ID发生变化，重新订阅
+  if (newFamilyId !== oldFamilyId) {
+    // 取消旧家庭的订阅（如果有）
+    if (oldFamilyId) {
+      try {
+        await familyMessage.unsubscribeFamilyMessage(oldFamilyId)
+        console.log(`已取消家庭 ${oldFamilyId} 的订阅`)
+      } catch (error) {
+        console.error('取消家庭订阅失败:', error)
+      }
+    }
+    
+    // 订阅新家庭的消息
+    if (newFamilyId) {
+      try {
+        await familyMessage.subscribeFamilyMessage(newFamilyId)
+        console.log(`已订阅家庭 ${newFamilyId} 的消息`)
+      } catch (error) {
+        console.error('订阅家庭消息失败:', error)
+      }
+    }
   }
 })
 
