@@ -940,16 +940,16 @@ const handleFamilyMessage = (data) => {
     case 'device.add':
       handleDeviceAdd(data.data)
       break
-    case 'device.alert':
+    case 'device.alert'://?
       handleDeviceAlert(data.data)
       break
     case 'device.bind':
       handleDeviceBind(data.data)
       break
-    case 'device.message.mark_all_read':
+    case 'device.message.mark_all_read'://?
       handleDeviceMessageMarkAllRead(data.data)
       break
-    case 'device.message.read':
+    case 'device.message.read'://?
       handleDeviceMessageRead(data.data)
       break
     case 'device.name.update':

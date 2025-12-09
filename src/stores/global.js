@@ -220,8 +220,10 @@ export const useGlobalStore = defineStore('global', {
 			this.errors.deviceMessages = null
 			
 			try {
+				const currentFamilyId = this.user?.account?.current_family_id
 				const res = await getDeviceMessages({
-					status: 'new'
+					status: 'new',
+					family_id: currentFamilyId
 				})
 				
 				// API直接返回消息数组，request.js已经提取了response.data
@@ -241,9 +243,11 @@ export const useGlobalStore = defineStore('global', {
 			this.errors.deviceMessages = null
 			
 			try {
+				const currentFamilyId = this.user?.account?.current_family_id
 				const res = await getDeviceMessages({
 					limit: params.limit || 50,
-					skip: params.skip || 0
+					skip: params.skip || 0,
+					family_id: currentFamilyId
 				})
 				// 返回已读消息数组
 				return Array.isArray(res) ? res : []

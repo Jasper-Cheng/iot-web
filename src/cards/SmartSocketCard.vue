@@ -14,17 +14,17 @@
             {{ wsConnected && deviceOnline ? '在线' : '离线' }}
           </span>
           <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
-        </div>
-      </div>
-      <div class="device-switch">
+    </div>
+    </div>
+    <div class="device-switch">
         <span class="switch-label">{{ effectivePower ? 'On' : 'Off' }}</span>
-        <div 
+      <div 
           :class="['switch-button', { 
             active: effectivePower,
             disabled: !wsConnected || !deviceOnline 
           }]"
-          @click="toggleDevice"
-        ></div>
+        @click="toggleDevice"
+      ></div>
       </div>
     </div>
   </div>

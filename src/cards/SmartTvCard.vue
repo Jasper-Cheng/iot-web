@@ -20,16 +20,16 @@
           </span>
           <span v-if="props.device?.sn" class="device-sn">{{ props.device.sn }}</span>
         </div>
-      </div>
-      <div class="device-switch">
+    </div>
+    <div class="device-switch">
         <span class="switch-label">{{ effectivePower ? 'On' : 'Off' }}</span>
-        <div 
+      <div 
           :class="['switch-button', { 
             active: effectivePower,
             disabled: !wsConnected || !deviceOnline 
           }]"
-          @click="toggleDevice"
-        ></div>
+        @click="toggleDevice"
+      ></div>
       </div>
     </div>
   </div>

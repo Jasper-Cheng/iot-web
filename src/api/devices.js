@@ -19,8 +19,8 @@ export const bindDeviceBySN = (sn, familyId = null) => {
     url: '/devices/bind-by-sn/',
     method: 'post',
     data: { sn: sn }
-  }
-  
+}
+
   // family_id 作为查询参数
   if (familyId !== null) {
     config.params = { family_id: familyId }
@@ -61,6 +61,11 @@ export const getDeviceMessages = (params) => {
   
   if (params.skip !== undefined) {
     requestParams.skip = params.skip
+  }
+  
+  // family_id 作为查询参数
+  if (params.family_id !== undefined && params.family_id !== null) {
+    requestParams.family_id = params.family_id
   }
   
   // 支持 level 参数，可以是数组或单个值
