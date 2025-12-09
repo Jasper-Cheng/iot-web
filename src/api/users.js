@@ -17,11 +17,18 @@ export const deleteUser = () => {
 }
 
 // 一键已读所有消息
-export const markAllMessagesAsRead = () => {
-  return request({
+export const markAllMessagesAsRead = (familyId = null) => {
+  const config = {
     url: '/device-messages/mark-all-read',
     method: 'patch'
-  })
+  }
+  
+  // family_id 作为查询参数
+  if (familyId !== null) {
+    config.params = { family_id: familyId }
+  }
+  
+  return request(config)
 }
 
 // 家庭相关API

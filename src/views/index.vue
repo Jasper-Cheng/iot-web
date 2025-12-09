@@ -1002,7 +1002,7 @@ const handleDeviceMessageRead = (data) => {
       }
     }
   }
-  ElMessage.success(`消息已标记为已读`)
+  ElMessage.success(message || `消息已标记为已读`)
 }
 
 // 处理所有设备消息已读事件
@@ -1019,7 +1019,7 @@ const handleDeviceMessageMarkAllRead = (data) => {
         msg.status = 'read'
       })
     }
-    ElMessage.success(`所有消息已标记为已读`)
+    ElMessage.success(message || `所有消息已标记为已读`)
 }
 
 // 处理设备名称更新事件
@@ -1203,7 +1203,7 @@ const handleAccountUpdate = (data) => {
   
   // 显示通知消息
   ElMessage.success({
-    message: '账户信息已更新',
+    message: title||'账户信息已更新',
     duration: 3000,
     showClose: true
   })
@@ -1309,10 +1309,7 @@ const handleMemberJoin = async (data) => {
   // 如果当前正在查看该家庭，重新加载成员数据和设备列表
   const currentFamilyId = globalStore.user?.account?.current_family_id
   if (currentFamilyId === familyId) {
-    await Promise.all([
-      globalStore.loadFamilyMembers(familyId),
-      globalStore.loadDevices()
-    ])
+    await globalStore.loadAll()
   }
   
   ElMessage.success(message || '成员已加入家庭')
@@ -1365,10 +1362,7 @@ const handleMemberRemove = async (data) => {
   } else {
     // 如果移除的是其他成员，重新加载成员数据和设备列表
     if (currentFamilyId === familyId) {
-      await Promise.all([
-        globalStore.loadFamilyMembers(familyId),
-        globalStore.loadDevices()
-      ])
+      await globalStore.loadAll()
     }
     
     ElMessage.success(message || '成员已移除')
@@ -1825,7 +1819,8 @@ const markAllAsRead = async () => {
   
   try {
     // 调用API标记所有消息为已读
-    await markAllMessagesAsRead()
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    await markAllMessagesAsRead(currentFamilyId)
     closeNotificationMenu()
   } catch (error) {
     console.error('标记所有消息为已读失败:', error)
@@ -1838,7 +1833,8 @@ const markMessageAsRead = async (message) => {
   
   try {
     // 调用API标记消息为已读
-    await markMessageAsReadAPI(message.id)
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    await markMessageAsReadAPI(message.id, currentFamilyId)
   } catch (error) {
     console.error('标记消息为已读失败:', error)
   }

@@ -110,11 +110,18 @@ export const getDeviceMessages = (params) => {
 }
 
 // 标记消息已读
-export const markMessageAsRead = (messageId) => {
-  return request({
+export const markMessageAsRead = (messageId, familyId = null) => {
+  const config = {
     url: `/device-messages/${messageId}/make-read`,
     method: 'patch'
-  })
+  }
+  
+  // family_id 作为查询参数
+  if (familyId !== null) {
+    config.params = { family_id: familyId }
+  }
+  
+  return request(config)
 }
 
 // 获取家庭设备
