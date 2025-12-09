@@ -1095,7 +1095,7 @@ const confirmEditDeviceName = async () => {
   editDeviceNameError.value = ''
 
   try {
-    await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim(), editingDeviceFamily.value.id)
+    await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim(), currentFamilyId.value)
     closeEditDeviceNameModal()
   } catch (error) {
     console.error('修改设备名称失败:', error)

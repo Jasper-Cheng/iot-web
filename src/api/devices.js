@@ -33,6 +33,8 @@ export const updateDeviceName = (id, name, familyId = null) => {
   if (familyId !== null) {
     config.params = { family_id: familyId }
   }
+
+  console.log('updateDeviceName', config)
   
   return request(config)
 }
