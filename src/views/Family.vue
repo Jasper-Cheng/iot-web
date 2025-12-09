@@ -1262,13 +1262,7 @@ const confirmRemoveDevice = async () => {
   try {
     await removeFamilyDevice(removingDeviceFamily.value.id, removingDevice.value.id)
     
-    // 如果当前正在查看该家庭，重新加载设备列表
-    if (currentFamilyId.value === removingDeviceFamily.value.id) {
-      await globalStore.loadDevices()
-    }
-    
     closeRemoveDeviceModal()
-    ElMessage.success('移除设备成功')
   } catch (error) {
     console.error('移除设备失败:', error)
     ElMessage.error(error.response?.data?.detail || '移除设备失败，请重试')
@@ -1350,19 +1344,11 @@ const confirmAddDevicesToFamily = async () => {
   
   try {
     // 批量添加设备
-    const addPromises = selectedDeviceIds.value.map(deviceId => 
+    selectedDeviceIds.value.map(deviceId => 
       addFamilyDevice(familyForAddDevice.value.id, deviceId)
     )
     
-    await Promise.all(addPromises)
-    
-    // 如果当前正在查看该家庭，重新加载设备列表
-    if (currentFamilyId.value === familyForAddDevice.value.id) {
-      await globalStore.loadDevices()
-    }
-    
     closeAddDeviceToFamilyModal()
-    ElMessage.success(`成功添加 ${selectedDeviceIds.value.length} 台设备到家庭`)
   } catch (error) {
     console.error('添加设备到家庭失败:', error)
     addDeviceError.value = error.response?.data?.detail || '添加设备失败，请重试'
