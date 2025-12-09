@@ -85,12 +85,15 @@ export const getFamilyMembers = (familyId, params = {}) => {
   })
 }
 
-export const joinFamilyByInviteCode = (inviteCode) => {
+export const joinFamilyByInviteCode = (inviteCode, nickname) => {
   return request({
     url: '/family-members/join-by-invite-code',
     method: 'post',
     params: {
       invite_code: inviteCode
+    },
+    data: {
+      nickname: nickname
     }
   })
 }

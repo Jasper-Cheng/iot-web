@@ -16,6 +16,18 @@
         </button>
         <span class="family-count">{{ familys.length }}/6</span>
         <button 
+          class="join-family-btn"
+          @click="openJoinFamilyModal"
+          title="加入家庭"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" fill="none"/>
+            <circle cx="8.5" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M20 8v6M23 11h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          加入家庭
+        </button>
+        <button 
           class="create-family-btn"
           @click="openCreateFamilyModal"
           :disabled="familys.length >= 6"
@@ -401,6 +413,49 @@
       </div>
     </div>
 
+    <!-- 加入家庭弹窗 -->
+    <div v-if="showJoinFamilyModal" class="modal-overlay" @click="closeJoinFamilyModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>加入家庭</h2>
+          <button class="close-btn" @click="closeJoinFamilyModal">×</button>
+        </div>
+        <form @submit.prevent="confirmJoinFamily" class="family-form">
+          <div class="form-group">
+            <label>邀请码</label>
+            <input 
+              type="text" 
+              v-model="joinFamilyForm.inviteCode" 
+              placeholder="请输入家庭邀请码"
+              :disabled="isJoiningFamily"
+              class="form-input"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>在家庭中的昵称</label>
+            <input 
+              type="text" 
+              v-model="joinFamilyForm.nickname" 
+              placeholder="请输入在家庭中的昵称"
+              :disabled="isJoiningFamily"
+              class="form-input"
+              required
+            />
+          </div>
+          <div v-if="joinFamilyError" class="error-message">
+            {{ joinFamilyError }}
+          </div>
+          <div class="form-actions">
+            <button type="button" @click="closeJoinFamilyModal" class="cancel-btn" :disabled="isJoiningFamily">取消</button>
+            <button type="submit" class="submit-btn" :disabled="isJoiningFamily || !joinFamilyForm.inviteCode.trim() || !joinFamilyForm.nickname.trim()">
+              {{ isJoiningFamily ? '加入中...' : '确认加入' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 删除家庭确认弹窗 -->
     <div v-if="showDeleteFamilyModal" class="modal-overlay" @click="closeDeleteFamilyModal">
       <div class="modal-content" @click.stop>
@@ -597,7 +652,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
-import { createFamily, deleteFamily, leaveFamily, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser, updateCurrentFamily } from '../api/users'
+import { createFamily, deleteFamily, leaveFamily, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser, updateCurrentFamily, joinFamilyByInviteCode } from '../api/users'
 import { updateDeviceName, getMyDevices } from '../api/devices'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
@@ -620,6 +675,15 @@ const familys = computed(() => {
 const currentFamily = computed(() => {
   if (!currentFamilyId.value) return null
   return familys.value.find(f => f.id === currentFamilyId.value) || null
+})
+
+// 加入家庭相关状态
+const showJoinFamilyModal = ref(false)
+const isJoiningFamily = ref(false)
+const joinFamilyError = ref('')
+const joinFamilyForm = ref({
+  inviteCode: '',
+  nickname: ''
 })
 
 // 创建家庭相关状态
@@ -811,6 +875,77 @@ const getGenderText = (gender) => {
     'other': '其他'
   }
   return genderMap[gender] || gender
+}
+
+// 打开加入家庭弹窗
+const openJoinFamilyModal = () => {
+  showJoinFamilyModal.value = true
+  joinFamilyError.value = ''
+  // 默认昵称为当前用户的昵称
+  joinFamilyForm.value.nickname = globalStore.user?.account?.nickname || ''
+  joinFamilyForm.value.inviteCode = ''
+}
+
+// 关闭加入家庭弹窗
+const closeJoinFamilyModal = () => {
+  showJoinFamilyModal.value = false
+  joinFamilyError.value = ''
+  joinFamilyForm.value = {
+    inviteCode: '',
+    nickname: ''
+  }
+}
+
+// 确认加入家庭
+const confirmJoinFamily = async () => {
+  if (!joinFamilyForm.value.inviteCode.trim()) {
+    joinFamilyError.value = '请输入邀请码'
+    return
+  }
+  
+  if (!joinFamilyForm.value.nickname.trim()) {
+    joinFamilyError.value = '请输入在家庭中的昵称'
+    return
+  }
+
+  isJoiningFamily.value = true
+  joinFamilyError.value = ''
+
+  try {
+    const result = await joinFamilyByInviteCode(
+      joinFamilyForm.value.inviteCode.trim(),
+      joinFamilyForm.value.nickname.trim()
+    )
+    
+    // 如果加入成功，自动切换到该家庭，因为自己不会收到家庭消息所以在这里更新。
+    if (result.family_id) {
+      try {
+        const accountData = await updateCurrentFamily(result.family_id)
+        if (accountData) {
+          globalStore.updateUserInfo({
+            nickname: accountData.nickname,
+            gender: accountData.gender,
+            phone: accountData.phone,
+            email: accountData.email,
+            avatar: accountData.avatar,
+            current_family_id: accountData.current_family_id
+          })
+        }
+        // 重新加载所有数据
+        await globalStore.loadAll()
+      } catch (error) {
+        console.error('切换家庭失败:', error)
+      }
+    }
+    
+    closeJoinFamilyModal()
+    ElMessage.success('加入家庭成功')
+  } catch (error) {
+    console.error('加入家庭失败:', error)
+    joinFamilyError.value = error.response?.data?.detail || '加入家庭失败，请重试'
+  } finally {
+    isJoiningFamily.value = false
+  }
 }
 
 // 打开创建家庭弹窗
@@ -1393,6 +1528,31 @@ onUnmounted(() => {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: 8px;
+}
+
+.join-family-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.join-family-btn:hover {
+  background: var(--color-hover);
+  border-color: var(--color-border-hover);
+}
+
+.join-family-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .create-family-btn {
