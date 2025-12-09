@@ -8,9 +8,9 @@
         <circle cx="12" cy="21" r="1" fill="currentColor"/>
       </svg>
     </div>
-    <div class="wifi-info">
+    <div class="card-header">
       <div class="wifi-card-info">
-        <h3>{{ device.name || 'Wi-Fi' }}</h3>
+        <h3>{{ props.device?.name || 'Wi-Fi' }}</h3>
         <div class="connection-status">
           <div 
             :class="['status-indicator', { 
@@ -21,19 +21,17 @@
           <span class="status-text">
             {{ wsConnected && deviceOnline ? '在线' : '离线' }}
           </span>
-          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+          <span v-if="props.device?.sn" class="device-sn">{{ props.device.sn }}</span>
         </div>
       </div>
-      <div class="wifi-status-row">
-        <div class="wifi-switch">
-          <div 
-            :class="['switch-button', { 
-              active: effectiveWifiStatus,
-              disabled: !wsConnected || !deviceOnline 
-            }]"
-            @click="toggleWiFi"
-          ></div>
-        </div>
+      <div class="wifi-switch">
+        <div 
+          :class="['switch-button', { 
+            active: effectiveWifiStatus,
+            disabled: !wsConnected || !deviceOnline 
+          }]"
+          @click="toggleWiFi"
+        ></div>
       </div>
     </div>
   </div>
@@ -92,12 +90,11 @@ const toggleWiFi = () => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 16px 18px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   transition: all 0.3s ease;
-  min-height: 80px;
 }
 
 .wifi-card:hover {
@@ -113,6 +110,7 @@ const toggleWiFi = () => {
   cursor: pointer;
   transition: all 0.3s ease;
   padding: 10px 12px;
+  flex-shrink: 0;
 }
 
 .wifi-icon svg {
@@ -121,11 +119,12 @@ const toggleWiFi = () => {
   color: var(--color-text-primary);
 }
 
-.wifi-info {
-  flex: 1;
+.card-header {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
 }
 
 .wifi-card-info h3 {
@@ -173,13 +172,6 @@ const toggleWiFi = () => {
   margin-left: 8px;
 }
 
-.wifi-status-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
 .wifi-switch {
   display: flex;
   align-items: center;
@@ -205,7 +197,6 @@ const toggleWiFi = () => {
   content: '';
   position: absolute;
   top: 2px;
-  left: 2px;
   width: 14px;
   height: 14px;
   background: var(--color-switch-indicator-active);
