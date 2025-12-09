@@ -259,7 +259,7 @@ const deviceSn = computed(() => props.device?.sn || 'speaker_001')
 
 
 // 设备在线状态 - 基于传入的device中的status判断
-// 设备状态：unconfigured/configured/unbound/bound/online/offline/fault
+// 设备状态：unbound/bound/offline/online/fatal
 const deviceOnline = computed(() => {
   return props.device?.status === 'online'
 })

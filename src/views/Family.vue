@@ -835,13 +835,11 @@ const formatDate = (dateString) => {
 // 获取设备状态文本
 const getStatusText = (status) => {
   const statusMap = {
-    'unconfigured': '未配置',
-    'configured': '已配置',
     'unbound': '未绑定',
     'bound': '已绑定',
-    'online': '在线',
     'offline': '离线',
-    'fault': '故障'
+    'online': '在线',
+    'fatal': '故障'
   }
   return statusMap[status] || status
 }
@@ -2340,7 +2338,7 @@ const switchToPersonalDevices = async () => {
   background: var(--color-text-muted);
 }
 
-.device-status.fault .status-dot {
+.device-status.fatal .status-dot {
   background: var(--color-danger);
 }
 
