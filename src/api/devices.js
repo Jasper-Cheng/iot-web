@@ -23,15 +23,18 @@ export const bindDeviceBySN = (sn) => {
 }
 
 export const updateDeviceName = (id, name, familyId = null) => {
-  const data = { name: name }
-  if (familyId !== null) {
-    data.family_id = familyId
-  }
-  return request({
+  const config = {
     url: `/devices/${id}/name`,
     method: 'patch',
-    data: data
-  })
+    data: { name: name }
+  }
+  
+  // family_id 作为查询参数
+  if (familyId !== null) {
+    config.params = { family_id: familyId }
+  }
+  
+  return request(config)
 }
 
 // 获取设备消息
