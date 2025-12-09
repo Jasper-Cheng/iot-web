@@ -2,8 +2,19 @@
   <div class="refrigerator-card">
     <div class="card-header">
       <div class="refrigerator-card-info">
-        <h3>Refrigerator</h3>
-        <p>Haier Smart Fridge</p>
+        <h3>{{ device.name || 'Refrigerator' }}</h3>
+        <div class="connection-status">
+          <div 
+            :class="['status-indicator', { 
+              'connected': wsConnected && deviceOnline,
+              'disconnected': !wsConnected || !deviceOnline 
+            }]"
+          ></div>
+          <span class="status-text">
+            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+          </span>
+          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+        </div>
       </div>
       
       <!-- 冰箱模式选择 -->
@@ -21,9 +32,12 @@
       </div>
       
       <div class="power-switch">
-        <span class="switch-label">{{ refrigeratorPower ? 'On' : 'Off' }}</span>
+        <span class="switch-label">{{ effectiveRefrigeratorPower ? 'On' : 'Off' }}</span>
         <div 
-          :class="['switch-button', { active: refrigeratorPower }]"
+          :class="['switch-button', { 
+            active: effectiveRefrigeratorPower,
+            disabled: !wsConnected || !deviceOnline 
+          }]"
           @click="toggleRefrigerator"
         ></div>
       </div>
@@ -133,6 +147,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -142,12 +157,32 @@ const props = defineProps({
   }
 })
 
+// 使用设备管理器
+const { deviceManager } = useWebSocketManager()
+
+// 设备在线状态
+const deviceOnline = computed(() => {
+  return props.device?.status === 'online'
+})
+
+// WebSocket连接状态
+const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
+
 // =========================
 // Refrigerator state and modes
 // =========================
 const refrigeratorPower = ref(false)
 const refrigeratorStatus = ref('idle') // idle, cooling, defrosting, error
 const refrigeratorMode = ref('normal') // normal, eco, vacation
+
+// 确保离线时开关始终为Off
+const effectiveRefrigeratorPower = computed(() => {
+  // 如果设备离线或WebSocket未连接，强制为Off
+  if (!deviceOnline.value || !wsConnected.value) {
+    return false
+  }
+  return refrigeratorPower.value
+})
 
 // 冷藏室设置
 const refrigeratorSettings = ref({
@@ -177,6 +212,12 @@ const refrigeratorStatusText = computed(() => {
 
 // 切换冰箱开关
 const toggleRefrigerator = () => {
+  // 设备不在线或WebSocket未连接时不允许操作
+  if (!deviceOnline.value || !wsConnected.value) {
+    console.warn('设备离线或WebSocket未连接，无法控制设备')
+    return
+  }
+  
   refrigeratorPower.value = !refrigeratorPower.value
   if (!refrigeratorPower.value) {
     // 关闭电源时，重置所有状态
@@ -240,10 +281,42 @@ const toggleFreezerSterilization = () => {
   color: var(--color-text-primary);
 }
 
-.refrigerator-card-info p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-indicator.disconnected {
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.device-sn {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
 }
 
 .refrigerator-status-section {
@@ -569,6 +642,15 @@ const toggleFreezerSterilization = () => {
 
 .switch-button.active::after {
   left: 16px;
+}
+
+.switch-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch-button.disabled:hover {
+  transform: none;
 }
 
 @keyframes pulse {

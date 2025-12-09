@@ -1,7 +1,21 @@
 <template>
   <div class="camera-card">
     <div class="camera-header">
-      <h3>Camera</h3>
+      <div class="camera-card-info">
+        <h3>{{ device.name || 'Camera' }}</h3>
+        <div class="connection-status">
+          <div 
+            :class="['status-indicator', { 
+              'connected': wsConnected && deviceOnline,
+              'disconnected': !wsConnected || !deviceOnline 
+            }]"
+          ></div>
+          <span class="status-text">
+            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+          </span>
+          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+        </div>
+      </div>
       <div class="camera-controls">
         <button 
           class="mic-button"
@@ -20,9 +34,12 @@
           </svg>
         </button>
         <div class="camera-switch">
-          <span class="switch-label">{{ cameraPower ? 'On' : 'Off' }}</span>
+          <span class="switch-label">{{ effectiveCameraPower ? 'On' : 'Off' }}</span>
           <div 
-            :class="['switch-button', { active: cameraPower }]"
+            :class="['switch-button', { 
+              active: effectiveCameraPower,
+              disabled: !wsConnected || !deviceOnline 
+            }]"
             @click="toggleCamera"
           ></div>
         </div>
@@ -59,6 +76,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 const props = defineProps({
   device: {
@@ -67,8 +85,28 @@ const props = defineProps({
   }
 })
 
+// 使用设备管理器
+const { deviceManager } = useWebSocketManager()
+
+// 设备在线状态
+const deviceOnline = computed(() => {
+  return props.device?.status === 'online'
+})
+
+// WebSocket连接状态
+const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
+
 // Camera power state
 const cameraPower = ref(false)
+
+// 确保离线时开关始终为Off
+const effectiveCameraPower = computed(() => {
+  // 如果设备离线或WebSocket未连接，强制为Off
+  if (!deviceOnline.value || !wsConnected.value) {
+    return false
+  }
+  return cameraPower.value
+})
 
 // Demo camera source
 const cameraVideoSrc = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
@@ -110,7 +148,14 @@ const stopVoice = () => {
 }
 
 // Camera power and fullscreen
-const toggleCamera = () => { cameraPower.value = !cameraPower.value }
+const toggleCamera = () => {
+  // 设备不在线或WebSocket未连接时不允许操作
+  if (!deviceOnline.value || !wsConnected.value) {
+    console.warn('设备离线或WebSocket未连接，无法控制设备')
+    return
+  }
+  cameraPower.value = !cameraPower.value
+}
 
 const cameraViewRef = ref(null)
 const isFullscreen = ref(false)
@@ -167,19 +212,58 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.camera-card-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-indicator.disconnected {
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.device-sn {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
 }
 
 .camera-controls {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.camera-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
 }
 
 .mic-button {
@@ -216,6 +300,15 @@ onBeforeUnmount(() => {
 .switch-button.active { background: var(--color-primary); }
 .switch-button::after { content: ''; position: absolute; top: 2px; width: 14px; height: 14px; background: var(--color-switch-indicator-active); border-radius: 50%; transition: all 0.3s ease; }
 .switch-button.active::after { left: 16px; }
+
+.switch-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch-button.disabled:hover {
+  transform: none;
+}
 
 </style>
 

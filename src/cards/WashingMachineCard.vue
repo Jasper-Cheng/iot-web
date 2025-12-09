@@ -2,8 +2,19 @@
   <div class="washing-machine-card">
     <div class="card-header">
       <div class="washing-machine-card-info">
-        <h3>Washing Machine</h3>
-        <p>Samsung Smart Washer</p>
+        <h3>{{ device.name || 'Washing Machine' }}</h3>
+        <div class="connection-status">
+          <div 
+            :class="['status-indicator', { 
+              'connected': wsConnected && deviceOnline,
+              'disconnected': !wsConnected || !deviceOnline 
+            }]"
+          ></div>
+          <span class="status-text">
+            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+          </span>
+          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+        </div>
       </div>
 
       <div class="record-button">
@@ -37,9 +48,12 @@
       </div>
 
       <div class="power-switch">
-        <span class="switch-label">{{ washingMachinePower ? 'On' : 'Off' }}</span>
+        <span class="switch-label">{{ effectiveWashingMachinePower ? 'On' : 'Off' }}</span>
         <div 
-          :class="['switch-button', { active: washingMachinePower }]"
+          :class="['switch-button', { 
+            active: effectiveWashingMachinePower,
+            disabled: !wsConnected || !deviceOnline 
+          }]"
           @click="toggleWashingMachine"
         ></div>
       </div>
@@ -191,6 +205,7 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -199,6 +214,17 @@ const props = defineProps({
     default: () => ({})
   }
 })
+
+// 使用设备管理器
+const { deviceManager } = useWebSocketManager()
+
+// 设备在线状态
+const deviceOnline = computed(() => {
+  return props.device?.status === 'online'
+})
+
+// WebSocket连接状态
+const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
 const washingMachineModes = ref([
   { id: 'normal', name: 'Normal' },
@@ -246,6 +272,15 @@ const washingMachineStatus = ref('idle') // idle, washing, rinsing, spinning, do
 const washingMachineTime = ref(0)
 const washingMachineProgress = ref(0)
 
+// 确保离线时开关始终为Off
+const effectiveWashingMachinePower = computed(() => {
+  // 如果设备离线或WebSocket未连接，强制为Off
+  if (!deviceOnline.value || !wsConnected.value) {
+    return false
+  }
+  return washingMachinePower.value
+})
+
 // Demo records (moved into component)
 const washingMachineRecords = ref([
   { id: 1, date: '2024-01-15', time: '16:20', duration: '45分钟', mode: 'Normal', status: '完成' },
@@ -291,6 +326,12 @@ const startButtonText = computed(() => {
 const showConfirmDialog = ref(false)
 
 const toggleWashingMachine = () => {
+  // 设备不在线或WebSocket未连接时不允许操作
+  if (!deviceOnline.value || !wsConnected.value) {
+    console.warn('设备离线或WebSocket未连接，无法控制设备')
+    return
+  }
+  
   // 正在运行时，先弹窗确认
   if (
     washingMachinePower.value &&
@@ -407,7 +448,38 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 
 .washing-machine-card { display: flex; flex-direction: column; flex: 1; border: 1px solid var(--color-border); border-radius: 16px; padding: 16px 18px; }
 .washing-machine-card-info h3 { margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
-.washing-machine-card-info p { margin: 0; color: var(--color-text-secondary); font-size: 12px; }
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+.status-indicator.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+.status-indicator.disconnected {
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+.status-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+.device-sn {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
+}
 .washing-machine-status-section { margin-bottom: 24px; }
 .washing-machine-info { display: flex; flex-direction: column; gap: 20px; }
 .status-display { display: flex; align-items: center; gap: 16px; }
@@ -471,6 +543,15 @@ onBeforeUnmount(() => { if (washingInterval) clearInterval(washingInterval) })
 .switch-button.active { background: var(--color-primary); }
 .switch-button::after { content: ''; position: absolute; top: 2px; width: 14px; height: 14px; background: var(--color-switch-indicator-active); border-radius: 50%; transition: all 0.3s ease; }
 .switch-button.active::after { left: 16px; }
+
+.switch-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch-button.disabled:hover {
+  transform: none;
+}
 
 /* Settings */
 .washing-machine-settings { margin-top: 24px; display: flex; flex-direction: column; gap: 20px; }

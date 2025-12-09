@@ -2,13 +2,27 @@
   <div class="air-cooler-card">
     <div class="card-header">
       <div class="air-card-info">
-        <h3>Air Cooler</h3>
-        <p>GTA AC00L4</p>
+        <h3>{{ device.name || 'Air Cooler' }}</h3>
+        <div class="connection-status">
+          <div 
+            :class="['status-indicator', { 
+              'connected': wsConnected && deviceOnline,
+              'disconnected': !wsConnected || !deviceOnline 
+            }]"
+          ></div>
+          <span class="status-text">
+            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+          </span>
+          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+        </div>
       </div>
       <div class="power-switch">
-        <span class="switch-label">{{ acPower ? 'On' : 'Off' }}</span>
+        <span class="switch-label">{{ effectiveAcPower ? 'On' : 'Off' }}</span>
         <div 
-          :class="['switch-button', { active: acPower }]"
+          :class="['switch-button', { 
+            active: effectiveAcPower,
+            disabled: !wsConnected || !deviceOnline 
+          }]"
           @click="toggleAC"
         ></div>
       </div>
@@ -51,6 +65,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -59,6 +74,17 @@ const props = defineProps({
     default: () => ({})
   }
 })
+
+// 使用设备管理器
+const { deviceManager } = useWebSocketManager()
+
+// 设备在线状态
+const deviceOnline = computed(() => {
+  return props.device?.status === 'online'
+})
+
+// WebSocket连接状态
+const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
 const acModes = ref([
   { id: 'heat', name: 'Heat' },
@@ -71,6 +97,15 @@ const activeMode = ref('cool')
 const lastActiveMode = ref(activeMode.value)
 const acPower = ref(true)
 const acTemp = ref(16)
+
+// 确保离线时开关始终为Off
+const effectiveAcPower = computed(() => {
+  // 如果设备离线或WebSocket未连接，强制为Off
+  if (!deviceOnline.value || !wsConnected.value) {
+    return false
+  }
+  return acPower.value
+})
 
 const tempEndColor = computed(() => {
   const t = acTemp.value
@@ -105,6 +140,11 @@ const setActiveMode = (modeId) => {
 }
 
 const toggleAC = () => {
+  // 设备不在线或WebSocket未连接时不允许操作
+  if (!deviceOnline.value || !wsConnected.value) {
+    console.warn('设备离线或WebSocket未连接，无法控制设备')
+    return
+  }
   acPower.value = !acPower.value
   if (!acPower.value) {
     lastActiveMode.value = activeMode.value
@@ -141,10 +181,42 @@ const toggleAC = () => {
   color: var(--color-text-primary);
 }
 
-.air-card-info p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 12px;
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-indicator.disconnected {
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.device-sn {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
 }
 
 .power-switch {
@@ -186,6 +258,15 @@ const toggleAC = () => {
 
 .switch-button.active::after {
   left: 16px;
+}
+
+.switch-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch-button.disabled:hover {
+  transform: none;
 }
 
 .temperature-section {

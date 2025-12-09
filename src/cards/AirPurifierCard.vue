@@ -2,13 +2,27 @@
   <div class="air-card">
     <div class="card-header">
       <div class="air-card-info">
-        <h3>Air Purifier</h3>
-        <p>Indoor Air Quality</p>
+        <h3>{{ device.name || 'Air Purifier' }}</h3>
+        <div class="connection-status">
+          <div 
+            :class="['status-indicator', { 
+              'connected': wsConnected && deviceOnline,
+              'disconnected': !wsConnected || !deviceOnline 
+            }]"
+          ></div>
+          <span class="status-text">
+            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+          </span>
+          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+        </div>
       </div>
       <div class="power-switch">
-        <span class="switch-label">{{ airPurifierPower ? 'On' : 'Off' }}</span>
+        <span class="switch-label">{{ effectiveAirPurifierPower ? 'On' : 'Off' }}</span>
         <div 
-          :class="['switch-button', { active: airPurifierPower }]"
+          :class="['switch-button', { 
+            active: effectiveAirPurifierPower,
+            disabled: !wsConnected || !deviceOnline 
+          }]"
           @click="toggleAirPurifier"
         ></div>
       </div>
@@ -84,6 +98,7 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
+import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -93,6 +108,17 @@ const props = defineProps({
   }
 })
 
+// 使用设备管理器
+const { deviceManager } = useWebSocketManager()
+
+// 设备在线状态
+const deviceOnline = computed(() => {
+  return props.device?.status === 'online'
+})
+
+// WebSocket连接状态
+const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
+
 // =========================
 // Air Purifier state and modes
 // =========================
@@ -100,6 +126,15 @@ const airPurifierPower = ref(false)
 const autoMode = ref(true)
 const fanSpeed = ref(3)
 const timerEnabled = ref(false)
+
+// 确保离线时开关始终为Off
+const effectiveAirPurifierPower = computed(() => {
+  // 如果设备离线或WebSocket未连接，强制为Off
+  if (!deviceOnline.value || !wsConnected.value) {
+    return false
+  }
+  return airPurifierPower.value
+})
 const timerOffHours = ref(2)
 let airTimerId = null
 
@@ -125,6 +160,11 @@ const airQualityText = computed(() => {
 })
 
 const toggleAirPurifier = () => {
+  // 设备不在线或WebSocket未连接时不允许操作
+  if (!deviceOnline.value || !wsConnected.value) {
+    console.warn('设备离线或WebSocket未连接，无法控制设备')
+    return
+  }
   airPurifierPower.value = !airPurifierPower.value
   if (!airPurifierPower.value) stopAirSimulation()
   else startAirSimulation()
@@ -196,16 +236,48 @@ onBeforeUnmount(() => stopAirSimulation())
 }
 
 .air-card-info h3 { 
-  margin: 0; 
+  margin: 0 0 4px 0; 
   font-size: 16px; 
   font-weight: 700; 
   color: var(--color-text-primary); 
 }
 
-.air-card-info p { 
-  margin: 0; 
-  font-size: 12px; 
-  color: var(--color-text-secondary); 
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-indicator.disconnected {
+  background: var(--color-danger);
+  box-shadow: 0 0 6px var(--color-blue-shadow);
+}
+
+.status-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.device-sn {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
 }
 
 .air-status-section { 
@@ -461,6 +533,15 @@ onBeforeUnmount(() => stopAirSimulation())
 
 .switch-button.active::after {
   left: 16px;
+}
+
+.switch-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch-button.disabled:hover {
+  transform: none;
 }
 
 /* Switch styles */
