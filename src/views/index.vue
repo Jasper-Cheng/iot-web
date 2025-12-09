@@ -1903,7 +1903,8 @@ const submitAddDevice = async () => {
   isAddingDevice.value = true
   
   try {
-    await bindDeviceBySN(deviceForm.value.sn.trim())
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    await bindDeviceBySN(deviceForm.value.sn.trim(), currentFamilyId)
     closeAddDeviceModal()
   } catch (error) {
     console.error('绑定设备失败:', error)

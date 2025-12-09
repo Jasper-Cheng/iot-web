@@ -14,12 +14,19 @@ export const unbindDeviceBySN = (sn) => {
   })
 }
 
-export const bindDeviceBySN = (sn) => {
-  return request({
+export const bindDeviceBySN = (sn, familyId = null) => {
+  const config = {
     url: '/devices/bind-by-sn/',
     method: 'post',
     data: { sn: sn }
-  })
+  }
+  
+  // family_id 作为查询参数
+  if (familyId !== null) {
+    config.params = { family_id: familyId }
+  }
+  
+  return request(config)
 }
 
 export const updateDeviceName = (id, name, familyId = null) => {

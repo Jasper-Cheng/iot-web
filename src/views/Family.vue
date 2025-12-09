@@ -1396,6 +1396,7 @@ const selectFamily = async (family) => {
     closeSwitchFamilyModal()
     ElMessage.success(`已切换到家庭"${family.name}"`)
   } catch (error) {
+    await globalStore.loadFamilys()
     console.error('切换家庭失败:', error)
     ElMessage.error('切换家庭失败，请重试')
   }

@@ -246,23 +246,7 @@ const confirmUnbind = async () => {
   try {
     // 调用解绑设备 API
     await unbindDeviceBySN(unbindingDevice.value.sn)
-    
-    // 取消订阅设备事件
-    if (deviceManager && unbindingDevice.value.sn) {
-      try {
-        await deviceManager.unsubscribeDeviceEvents(unbindingDevice.value.sn)
-        console.log(`已取消订阅设备 ${unbindingDevice.value.sn} 的事件`)
-      } catch (error) {
-        console.warn(`取消订阅设备 ${unbindingDevice.value.sn} 事件失败:`, error)
-        // 即使取消订阅失败，也继续执行解绑流程
-      }
-    }
-    
-    // 重新加载设备列表
-    await globalStore.loadDevices()
-    
     closeUnbindModal()
-    ElMessage.success('设备解绑成功')
   } catch (error) {
     console.error('解绑设备失败:', error)
     ElMessage.error('解绑设备失败')
