@@ -504,6 +504,44 @@ export function useWebSocketManager() {
   }
 
   /**
+   * 获取已订阅的设备列表
+   */
+  const getSubscribedDevices = () => {
+    return Array.from(subscribedDevicesSingleton)
+  }
+
+  /**
+   * 取消所有设备的订阅
+   */
+  const unsubscribeAllDevices = async () => {
+    if (subscribedDevicesSingleton.size === 0) {
+      return
+    }
+
+    const deviceSns = Array.from(subscribedDevicesSingleton)
+    console.log(`取消所有设备订阅，共 ${deviceSns.length} 个设备`)
+
+    // 并行取消所有设备的订阅
+    const unsubscribePromises = deviceSns.map(async (deviceSn) => {
+      try {
+        await wsManagerSingleton.unsubscribeDeviceEvents(deviceSn)
+        subscribedDevicesSingleton.delete(deviceSn)
+        // 清除事件处理器
+        clearEventNotificationHandler(deviceSn)
+        console.log(`已取消设备 ${deviceSn} 的订阅`)
+      } catch (error) {
+        console.warn(`取消设备 ${deviceSn} 订阅失败:`, error)
+        // 即使失败也从集合中移除
+        subscribedDevicesSingleton.delete(deviceSn)
+        clearEventNotificationHandler(deviceSn)
+      }
+    })
+
+    await Promise.all(unsubscribePromises)
+    console.log('所有设备订阅已取消')
+  }
+
+  /**
    * 订阅家庭消息
    * @param {number} familyId - 家庭ID
    */
@@ -637,6 +675,8 @@ export function useWebSocketManager() {
     invokeDeviceService,   // 调用设备服务 (如开关、调节等)
     subscribeDeviceEvents, // 订阅设备事件通知
     unsubscribeDeviceEvents, // 取消订阅设备事件
+    unsubscribeAllDevices, // 取消所有设备订阅
+    getSubscribedDevices, // 获取已订阅的设备列表
     setEventNotificationHandler, // 设置事件通知处理器
     clearEventNotificationHandler, // 清除事件通知处理器
     connectionState: computed(() => connectionState.value), // WebSocket 连接状态
@@ -669,6 +709,8 @@ export function useWebSocketManager() {
       invokeDeviceService,   // 调用设备服务 (如开关、调节等)
       subscribeDeviceEvents, // 订阅设备事件通知
       unsubscribeDeviceEvents, // 取消订阅设备事件
+      unsubscribeAllDevices, // 取消所有设备订阅
+      getSubscribedDevices, // 获取已订阅的设备列表
       setEventNotificationHandler, // 设置事件通知处理器
       clearEventNotificationHandler, // 清除事件通知处理器
       eventNotificationHandlers, // 事件通知处理器映射表

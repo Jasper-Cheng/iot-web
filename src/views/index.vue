@@ -946,10 +946,10 @@ const handleFamilyMessage = (data) => {
     case 'device.bind':
       handleDeviceBind(data.data)
       break
-    case 'device.message.mark_all_read'://?
+    case 'device.message.mark_all_read':
       handleDeviceMessageMarkAllRead(data.data)
       break
-    case 'device.message.read'://?
+    case 'device.message.read':
       handleDeviceMessageRead(data.data)
       break
     case 'device.name.update':
@@ -2015,6 +2015,15 @@ watch(() => globalStore.user?.account?.current_family_id, async (newFamilyId, ol
   
   // 如果家庭ID发生变化，重新订阅
   if (newFamilyId !== oldFamilyId) {
+    // 取消之前所有设备的订阅
+    if (deviceManager && deviceManager.unsubscribeAllDevices) {
+      try {
+        await deviceManager.unsubscribeAllDevices()
+      } catch (error) {
+        console.warn('取消设备订阅失败:', error)
+      }
+    }
+
     // 取消旧家庭的订阅（如果有）
     if (oldFamilyId) {
       try {
