@@ -1034,7 +1034,7 @@ const handleDeviceNameUpdate = (data) => {
       device.name = deviceName
     }
   }
-  ElMessage.success(`设备名称更新成功`)
+  ElMessage.success(message || `设备名称更新成功`)
 }
 
 // 处理设备绑定事件
