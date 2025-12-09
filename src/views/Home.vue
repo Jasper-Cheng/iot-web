@@ -120,17 +120,12 @@ import { updateDeviceName, unbindDeviceBySN } from '../api/devices'
 import { getPointsBalance } from '../api/points'
 import CheckinCalendar from '../components/CheckinCalendar.vue'
 import ColorControlPanel from '../components/ColorControlPanel.vue'
-import EnergyPanel from '../components/EnergyPanel.vue'
 import SmartControlPanel from '../components/SmartControlPanel.vue'
 import { ElMessage } from 'element-plus'
-import { useWebSocketManager } from '../composables/useWebSocketManager'
 import { getThumbnailByCardName } from '../utils/deviceMapping'
 
 // 全局状态
 const globalStore = useGlobalStore()
-
-// WebSocket 管理器
-const { deviceManager } = useWebSocketManager()
 
 
 // 设备列表（从 globalStore 加载）
