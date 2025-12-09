@@ -648,7 +648,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
@@ -1106,13 +1106,6 @@ const confirmLeaveFamily = async () => {
   }
 }
 
-// 加载当前家庭的成员数据（设备通过 loadDevices 自动加载）
-const loadCurrentFamilyData = async () => {
-  if (currentFamilyId.value) {
-    await globalStore.loadFamilyMembers(currentFamilyId.value)
-  }
-}
-
 // 监听当前家庭ID变化，自动加载成员数据（设备通过 loadDevices 自动加载）
 watch(() => currentFamilyId.value, (newFamilyId) => {
   if (newFamilyId) {
@@ -1415,46 +1408,6 @@ const selectFamily = async (family) => {
   }
 }
 
-// 切换到此家庭设备管理
-const switchToFamilyDevices = async (family) => {
-  try {
-    // 取消之前所有设备的订阅
-    if (deviceManager && deviceManager.unsubscribeAllDevices) {
-      try {
-        await deviceManager.unsubscribeAllDevices()
-      } catch (error) {
-        console.warn('取消设备订阅失败:', error)
-      }
-    }
-
-    // 调用切换家庭 API
-    const accountData = await updateCurrentFamily(family.id)
-    
-    // 根据返回的数据更新本地 user 数据
-    if (accountData) {
-      globalStore.updateUserInfo({
-        nickname: accountData.nickname,
-        gender: accountData.gender,
-        phone: accountData.phone,
-        email: accountData.email,
-        avatar: accountData.avatar,
-        current_family_id: accountData.current_family_id
-      })
-    }
-    
-    // 调用 loadAll 重新加载所有数据（loadDevices 会根据 current_family_id 加载对应家庭的设备）
-    await globalStore.loadAll()
-    
-    // 跳转到 Home 页面
-    router.push('/home')
-    
-    ElMessage.success(`已切换到家庭"${family.name}"的设备管理`)
-  } catch (error) {
-    console.error('切换家庭设备失败:', error)
-    ElMessage.error('切换家庭设备失败，请重试')
-  }
-}
-
 // 切回个人设备管理
 const switchToPersonalDevices = async () => {
   // 关闭切换家庭弹窗
@@ -1498,15 +1451,7 @@ const switchToPersonalDevices = async () => {
   }
 }
 
-// 加载数据
-onMounted(async () => {
-  await loadCurrentFamilyData()
-})
-
-// 组件卸载时移除事件监听器
-onUnmounted(() => {
-  // 数据更新已在 index.vue 中直接更新 globalStore，无需事件监听
-})
+// 数据加载通过 watch 自动处理，无需在 onMounted 中手动加载
 </script>
 
 <style scoped>
