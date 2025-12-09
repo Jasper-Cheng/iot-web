@@ -1306,10 +1306,13 @@ const handleMemberJoin = async (data) => {
   const { title, message, level, familyId } = data
   console.log(`成员加入 [${level}]: ${title} - ${message}`)
   
-  // 如果当前正在查看该家庭，重新加载成员数据
+  // 如果当前正在查看该家庭，重新加载成员数据和设备列表
   const currentFamilyId = globalStore.user?.account?.current_family_id
   if (currentFamilyId === familyId) {
-    await globalStore.loadFamilyMembers(familyId)
+    await Promise.all([
+      globalStore.loadFamilyMembers(familyId),
+      globalStore.loadDevices()
+    ])
   }
   
   ElMessage.success(message || '成员已加入家庭')
@@ -1360,9 +1363,12 @@ const handleMemberRemove = async (data) => {
       ElMessage.error('切回个人设备管理失败，请刷新页面')
     }
   } else {
-    // 如果移除的是其他成员，重新加载成员数据
+    // 如果移除的是其他成员，重新加载成员数据和设备列表
     if (currentFamilyId === familyId) {
-      await globalStore.loadFamilyMembers(familyId)
+      await Promise.all([
+        globalStore.loadFamilyMembers(familyId),
+        globalStore.loadDevices()
+      ])
     }
     
     ElMessage.success(message || '成员已移除')
