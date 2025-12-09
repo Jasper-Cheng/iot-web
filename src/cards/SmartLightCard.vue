@@ -7,7 +7,7 @@
     </div>
     <div class="card-header">
       <div class="device-card-info">
-        <h3>{{ device.name || 'Smart Light' }}</h3>
+        <h3>{{ props.device?.name || 'Smart Light' }}</h3>
         <div class="connection-status">
           <div 
             :class="['status-indicator', { 
@@ -18,7 +18,7 @@
           <span class="status-text">
             {{ wsConnected && deviceOnline ? '在线' : '离线' }}
           </span>
-          <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
+          <span v-if="props.device?.sn" class="device-sn">{{ props.device.sn }}</span>
         </div>
       </div>
       <div class="device-switch">
@@ -58,14 +58,8 @@ const deviceOnline = computed(() => {
 // WebSocket连接状态
 const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
-// Device information
-const device = ref({
-  id: 1,
-  name: 'Smart Light',
-  model: 'Bardi Smart Light',
-  type: 'light',
-  power: false
-})
+// 设备电源状态（本地状态）
+const devicePower = ref(false)
 
 // 确保离线时开关始终为Off
 const effectivePower = computed(() => {
@@ -73,17 +67,23 @@ const effectivePower = computed(() => {
   if (!deviceOnline.value || !wsConnected.value) {
     return false
   }
-  return device.value.power
+  return devicePower.value
 })
 
 // Methods
-const toggleDevice = () => {
+const toggleDevice = async () => {
   // 设备不在线或WebSocket未连接时不允许操作
   if (!deviceOnline.value || !wsConnected.value) {
     console.warn('设备离线或WebSocket未连接，无法控制设备')
     return
   }
-  device.value.power = !device.value.power
+  try {
+    const newPowerState = !devicePower.value
+    await deviceManager.invokeDeviceService(props.device?.sn, 'setPower', { power: newPowerState })
+    devicePower.value = newPowerState
+  } catch (error) {
+    console.error('控制设备开关失败:', error)
+  }
 }
 </script>
 

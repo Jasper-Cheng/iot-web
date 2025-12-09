@@ -25,7 +25,6 @@
         </div>
       </div>
       <div class="wifi-status-row">
-        <p>{{ effectiveWifiStatus ? 'On' : 'Off' }}</p>
         <div class="wifi-switch">
           <div 
             :class="['switch-button', { 
@@ -177,14 +176,8 @@ const toggleWiFi = () => {
 .wifi-status-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-}
-
-.wifi-status-row p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
 }
 
 .wifi-switch {

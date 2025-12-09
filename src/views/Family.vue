@@ -1096,11 +1096,6 @@ const confirmEditDeviceName = async () => {
 
   try {
     await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim(), editingDeviceFamily.value.id)
-    // 更新 globalStore.devices 中的设备数据
-    const deviceIndex = globalStore.devices.findIndex(d => d.id === editingDevice.value.id)
-    if (deviceIndex > -1) {
-      globalStore.devices[deviceIndex] = { ...globalStore.devices[deviceIndex], name: editingDeviceName.value.trim() }
-    }
     closeEditDeviceNameModal()
   } catch (error) {
     console.error('修改设备名称失败:', error)
