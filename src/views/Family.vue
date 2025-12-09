@@ -1448,6 +1448,9 @@ const switchToFamilyDevices = async (family) => {
 
 // 切回个人设备管理
 const switchToPersonalDevices = async () => {
+  // 关闭切换家庭弹窗
+  closeSwitchFamilyModal()
+  
   try {
     // 调用切换家庭 API，传入 null 表示切回个人设备管理
     const accountData = await updateCurrentFamily(null)
