@@ -33,8 +33,10 @@
               <!-- 解绑设备按钮 -->
               <button 
                 class="unbind-btn"
+                :class="{ disabled: !canUnbindDevice(device) }"
                 @click="openUnbindModal(device)"
-                :title="'解绑设备'"
+                :title="canUnbindDevice(device) ? '解绑设备' : '只能解绑自己绑定的设备'"
+                :disabled="!canUnbindDevice(device)"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -150,6 +152,17 @@ const showUnbindModal = ref(false)
 const unbindingDevice = ref(null)
 const isUnbinding = ref(false)
 
+// 检查是否可以解绑设备（只有设备绑定的 account_id 是当前用户 ID 时才能解绑）
+const canUnbindDevice = (device) => {
+  const currentUserId = globalStore.user?.account?.id
+  if (!currentUserId) {
+    return false
+  }
+  // 如果设备的 account_id 为 null，表示是个人设备，可以解绑
+  // 如果设备的 account_id 等于当前用户 ID，可以解绑
+  return device.account_id === null || device.account_id === currentUserId
+}
+
 // 积分相关方法
 const loadUserPoints = async () => {
   try {
@@ -207,6 +220,11 @@ const confirmEditName = async () => {
 // 解绑设备相关方法
 // =========================
 const openUnbindModal = (device) => {
+  // 检查是否可以解绑
+  if (!canUnbindDevice(device)) {
+    ElMessage.warning('只能解绑自己绑定的设备')
+    return
+  }
   unbindingDevice.value = device
   showUnbindModal.value = true
 }
@@ -441,6 +459,21 @@ const confirmUnbind = async () => {
 
 .unbind-btn:hover svg {
   color: white;
+}
+
+.unbind-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.unbind-btn.disabled:hover {
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.unbind-btn.disabled:hover svg {
+  color: var(--color-text-secondary);
 }
 
 
