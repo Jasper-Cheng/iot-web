@@ -204,6 +204,12 @@ const confirmEditName = async () => {
   try {
     const currentFamilyId = globalStore.user?.account?.current_family_id
     await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim(), currentFamilyId)
+    
+    // 当用户没有选择家庭时，接口调用成功后重新加载设备列表
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      await globalStore.loadDevices()
+    }
+    
     closeEditNameModal()
   } catch (error) {
     console.error('修改设备名称失败:', error)
@@ -241,6 +247,13 @@ const confirmUnbind = async () => {
   try {
     // 调用解绑设备 API
     await unbindDeviceBySN(unbindingDevice.value.sn)
+    
+    // 当用户没有选择家庭时，接口调用成功后重新加载设备列表
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      await globalStore.loadDevices()
+    }
+    
     closeUnbindModal()
   } catch (error) {
     console.error('解绑设备失败:', error)

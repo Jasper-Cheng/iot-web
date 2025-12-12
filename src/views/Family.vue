@@ -1226,6 +1226,13 @@ const confirmEditDeviceName = async () => {
 
   try {
     await updateDeviceName(editingDevice.value.id, editingDeviceName.value.trim(), currentFamilyId.value)
+    
+    // 当用户没有选择家庭时，接口调用成功后重新加载设备列表
+    const userCurrentFamilyId = globalStore.user?.account?.current_family_id
+    if (userCurrentFamilyId === null || userCurrentFamilyId === undefined) {
+      await globalStore.loadDevices()
+    }
+    
     closeEditDeviceNameModal()
   } catch (error) {
     console.error('修改设备名称失败:', error)

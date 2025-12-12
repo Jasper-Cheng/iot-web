@@ -1549,6 +1549,11 @@ const updateUserInfo = async () => {
 
     await updateUser(updateData)
     
+    // 当用户没有选择家庭时，接口调用成功后更新用户信息
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      globalStore.updateUserInfo(updateData)
+    }
     
     closeEditUserModal()
   } catch (error) {
@@ -1821,6 +1826,19 @@ const markAllAsRead = async () => {
     // 调用API标记所有消息为已读
     const currentFamilyId = globalStore.user?.account?.current_family_id
     await markAllMessagesAsRead(currentFamilyId)
+    
+    // 当用户没有选择家庭时，接口调用成功后本地更新消息状态
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      // 更新全局消息状态为已读
+      if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+        globalStore.deviceMessages.forEach(msg => {
+          msg.status = 'read'
+        })
+      }
+      // 清空未读消息列表
+      unreadMessages.value = []
+    }
+    
     closeNotificationMenu()
   } catch (error) {
     console.error('标记所有消息为已读失败:', error)
@@ -1835,6 +1853,22 @@ const markMessageAsRead = async (message) => {
     // 调用API标记消息为已读
     const currentFamilyId = globalStore.user?.account?.current_family_id
     await markMessageAsReadAPI(message.id, currentFamilyId)
+    
+    // 当用户没有选择家庭时，接口调用成功后本地更新消息状态
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      // 更新全局消息状态为已读
+      if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+        const globalMessage = globalStore.deviceMessages.find(m => m.id === message.id)
+        if (globalMessage) {
+          globalMessage.status = 'read'
+        }
+      }
+      // 从未读消息列表中移除该消息
+      const index = unreadMessages.value.findIndex(m => m.id === message.id)
+      if (index > -1) {
+        unreadMessages.value.splice(index, 1)
+      }
+    }
   } catch (error) {
     console.error('标记消息为已读失败:', error)
   }
@@ -1901,6 +1935,12 @@ const submitAddDevice = async () => {
   try {
     const currentFamilyId = globalStore.user?.account?.current_family_id
     await bindDeviceBySN(deviceForm.value.sn.trim(), currentFamilyId)
+    
+    // 当用户没有选择家庭时，接口调用成功后重新加载设备列表
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      await globalStore.loadDevices()
+    }
+    
     closeAddDeviceModal()
   } catch (error) {
     console.error('绑定设备失败:', error)
@@ -1919,7 +1959,29 @@ const confirmDelete = async () => {
   try {
     // 调用删除用户API
     await deleteUser()
-    showDeleteConfirmModal.value = false
+    
+    // 当用户没有选择家庭时，接口调用成功后执行清理操作
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      // 断开 WebSocket 连接（不等待结果）
+      disconnect().then(() => {
+        console.log('WebSocket 连接已断开（注销账户）')
+      }).catch(disconnectError => {
+        console.warn('断开 WebSocket 连接失败:', disconnectError)
+      })
+      
+      // 延迟500毫秒后执行清理流程
+      setTimeout(() => {
+        // 清除认证状态并跳转
+        globalStore.clearAuth()
+        showDeleteConfirmModal.value = false
+        showUserMenu.value = false
+        router.push('/login')
+      }, 500)
+    } else {
+      // 如果选择了家庭，只关闭弹窗
+      showDeleteConfirmModal.value = false
+    }
   } catch (error) {
     console.error('注销账户失败:', error)
   }
