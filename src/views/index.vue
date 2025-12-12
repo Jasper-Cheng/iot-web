@@ -940,7 +940,7 @@ const handleFamilyMessage = (data) => {
     case 'device.add':
       handleDeviceAdd(data.data)
       break
-    case 'device.alert'://?
+    case 'device.alert':
       handleDeviceAlert(data.data)
       break
     case 'device.bind':
