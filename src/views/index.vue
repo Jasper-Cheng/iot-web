@@ -715,16 +715,37 @@
   <div v-if="showSystemNotificationModal" class="device-modal" @click="closeSystemNotificationModal">
     <div class="message-log-modal-content" @click.stop>
       <div class="message-log-header">
-        <h3>系统通知</h3>
+        <h3>{{ currentSystemNotification?.typeText || getSystemMessageTypeText(currentSystemNotification?.type) || '系统通知' }}</h3>
         <button class="delete-close-btn" @click="closeSystemNotificationModal">X</button>
       </div>
       <div class="message-log-body" v-if="currentSystemNotification">
         <div class="notification-content">
           <div class="notification-icon" :class="`level-${currentSystemNotification.priority}`">
+            <!-- 通知 -->
             <svg v-if="currentSystemNotification.type === 'notification'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" fill="none"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
+            <!-- 公告 -->
+            <svg v-else-if="currentSystemNotification.type === 'announcement'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <!-- 警告 -->
+            <svg v-else-if="currentSystemNotification.type === 'alert'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <!-- 维护 -->
+            <svg v-else-if="currentSystemNotification.type === 'maintenance'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <!-- 更新 -->
+            <svg v-else-if="currentSystemNotification.type === 'update'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <!-- 默认图标 -->
             <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" fill="none"/>
               <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -734,11 +755,14 @@
             <h4 class="notification-title">{{ currentSystemNotification.title }}</h4>
             <p class="notification-text">{{ currentSystemNotification.content }}</p>
             <div class="notification-meta">
+              <span class="notification-type" :class="`type-${currentSystemNotification.type}`">
+                {{ currentSystemNotification.typeText || getSystemMessageTypeText(currentSystemNotification.type) }}
+              </span>
               <span class="notification-priority" :class="`level-${currentSystemNotification.priority}`">
-                {{ currentSystemNotification.priority }}
+                {{ currentSystemNotification.priority === 'low' ? '低' : currentSystemNotification.priority === 'normal' ? '普通' : currentSystemNotification.priority === 'high' ? '高' : currentSystemNotification.priority === 'urgent' ? '紧急' : currentSystemNotification.priority }}
               </span>
               <span class="notification-time">
-                {{ new Date(currentSystemNotification.timestamp).toLocaleString() }}
+                {{ new Date(currentSystemNotification.timestamp).toLocaleString('zh-CN') }}
               </span>
             </div>
             <div v-if="currentSystemNotification.device_id" class="notification-device">
@@ -856,77 +880,66 @@ const handleSystemMessage = (data) => {
   console.log('收到系统消息:', data)
   // 根据消息类型调用相应的处理函数
   switch (data.type) {
-    case 'device_status_change':
-      handleDeviceOnlineChange(data.data)
-      break
-    case 'system_notification':
-      handleSystemNotification(data.data)
-      break
-    case 'promotion':
-      handlePromotion(data.data)
-      break
-    case 'mall_new_product':
-      handleMallNewProduct(data.data)
-      break
-    case 'user_message':
-      handleUserMessage(data.data)
-      break
-    case 'system_update':
-      handleSystemUpdate(data.data)
+    case 'notification':
+    case 'announcement':
+    case 'alert':
+    case 'maintenance':
+    case 'update':
+      handleSystemMessageType(data)
       break
     default:
       console.warn('未知的系统消息类型:', data.type)
   }
 }
 
-// 具体的系统消息处理方法
-const handleDeviceOnlineChange = (data) => {
-  const { deviceId, deviceName, oldStatus, newStatus, timestamp } = data
-  if (globalStore.devices) {
-    const device = globalStore.devices.find(d => d.id === deviceId)
-    if (device) {
-      device.status = newStatus
-      device.lastSeen = timestamp
-    }
+// 获取系统消息类型的中文描述
+const getSystemMessageTypeText = (type) => {
+  const typeMap = {
+    'notification': '通知',
+    'announcement': '公告',
+    'alert': '警告',
+    'maintenance': '维护',
+    'update': '更新'
   }
-  console.log(`设备 ${deviceName} 状态从 ${oldStatus} 变更为 ${newStatus}`)
+  return typeMap[type] || '通知'
 }
 
-const handleSystemNotification = (data) => {
-  const { title, content, type, priority, timestamp, device_id, service_name } = data
-  console.log(`系统通知 [${priority}]: ${title} - ${content}`)
+// 处理系统消息类型（notification, announcement, alert, maintenance, update）
+const handleSystemMessageType = (data) => {
+  const { id, title, content, type, priority, platforms, extra, created_at, updated_at } = data
   
-  // 显示系统通知弹窗
+  // 构建系统消息对象
+  const systemMessage = {
+    id: id || Date.now(),
+    title: title || '系统消息',
+    content: content || '',
+    type: type,
+    priority: priority || 'normal',
+    platforms: platforms || ['web'],
+    extra: extra || {},
+    created_at: created_at || new Date().toISOString(),
+    updated_at: updated_at || new Date().toISOString()
+  }
+  
+  // 更新 systemMessages（添加到数组开头）
+  if (!globalStore.systemMessages) {
+    globalStore.systemMessages = []
+  }
+  globalStore.systemMessages.unshift(systemMessage)
+  
+  // 显示弹窗提示
   currentSystemNotification.value = {
-    title: title,
-    content: content,
-    priority: priority,
-    timestamp: timestamp || Date.now(),
-    type: type || 'notification',
-    device_id: device_id,
-    service_name: service_name
+    title: title || '系统消息',
+    content: content || '',
+    priority: priority || 'normal',
+    timestamp: created_at ? new Date(created_at).getTime() : Date.now(),
+    type: type,
+    typeText: getSystemMessageTypeText(type),
+    extra: extra || {}
   }
   showSystemNotificationModal.value = true
-}
-
-const handlePromotion = (data) => {
-  const { title, message, actionUrl } = data
-  console.log(`优惠活动: ${title} - ${message}`)
-}
-
-const handleMallNewProduct = (data) => {
-  const { productName, price, category } = data
-  console.log(`商场上新: ${productName} - ¥${price} (${category})`)
-}
-
-const handleUserMessage = (data) => {
-  const { title, content, priority, deviceId } = data
-  console.log(`用户消息 [${priority}]: ${title} - ${content}`)
-}
-
-const handleSystemUpdate = (data) => {
-  const { version, features, updateUrl } = data
-  console.log(`系统更新: 版本 ${version} - ${features}`)
+  
+  console.log(`系统消息 [${getSystemMessageTypeText(type)}]: ${title} - ${content}`)
 }
 
 // 家庭消息处理
