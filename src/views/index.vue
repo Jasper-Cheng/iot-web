@@ -878,17 +878,21 @@ const currentTheme = ref('dark')
 // 系统消息处理
 const handleSystemMessage = (data) => {
   console.log('收到系统消息:', data)
+  // data 结构: { type: "notification", data: { id, title, content, type, priority, extra, timestamp } }
+  const messageType = data.type
+  const messageData = data.data || data
+  
   // 根据消息类型调用相应的处理函数
-  switch (data.type) {
+  switch (messageType) {
     case 'notification':
     case 'announcement':
     case 'alert':
     case 'maintenance':
     case 'update':
-      handleSystemMessageType(data)
+      handleSystemMessageType(messageData)
       break
     default:
-      console.warn('未知的系统消息类型:', data.type)
+      console.warn('未知的系统消息类型:', messageType)
   }
 }
 
@@ -906,19 +910,23 @@ const getSystemMessageTypeText = (type) => {
 
 // 处理系统消息类型（notification, announcement, alert, maintenance, update）
 const handleSystemMessageType = (data) => {
-  const { id, title, content, type, priority, platforms, extra, created_at, updated_at } = data
+  // data 结构: { id, title, content, type, priority, extra, timestamp }
+  const { id, title, content, type, priority, extra, timestamp } = data
   
-  // 构建系统消息对象
+  // 将 timestamp 转换为 ISO 字符串格式
+  const timestampISO = timestamp ? new Date(timestamp).toISOString() : new Date().toISOString()
+  
+  // 构建系统消息对象（符合 globalStore.systemMessages 的数据结构）
   const systemMessage = {
     id: id || Date.now(),
     title: title || '系统消息',
     content: content || '',
     type: type,
     priority: priority || 'normal',
-    platforms: platforms || ['web'],
+    platforms: ['web'], // 默认平台
     extra: extra || {},
-    created_at: created_at || new Date().toISOString(),
-    updated_at: updated_at || new Date().toISOString()
+    created_at: timestampISO,
+    updated_at: timestampISO
   }
   
   // 更新 systemMessages（添加到数组开头）
@@ -927,19 +935,42 @@ const handleSystemMessageType = (data) => {
   }
   globalStore.systemMessages.unshift(systemMessage)
   
-  // 显示弹窗提示
-  currentSystemNotification.value = {
-    title: title || '系统消息',
-    content: content || '',
-    priority: priority || 'normal',
-    timestamp: created_at ? new Date(created_at).getTime() : Date.now(),
-    type: type,
-    typeText: getSystemMessageTypeText(type),
-    extra: extra || {}
-  }
-  showSystemNotificationModal.value = true
+  // 使用 ElMessage 显示弹窗提示
+  const typeText = getSystemMessageTypeText(type)
+  const messageText = title ? `${title}${content ? ': ' + content : ''}` : content || '系统消息'
   
-  console.log(`系统消息 [${getSystemMessageTypeText(type)}]: ${title} - ${content}`)
+  // 根据优先级选择 ElMessage 类型（颜色）
+  // 普通及以下（normal, low）→ 绿色（success）
+  // 高（high）→ 橙色（warning）
+  // 紧急（urgent）→ 红色（error）
+  let messageType = 'success' // 默认绿色
+  if (priority === 'urgent') {
+    messageType = 'error' // 红色
+  } else if (priority === 'high') {
+    messageType = 'warning' // 橙色
+  } else {
+    // normal 或 low 都是绿色
+    messageType = 'success'
+  }
+  
+  // 根据优先级设置持续时间（单位：毫秒）
+  let duration = 3000
+  if (priority === 'urgent') {
+    duration = 5000
+  } else if (priority === 'high') {
+    duration = 4000
+  } else if (priority === 'low') {
+    duration = 2000
+  }
+  
+  ElMessage({
+    message: `系统消息: [${typeText}] ${messageText}`,
+    type: messageType,
+    duration: duration,
+    showClose: true
+  })
+  
+  console.log(`系统消息 [${typeText}]: ${title} - ${content}`)
 }
 
 // 家庭消息处理
