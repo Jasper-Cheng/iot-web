@@ -49,6 +49,9 @@ class MQTTManager {
     // 消息处理器
     this.systemMessageHandler = null
     this.familyMessageHandler = null
+    
+    // 设备主题消息处理器映射
+    this.deviceTopicHandlers = new Map()
 
     // 绑定方法
     this.connect = this.connect.bind(this)
@@ -110,7 +113,7 @@ class MQTTManager {
           resolve()
         })
 
-        // 接收消息
+        // 接收消息（统一处理，包括设备消息）
         this.client.on('message', (topic, message) => {
           this.handleMessage(topic, message)
         })
@@ -301,6 +304,18 @@ class MQTTManager {
       } else if (topic.startsWith('home/') && topic.endsWith('/notice')) {
         // 家庭通知消息
         this.handleHomeNotice(data)
+      } else if (topic.startsWith('web/') && (topic.endsWith('/data') || topic.endsWith('/status'))) {
+        // 设备消息处理
+        const handler = this.deviceTopicHandlers.get(topic)
+        if (handler) {
+          try {
+            handler(data)
+          } catch (error) {
+            this.log(`Error in device topic handler for ${topic}:`, error)
+          }
+        } else {
+          this.log('Device message received but no handler set:', { topic, data })
+        }
       } else {
         this.log('Unknown topic:', topic)
       }
@@ -316,17 +331,13 @@ class MQTTManager {
    * @param {Object} data - 消息数据
    */
   handleSystemNotice(data) {
-    // 将MQTT消息转换为WebSocket消息格式
-    // WebSocket格式: { method: "system.message", params: { type, data } }
-    const wsFormatData = {
-      method: 'system.message',
-      params: data
-    }
+    // 触发系统消息事件
+    this.emit('system.message', data)
 
     // 调用系统消息处理器
     if (this.systemMessageHandler) {
       try {
-        this.systemMessageHandler(wsFormatData.params)
+        this.systemMessageHandler(data)
       } catch (error) {
         this.log('Error in system message handler:', error)
       }
@@ -340,17 +351,13 @@ class MQTTManager {
    * @param {Object} data - 消息数据
    */
   handleHomeNotice(data) {
-    // 将MQTT消息转换为WebSocket消息格式
-    // WebSocket格式: { method: "family.message", params: { type, data } }
-    const wsFormatData = {
-      method: 'family.message',
-      params: data
-    }
+    // 触发家庭消息事件
+    this.emit('family.message', data)
 
     // 调用家庭消息处理器
     if (this.familyMessageHandler) {
       try {
-        this.familyMessageHandler(wsFormatData.params)
+        this.familyMessageHandler(data)
       } catch (error) {
         this.log('Error in family message handler:', error)
       }
@@ -465,6 +472,119 @@ class MQTTManager {
    */
   getSubscribedTopics() {
     return Array.from(this.subscribedTopics)
+  }
+
+  /**
+   * 订阅设备主题
+   * @param {string} deviceSn - 设备序列号
+   * @param {Function} dataHandler - 数据消息处理器 (web/{sn}/data)
+   * @param {Function} statusHandler - 状态消息处理器 (web/{sn}/status)
+   * @returns {Promise} 返回订阅结果
+   */
+  subscribeDeviceTopics(deviceSn, dataHandler = null, statusHandler = null) {
+    if (!this.client || !this.client.connected) {
+      return Promise.reject(new Error('MQTT not connected'))
+    }
+
+    return new Promise((resolve, reject) => {
+      const dataTopic = `web/${deviceSn}/data`
+      const statusTopic = `web/${deviceSn}/status`
+      const topics = []
+
+      if (dataHandler) {
+        topics.push({ topic: dataTopic, handler: dataHandler })
+        this.deviceTopicHandlers.set(dataTopic, dataHandler)
+      }
+      if (statusHandler) {
+        topics.push({ topic: statusTopic, handler: statusHandler })
+        this.deviceTopicHandlers.set(statusTopic, statusHandler)
+      }
+
+      if (topics.length === 0) {
+        resolve()
+        return
+      }
+
+      // 订阅所有主题
+      const topicList = topics.map(t => t.topic)
+      this.client.subscribe(topicList, { qos: 1 }, (error) => {
+        if (error) {
+          this.log(`Failed to subscribe to device topics for ${deviceSn}:`, error)
+          reject(error)
+        } else {
+          // 记录订阅的主题
+          topicList.forEach(topic => {
+            this.subscribedTopics.add(topic)
+          })
+          
+          this.log(`Subscribed to device topics for ${deviceSn}:`, topicList)
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
+   * 取消订阅设备主题
+   * @param {string} deviceSn - 设备序列号
+   * @returns {Promise} 返回取消订阅结果
+   */
+  unsubscribeDeviceTopics(deviceSn) {
+    if (!this.client || !this.client.connected) {
+      // 即使未连接，也清除处理器
+      const dataTopic = `web/${deviceSn}/data`
+      const statusTopic = `web/${deviceSn}/status`
+      this.deviceTopicHandlers.delete(dataTopic)
+      this.deviceTopicHandlers.delete(statusTopic)
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      const dataTopic = `web/${deviceSn}/data`
+      const statusTopic = `web/${deviceSn}/status`
+      const topics = [dataTopic, statusTopic]
+
+      this.client.unsubscribe(topics, (error) => {
+        if (error) {
+          this.log(`Failed to unsubscribe from device topics for ${deviceSn}:`, error)
+          reject(error)
+        } else {
+          topics.forEach(topic => {
+            this.subscribedTopics.delete(topic)
+            this.deviceTopicHandlers.delete(topic)
+          })
+          this.log(`Unsubscribed from device topics for ${deviceSn}`)
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
+   * 发布设备控制消息
+   * @param {string} deviceSn - 设备序列号
+   * @param {Object} payload - 控制消息内容
+   * @returns {Promise} 返回发布结果
+   */
+  publishDeviceControl(deviceSn, payload) {
+    if (!this.client || !this.client.connected) {
+      return Promise.reject(new Error('MQTT not connected'))
+    }
+
+    return new Promise((resolve, reject) => {
+      const topic = `web/${deviceSn}/control`
+      const message = JSON.stringify(payload)
+
+      this.client.publish(topic, message, { qos: 1 }, (error) => {
+        if (error) {
+          this.log(`Failed to publish control message to ${topic}:`, error)
+          reject(error)
+        } else {
+          this.log(`Published control message to ${topic}:`, payload)
+          resolve()
+        }
+      })
+    })
   }
 
   /**

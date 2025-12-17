@@ -784,7 +784,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { initTheme, setTheme, DEFAULT_NO_AVATAR_URL } from '../utils/theme.js'
 import { useGlobalStore } from '../stores/global'
@@ -793,7 +793,7 @@ import { bindDeviceBySN, markMessageAsRead as markMessageAsReadAPI } from '../ap
 import { getPointsBalance, getPointsHistory } from '../api/points'
 import { logout as logoutApi } from '../api/auth'
 import { ElMessage } from 'element-plus'
-import { useWebSocketManager } from '../composables/useWebSocketManager'
+import { getMQTTManager, clearMQTTManager } from '../utils/mqtt.js'
 import AvatarSelector from '../components/AvatarSelector.vue'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
@@ -802,13 +802,104 @@ const router = useRouter()
 const route = useRoute()
 const globalStore = useGlobalStore()
 
-// 使用设备实时数据管理 - 在 Index 层级初始化，确保用户已登录
-const { systemMessage, familyMessage, deviceManager, initConnection, disconnect } = useWebSocketManager()
+// MQTT 管理器实例
+let mqttManager = null
+const mqttConnectionState = ref('disconnected')
 
-// 检查注入是否成功
-if (!systemMessage || !familyMessage) {
-  console.error('消息管理器注入失败，请检查 useWebSocketManager 是否正确初始化')
+/**
+ * 初始化MQTT连接
+ */
+const initMQTTConnection = async () => {
+  try {
+    const token = globalStore.token
+    if (!token) {
+      console.warn('MQTT连接失败: 缺少token')
+      return
+    }
+
+    // 检查是否需要重新创建 MQTT 管理器（token 变化时）
+    const currentToken = mqttManager?.options?.username || null
+    
+    if (!mqttManager || currentToken !== token) {
+      // 先断开旧连接
+      if (mqttManager) {
+        mqttManager.disconnect()
+      }
+      // 清除全局 MQTT 实例
+      clearMQTTManager()
+      // 创建新的 MQTT 管理器
+      mqttManager = getMQTTManager({
+        host: 'localhost', // 根据实际情况修改
+        port: 1883, // 根据实际情况修改
+        protocol: 'ws', // ws 或 wss
+        path: '/mqtt',
+        clientId: `mqtt_client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        username: token, // 使用 token 作为用户名
+        password: '', // 根据实际情况设置
+        reconnectPeriod: 3000,
+        connectTimeout: 30000,
+        keepalive: 60,
+        debug: false
+      })
+
+      // 监听连接状态变化
+      mqttManager.on('stateChange', (state) => {
+        mqttConnectionState.value = state
+        
+        // 根据连接状态设置或清除消息处理器
+        switch (state) {
+          case 'connected':
+            console.log('MQTT已连接，设置消息处理器')
+            // 连接成功时设置系统消息处理器
+            mqttManager.setSystemMessageHandler(handleSystemMessage)
+            // 设置家庭消息处理器
+            mqttManager.setFamilyMessageHandler(handleFamilyMessage)
+            // 更新家庭订阅（MQTT会自动订阅）
+            mqttManager.updateHomeSubscription()
+            break
+          case 'connecting':
+            console.log('MQTT正在连接...')
+            break
+          case 'disconnected':
+            console.log('MQTT已断开连接，清除消息处理器')
+            // 断开连接时清除处理器
+            mqttManager.clearSystemMessageHandler()
+            mqttManager.clearFamilyMessageHandler()
+            break
+          case 'error':
+            console.log('MQTT连接出错，清除消息处理器')
+            // 连接错误时清除处理器
+            mqttManager.clearSystemMessageHandler()
+            mqttManager.clearFamilyMessageHandler()
+            break
+          default:
+            console.log('未知的连接状态:', state)
+        }
+      })
+    }
+
+    // 连接MQTT（若已连接/连接中，内部会忽略）
+    await mqttManager.connect()
+  } catch (error) {
+    console.error('MQTT连接失败:', error)
+  }
 }
+
+/**
+ * 断开MQTT连接
+ */
+const disconnectMQTT = async () => {
+  try {
+    if (mqttManager) {
+      mqttManager.disconnect()
+      mqttManager = null
+    }
+    clearMQTTManager()
+  } catch (error) {
+    console.warn('断开连接过程中出现错误:', error)
+  }
+}
+
 
 
 
@@ -1108,16 +1199,8 @@ const handleDeviceUnbind = async (data) => {
     }
   }
   
-  // 如果找到了设备序列号，取消订阅设备事件
-  if (deviceSerialNumber && deviceManager) {
-    try {
-      await deviceManager.unsubscribeDeviceEvents(deviceSerialNumber)
-      console.log(`已取消订阅设备 ${deviceSerialNumber} 的事件`)
-    } catch (error) {
-      console.warn(`取消订阅设备 ${deviceSerialNumber} 事件失败:`, error)
-      // 即使取消订阅失败，也继续执行解绑流程
-    }
-  }
+  // 如果找到了设备序列号，取消订阅设备主题（由设备卡片自己管理，这里不需要处理）
+  // MQTT 设备订阅由各个设备卡片自己管理
   
   // 重新加载设备列表以移除已解绑的设备
   await globalStore.loadDevices()
@@ -1265,11 +1348,11 @@ const handleForceLogout = async (data) => {
     showClose: true
   })
   
-  // 断开 WebSocket 连接（不等待结果）
-  disconnect().then(() => {
-    console.log('WebSocket 连接已断开（强制退出）')
+  // 断开 MQTT 连接（不等待结果）
+  disconnectMQTT().then(() => {
+    console.log('MQTT 连接已断开（强制退出）')
   }).catch(disconnectError => {
-    console.warn('断开 WebSocket 连接失败:', disconnectError)
+    console.warn('断开 MQTT 连接失败:', disconnectError)
   })
   
   // 延迟 500 毫秒后执行退出登录流程
@@ -1308,15 +1391,8 @@ const handleDeviceRemove = async (data) => {
     }
   }
   
-  // 如果找到了设备序列号，取消订阅设备事件
-  if (deviceSerialNumber && deviceManager) {
-    try {
-      await deviceManager.unsubscribeDeviceEvents(deviceSerialNumber)
-      console.log(`已取消订阅设备 ${deviceSerialNumber} 的事件`)
-    } catch (error) {
-      console.warn(`取消订阅设备 ${deviceSerialNumber} 事件失败:`, error)
-    }
-  }
+  // 如果找到了设备序列号，取消订阅设备主题（由设备卡片自己管理，这里不需要处理）
+  // MQTT 设备订阅由各个设备卡片自己管理
   
   // 重新加载设备列表以移除已移除的设备
   await globalStore.loadDevices()
@@ -1466,11 +1542,11 @@ const logout = async () => {
   
   //延迟500毫秒后执行退出登录流程
   setTimeout(() => {
-    // 断开 WebSocket 连接（不等待结果）
-    disconnect().then(() => {
-      console.log('WebSocket 连接已断开')
+    // 断开 MQTT 连接（不等待结果）
+    disconnectMQTT().then(() => {
+      console.log('MQTT 连接已断开')
     }).catch(disconnectError => {
-      console.warn('断开 WebSocket 连接失败:', disconnectError)
+      console.warn('断开 MQTT 连接失败:', disconnectError)
     })
     // 立即清除认证状态并跳转
     globalStore.clearAuth()
@@ -2004,15 +2080,15 @@ const confirmDelete = async () => {
     // 调用删除用户API
     await deleteUser()
     
-    // 当用户没有选择家庭时，接口调用成功后执行清理操作
-    const currentFamilyId = globalStore.user?.account?.current_family_id
-    if (currentFamilyId === null || currentFamilyId === undefined) {
-      // 断开 WebSocket 连接（不等待结果）
-      disconnect().then(() => {
-        console.log('WebSocket 连接已断开（注销账户）')
-      }).catch(disconnectError => {
-        console.warn('断开 WebSocket 连接失败:', disconnectError)
-      })
+      // 当用户没有选择家庭时，接口调用成功后执行清理操作
+      const currentFamilyId = globalStore.user?.account?.current_family_id
+      if (currentFamilyId === null || currentFamilyId === undefined) {
+        // 断开 MQTT 连接（不等待结果）
+        disconnectMQTT().then(() => {
+          console.log('MQTT 连接已断开（注销账户）')
+        }).catch(disconnectError => {
+          console.warn('断开 MQTT 连接失败:', disconnectError)
+        })
       
       // 延迟500毫秒后执行清理流程
       setTimeout(() => {
@@ -2041,14 +2117,14 @@ onMounted(async () => {
   const theme = initTheme()
   currentTheme.value = theme
   
-  // 确保用户认证状态已恢复后再初始化 WebSocket 连接
+  // 确保用户认证状态已恢复后再初始化 MQTT 连接
   // App.vue 的 onMounted 会在 index.vue 之前执行，所以这里应该已经有 token 了
   // 但为了保险起见，添加一个短暂的延迟确保 restoreAuth 完成
   await new Promise(resolve => setTimeout(resolve, 100))
   
-  // 初始化 WebSocket 连接
+  // 初始化 MQTT 连接
   if (globalStore.token) {
-    await initConnection()
+    await initMQTTConnection()
   }
   
   // 加载所有数据
@@ -2059,94 +2135,16 @@ onMounted(async () => {
   
 })
 
-// 订阅家庭消息的函数
-const subscribeCurrentFamily = async () => {
-  if (!familyMessage || !globalStore.user?.account) {
-    return
-  }
-  
-  const currentFamilyId = globalStore.user.account.current_family_id
-  if (currentFamilyId) {
-    try {
-      await familyMessage.subscribeFamilyMessage(currentFamilyId)
-    } catch (error) {
-    }
-  }
-}
-
-// 监听WebSocket连接状态
-watch(() => systemMessage?.connectionState?.value, async (newState, oldState) => {
-  
-  // 检查是否获取到了正确的 manager 对象
-  if (!systemMessage || !familyMessage || !systemMessage.setSystemMessageHandler) {
-    console.warn('消息管理器未正确初始化，跳过状态处理')
-    return
-  }
-  
-  switch (newState) {
-    case 'connected':
-      console.log('WebSocket已连接，设置消息处理器')
-      // 连接成功时设置系统消息处理器
-      systemMessage.setSystemMessageHandler(handleSystemMessage)
-      // 设置家庭消息处理器
-      familyMessage.setFamilyMessageHandler(handleFamilyMessage)
-      // 订阅当前家庭的消息
-      await subscribeCurrentFamily()
-      break
-    case 'connecting':
-      console.log('WebSocket正在连接...')
-      break
-    case 'disconnected':
-      console.log('WebSocket已断开连接，清除消息处理器')
-      // 断开连接时清除处理器
-      systemMessage.clearSystemMessageHandler()
-      familyMessage.clearFamilyMessageHandler()
-      break
-    case 'error':
-      console.log('WebSocket连接出错，清除消息处理器')
-      // 连接错误时清除处理器
-      systemMessage.clearSystemMessageHandler()
-      familyMessage.clearFamilyMessageHandler()
-      break
-    default:
-      console.log('未知的连接状态:', newState)
-  }
-})
-
-// 监听当前家庭ID变化，切换家庭时重新订阅
+// 监听当前家庭ID变化，切换家庭时更新订阅
 watch(() => globalStore.user?.account?.current_family_id, async (newFamilyId, oldFamilyId) => {
-  if (!familyMessage || !systemMessage?.connectionState?.value || systemMessage.connectionState.value !== 'connected') {
+  if (mqttConnectionState.value !== 'connected' || !mqttManager) {
     return
   }
   
-  // 如果家庭ID发生变化，重新订阅
+  // 如果家庭ID发生变化，更新订阅
   if (newFamilyId !== oldFamilyId) {
-    // 取消之前所有设备的订阅
-    if (deviceManager && deviceManager.unsubscribeAllDevices) {
-      try {
-        await deviceManager.unsubscribeAllDevices()
-      } catch (error) {
-        console.warn('取消设备订阅失败:', error)
-      }
-    }
-
-    // 取消旧家庭的订阅（如果有）
-    if (oldFamilyId) {
-      try {
-        await familyMessage.unsubscribeFamilyMessage(oldFamilyId)
-      } catch (error) {
-      }
-    }
-    
-    // 订阅新家庭的消息
-    if (newFamilyId) {
-      try {
-        await familyMessage.subscribeFamilyMessage(newFamilyId)
-        console.log(`已订阅家庭 ${newFamilyId} 的消息`)
-      } catch (error) {
-        console.error('订阅家庭消息失败:', error)
-      }
-    }
+    // MQTT会自动处理家庭订阅的更新
+    mqttManager.updateHomeSubscription()
   }
 })
 
