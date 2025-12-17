@@ -14,7 +14,7 @@ class MQTTManager {
       host: options.host || 'localhost',
       port: options.port || 1883,
       protocol: options.protocol || 'ws', // ws 或 wss
-      path: options.path || '/mqtt',
+      path: options.path || '',
       clientId: options.clientId || `mqtt_client_${Date.now()}`,
       username: options.username || '',
       password: options.password || '',
@@ -332,12 +332,12 @@ class MQTTManager {
    */
   handleSystemNotice(data) {
     // 触发系统消息事件
-    this.emit('system.message', data)
+    // this.emit('system.message', data)
 
     // 调用系统消息处理器
     if (this.systemMessageHandler) {
       try {
-        this.systemMessageHandler(data)
+        this.systemMessageHandler(data.params)
       } catch (error) {
         this.log('Error in system message handler:', error)
       }
@@ -352,12 +352,12 @@ class MQTTManager {
    */
   handleHomeNotice(data) {
     // 触发家庭消息事件
-    this.emit('family.message', data)
+    // this.emit('family.message', data)
 
     // 调用家庭消息处理器
     if (this.familyMessageHandler) {
       try {
-        this.familyMessageHandler(data)
+        this.familyMessageHandler(data.params)
       } catch (error) {
         this.log('Error in family message handler:', error)
       }

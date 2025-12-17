@@ -830,11 +830,11 @@ const initMQTTConnection = async () => {
       // 创建新的 MQTT 管理器
       mqttManager = getMQTTManager({
         host: 'localhost', // 根据实际情况修改
-        port: 1883, // 根据实际情况修改
+        port: 8083, // 根据实际情况修改
         protocol: 'ws', // ws 或 wss
-        path: '/mqtt',
+        path: '',
         clientId: `mqtt_client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        username: token, // 使用 token 作为用户名
+        username: '', // 使用 token 作为用户名
         password: '', // 根据实际情况设置
         reconnectPeriod: 3000,
         connectTimeout: 30000,
@@ -1068,6 +1068,7 @@ const handleSystemMessageType = (data) => {
 const handleFamilyMessage = (data) => {
   // console.log('收到家庭消息:', data)
   // 根据消息类型调用相应的处理函数
+  console.log('收到家庭消息:', data)
   switch (data.type) {
     case 'account.update':
       handleAccountUpdate(data.data)
