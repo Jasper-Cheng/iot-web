@@ -216,6 +216,10 @@
                 <div class="feedback-content">
                   <p>{{ feedback.content }}</p>
                 </div>
+                <div v-if="feedback.contact_info" class="feedback-contact">
+                  <span class="contact-label">联系方式：</span>
+                  <span class="contact-value">{{ feedback.contact_info }}</span>
+                </div>
                 <div v-if="feedback.replay" class="feedback-replay">
                   <div class="replay-header">
                     <span class="replay-label">回复：</span>
@@ -1464,6 +1468,26 @@ export default {
   font-size: 14px;
   color: var(--color-text-primary);
   line-height: 1.5;
+}
+
+.feedback-contact {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.contact-value {
+  color: var(--color-text-primary);
 }
 
 .feedback-replay {
