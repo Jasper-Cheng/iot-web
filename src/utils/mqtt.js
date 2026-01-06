@@ -15,7 +15,7 @@ class MQTTManager {
       port: options.port || 1883,
       protocol: options.protocol || 'ws', // ws 或 wss
       path: options.path || '',
-      clientId: options.clientId || `mqtt_client_${Date.now()}`,
+      clientId: options.clientId || null, // 将在 connect 时动态生成
       username: options.username || '',
       password: options.password || '',
       reconnectPeriod: options.reconnectPeriod || 3000,
@@ -62,6 +62,25 @@ class MQTTManager {
   }
 
   /**
+   * 生成 clientId
+   * @returns {string} clientId
+   */
+  generateClientId() {
+    // 如果已经设置了 clientId，直接返回
+    if (this.options.clientId) {
+      return this.options.clientId
+    }
+
+    // 从 globalStore 获取 userId
+    const globalStore = useGlobalStore()
+    const userId = globalStore.user?.account?.id || 'unknown'
+    const timestamp = Date.now()
+    
+    // 生成格式：web_iot_${userId}_${时间戳}
+    return `web_iot_${userId}_${timestamp}`
+  }
+
+  /**
    * 连接到MQTT服务器
    */
   connect() {
@@ -77,13 +96,23 @@ class MQTTManager {
         this.emit('stateChange', this.state)
         this.log('Connecting to MQTT server...')
 
+        // 生成或使用已有的 clientId
+        const clientId = this.generateClientId()
+        // 保存到 options 中，以便后续使用
+        if (!this.options.clientId) {
+          this.options.clientId = clientId
+        }
+        
+        // 打印 clientId
+        console.log('[MQTT] ClientId:', clientId)
+
         // 构建连接URL
         const protocol = this.options.protocol === 'wss' ? 'wss' : 'ws'
         const url = `${protocol}://${this.options.host}:${this.options.port}${this.options.path}`
 
         // 连接选项
         const connectOptions = {
-          clientId: this.options.clientId,
+          clientId: clientId,
           username: this.options.username,
           password: this.options.password,
           keepalive: this.options.keepalive,
@@ -92,7 +121,7 @@ class MQTTManager {
           clean: true,
           will: {
             topic: 'client/disconnect',
-            payload: JSON.stringify({ clientId: this.options.clientId }),
+            payload: JSON.stringify({ clientId: clientId }),
             qos: 1,
             retain: false
           }

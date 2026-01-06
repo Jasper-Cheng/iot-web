@@ -828,12 +828,13 @@ const initMQTTConnection = async () => {
       // 清除全局 MQTT 实例
       clearMQTTManager()
       // 创建新的 MQTT 管理器
+      // clientId 将在 connect 时自动生成，格式为: web_iot_${userId}_${时间戳}
       mqttManager = getMQTTManager({
         host: 'localhost', // 根据实际情况修改
         port: 8083, // 根据实际情况修改
         protocol: 'ws', // ws 或 wss
         path: '',
-        clientId: `mqtt_client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        // clientId 不在这里设置，由 mqtt.js 在 connect 时自动生成
         username: '', // 使用 token 作为用户名
         password: '', // 根据实际情况设置
         reconnectPeriod: 3000,
