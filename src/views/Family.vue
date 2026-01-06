@@ -303,15 +303,27 @@
                   </div>
                 </div>
               </div>
-              <button 
-                class="device-remove-btn"
-                @click="openRemoveDeviceModal(currentFamily, device)"
-                title="移除设备"
-              >
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </button>
+              <div class="device-actions-buttons">
+                <button 
+                  v-if="isDeviceOwner(device)"
+                  class="device-unbind-btn"
+                  @click="openUnbindDeviceModal(device)"
+                  title="解绑设备"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <button 
+                  class="device-remove-btn"
+                  @click="openRemoveDeviceModal(currentFamily, device)"
+                  title="移除设备"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -602,6 +614,34 @@
       </div>
     </div>
 
+    <!-- 解绑设备确认弹窗 -->
+    <div v-if="showUnbindDeviceModal" class="device-modal" @click="closeUnbindDeviceModal">
+      <div class="delete-modal-content" @click.stop>
+        <div class="delete-modal-header">
+          <h3>解绑设备</h3>
+          <button class="delete-close-btn" @click="closeUnbindDeviceModal">X</button>
+        </div>
+        <div class="delete-modal-body">
+          <!-- 设备缩略图 -->
+          <div v-if="unbindingDevice?.cardName" class="device-thumbnail-container">
+            <img 
+              :src="getThumbnailByCardName(unbindingDevice.cardName)" 
+              :alt="unbindingDevice.name" 
+              class="device-thumbnail-preview"
+            />
+          </div>
+          <p>确定要解绑设备 <strong>{{ unbindingDevice?.name }}</strong> 吗？</p>
+          <p class="warning-text">解绑后，您将无法控制此设备，需要重新绑定才能使用。</p>
+        </div>
+        <div class="delete-modal-footer">
+          <button class="cancel-btn" @click="closeUnbindDeviceModal" :disabled="isUnbindingDevice">取消</button>
+          <button class="action-btn danger" @click="confirmUnbindDevice" :disabled="isUnbindingDevice">
+            {{ isUnbindingDevice ? '解绑中...' : '确认解绑' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 添加设备到家庭弹窗 -->
     <div v-if="showAddDeviceToFamilyModal" class="modal-overlay" @click="closeAddDeviceToFamilyModal">
       <div class="modal-content" @click.stop>
@@ -688,7 +728,7 @@ import { useRouter } from 'vue-router'
 import { useGlobalStore } from '../stores/global'
 import { DEFAULT_NO_AVATAR_URL } from '../utils/theme'
 import { createFamily, deleteFamily, leaveFamily, updateFamilyMemberNickname, removeFamilyDevice, addFamilyDevice, updateUser, updateCurrentFamily, joinFamilyByInviteCode } from '../api/users'
-import { updateDeviceName, getMyDevices } from '../api/devices'
+import { updateDeviceName, getMyDevices, unbindDeviceBySN } from '../api/devices'
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { getThumbnailByCardName, getDeviceCardBySN } from '../utils/deviceMapping'
@@ -779,6 +819,11 @@ const showRemoveDeviceModal = ref(false)
 const isRemovingDevice = ref(false)
 const removingDevice = ref(null)
 const removingDeviceFamily = ref(null)
+
+// 解绑设备相关状态
+const showUnbindDeviceModal = ref(false)
+const isUnbindingDevice = ref(false)
+const unbindingDevice = ref(null)
 
 // 添加设备到家庭相关状态
 const showAddDeviceToFamilyModal = ref(false)
@@ -909,6 +954,13 @@ const getDeviceOwner = (device) => {
   const members = familyMembers.value
   const owner = members.find(m => m.account?.id === device.account_id)
   return owner?.nickname || owner?.account?.nickname || null
+}
+
+// 判断设备是否属于当前用户
+const isDeviceOwner = (device) => {
+  const currentUserId = globalStore.user?.account?.id
+  if (!currentUserId) return false
+  return device.account_id === currentUserId
 }
 
 // 获取性别文本
@@ -1352,6 +1404,50 @@ const confirmRemoveDevice = async () => {
     ElMessage.error(error.response?.data?.detail || '移除设备失败，请重试')
   } finally {
     isRemovingDevice.value = false
+  }
+}
+
+// 打开解绑设备弹窗
+const openUnbindDeviceModal = (device) => {
+  if (!isDeviceOwner(device)) {
+    ElMessage.warning('只能解绑自己绑定的设备')
+    return
+  }
+  unbindingDevice.value = device
+  showUnbindDeviceModal.value = true
+}
+
+// 关闭解绑设备弹窗
+const closeUnbindDeviceModal = () => {
+  showUnbindDeviceModal.value = false
+  unbindingDevice.value = null
+  isUnbindingDevice.value = false
+}
+
+// 确认解绑设备
+const confirmUnbindDevice = async () => {
+  if (!unbindingDevice.value || !unbindingDevice.value.sn) {
+    return
+  }
+
+  isUnbindingDevice.value = true
+  
+  try {
+    // 调用解绑设备 API
+    await unbindDeviceBySN(unbindingDevice.value.sn)
+    
+    // 当用户没有选择家庭时，接口调用成功后重新加载设备列表
+    const currentFamilyId = globalStore.user?.account?.current_family_id
+    if (currentFamilyId === null || currentFamilyId === undefined) {
+      await globalStore.loadDevices()
+    }
+    
+    closeUnbindDeviceModal()
+  } catch (error) {
+    console.error('解绑设备失败:', error)
+    ElMessage.error('解绑设备失败')
+  } finally {
+    isUnbindingDevice.value = false
   }
 }
 
@@ -2423,6 +2519,41 @@ const switchToPersonalDevices = async () => {
   height: 14px;
 }
 
+.device-actions-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.device-unbind-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.device-unbind-btn:hover {
+  background: var(--color-danger-light);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.device-unbind-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .device-remove-btn {
   display: flex;
   align-items: center;
@@ -2779,6 +2910,105 @@ const switchToPersonalDevices = async () => {
 .submit-btn.danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
   border-color: var(--color-danger-hover);
+}
+
+/* 解绑设备弹窗样式（与首页保持一致） */
+.device-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.delete-modal-content {
+  background: var(--color-bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: var(--color-modal-shadow);
+}
+
+.delete-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.delete-modal-header h3 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.delete-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-close-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.delete-modal-body {
+  margin-bottom: 20px;
+}
+
+.delete-modal-body p {
+  margin: 0 0 12px 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.delete-modal-body .warning-text {
+  color: var(--color-danger) !important;
+  font-weight: 500;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+/* 设备缩略图容器 */
+.device-thumbnail-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.device-thumbnail-preview {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  max-height: 520px;
+}
+
+.delete-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
 }
 
 /* 二维码弹窗样式 */
