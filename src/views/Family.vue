@@ -197,6 +197,7 @@
                 </div>
               </div>
               <div class="member-actions">
+                <span v-if="isCurrentUser(member)" class="my-badge">我</span>
                 <button 
                   v-if="isCurrentUser(member) || isCreator(currentFamily)"
                   class="member-leave-btn"
@@ -2146,6 +2147,20 @@ const switchToPersonalDevices = async () => {
   font-weight: normal;
 }
 
+.my-badge {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary-text);
+  background: var(--color-primary);
+  border-radius: 12px;
+  white-space: nowrap;
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .member-details {
   display: flex;
   flex-direction: column;
@@ -2173,8 +2188,10 @@ const switchToPersonalDevices = async () => {
 .member-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .member-leave-btn {
