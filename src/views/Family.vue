@@ -94,7 +94,22 @@
             </h3>
             <p v-if="currentFamily.description" class="family-description">{{ currentFamily.description }}</p>
             <div class="family-meta">
-              <span class="invite-code">邀请码: {{ currentFamily.invite_code }}</span>
+              <span class="invite-code">
+                邀请码: {{ currentFamily.invite_code }}
+                <button 
+                  class="qrcode-icon-btn"
+                  @click="showQRCodeModal(currentFamily)"
+                  title="生成二维码"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3h8v8H3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13 3h8v8h-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M3 13h8v8H3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 16h3v3h-3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19 19h3v3h-3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </span>
               <span class="created-time">{{ formatDate(currentFamily.created_at) }}</span>
             </div>
           </div>
@@ -645,6 +660,25 @@
         </div>
       </div>
     </div>
+
+    <!-- 二维码弹窗 -->
+    <div v-if="showQRCodeModalVisible" class="modal-overlay" @click="closeQRCodeModal">
+      <div class="modal-content qrcode-modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>家庭邀请二维码</h2>
+          <button class="close-btn" @click="closeQRCodeModal">×</button>
+        </div>
+        <div class="modal-body qrcode-modal-body">
+          <div v-if="isGeneratingQRCode" class="loading-text">生成中...</div>
+          <div v-else-if="qrCodeDataUrl" class="qrcode-container">
+            <img :src="qrCodeDataUrl" alt="邀请二维码" class="qrcode-image" />
+            <p class="qrcode-tip">扫描二维码加入家庭</p>
+            <p class="qrcode-invite-code">邀请码: {{ qrCodeFamily?.invite_code }}</p>
+          </div>
+          <div v-else class="error-text">生成二维码失败</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -659,6 +693,7 @@ import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { getThumbnailByCardName, getDeviceCardBySN } from '../utils/deviceMapping'
 import { useWebSocketManager } from '../composables/useWebSocketManager'
+import QRCode from 'qrcode'
 
 const router = useRouter()
 const globalStore = useGlobalStore()
@@ -753,6 +788,12 @@ const familyForAddDevice = ref(null)
 const selectedDeviceIds = ref([])
 const isLoadingUserDevices = ref(false)
 const userDevices = ref([])
+
+// 二维码相关状态
+const showQRCodeModalVisible = ref(false)
+const isGeneratingQRCode = ref(false)
+const qrCodeDataUrl = ref('')
+const qrCodeFamily = ref(null)
 
 // 获取家庭成员（使用 globalStore 的数据，使用 computed 确保响应式更新）
 const familyMembers = computed(() => {
@@ -1140,6 +1181,46 @@ const generateInviteLink = async (family) => {
       showClose: true
     })
   }
+}
+
+// 打开二维码弹窗
+const showQRCodeModal = async (family) => {
+  if (!family.invite_code) {
+    ElMessage.error('该家庭没有邀请码')
+    return
+  }
+
+  qrCodeFamily.value = family
+  showQRCodeModalVisible.value = true
+  isGeneratingQRCode.value = true
+  qrCodeDataUrl.value = ''
+
+  try {
+    // 生成二维码，内容为邀请码
+    const dataUrl = await QRCode.toDataURL(family.invite_code, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    })
+    
+    qrCodeDataUrl.value = dataUrl
+  } catch (error) {
+    console.error('生成二维码失败:', error)
+    ElMessage.error('生成二维码失败，请重试')
+  } finally {
+    isGeneratingQRCode.value = false
+  }
+}
+
+// 关闭二维码弹窗
+const closeQRCodeModal = () => {
+  showQRCodeModalVisible.value = false
+  qrCodeFamily.value = null
+  qrCodeDataUrl.value = ''
+  isGeneratingQRCode.value = false
 }
 
 // 打开编辑昵称弹窗
@@ -1839,10 +1920,43 @@ const switchToPersonalDevices = async () => {
   flex-wrap: wrap;
 }
 
-.invite-code,
+.invite-code {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .created-time {
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+.qrcode-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.qrcode-icon-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-primary);
+}
+
+.qrcode-icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .family-section {
@@ -2665,6 +2779,47 @@ const switchToPersonalDevices = async () => {
 .submit-btn.danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
   border-color: var(--color-danger-hover);
+}
+
+/* 二维码弹窗样式 */
+.qrcode-modal-content {
+  max-width: 400px;
+}
+
+.qrcode-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.qrcode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.qrcode-image {
+  width: 300px;
+  height: 300px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+}
+
+.qrcode-tip {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.qrcode-invite-code {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 </style>
 
