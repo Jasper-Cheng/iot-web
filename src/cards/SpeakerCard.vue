@@ -6,12 +6,12 @@
         <div class="connection-status">
           <div 
             :class="['status-indicator', { 
-              'connected': wsConnected && deviceOnline,
-              'disconnected': !wsConnected || !deviceOnline 
+              'connected': deviceOnline,
+              'disconnected': !deviceOnline 
             }]"
           ></div>
           <span class="status-text">
-            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+            {{ deviceOnline ? '在线' : '离线' }}
           </span>
           <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
         </div>
@@ -22,7 +22,7 @@
          <div 
            :class="['switch-button', { 
              active: effectiveSpeakerPower,
-             disabled: !wsConnected || !deviceOnline 
+             disabled: !deviceOnline 
            }]"
            @click="toggleSpeaker"
          ></div>
@@ -92,7 +92,7 @@
         <div class="volume-control-wrapper">
           <button 
             class="control-btn volume-btn" 
-            :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+            :disabled="!effectiveSpeakerPower || !deviceOnline" 
             @click="toggleVolumePanel"
           >
             <svg v-if="mute" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -109,7 +109,7 @@
               <input 
                 type="range" 
                 class="volume-slider-vertical-input" 
-                :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                :disabled="!effectiveSpeakerPower || !deviceOnline"
                 :value="displayVolume" 
                 @input="updateVolumeDisplay"
                 @change="updateVolume"
@@ -124,7 +124,7 @@
 
         <button 
           class="control-btn prev-btn" 
-          :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+          :disabled="!effectiveSpeakerPower || !deviceOnline" 
           @click="previousSong"
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -134,7 +134,7 @@
          
         <button 
           class="control-btn play-pause-btn" 
-          :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+          :disabled="!effectiveSpeakerPower || !deviceOnline" 
           @click="togglePlayPause"
         >
           <svg v-if="speakerStatus === 'playing'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -147,7 +147,7 @@
          
         <button 
           class="control-btn next-btn" 
-          :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+          :disabled="!effectiveSpeakerPower || !deviceOnline" 
           @click="nextSong"
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -159,7 +159,7 @@
         <div class="equalizer-control-wrapper">
           <button 
             class="control-btn equalizer-btn" 
-            :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline" 
+            :disabled="!effectiveSpeakerPower || !deviceOnline" 
             @click="toggleEqualizerPanel"
           >
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -179,7 +179,7 @@
                 </div>
                 <select 
                   class="equalizer-select" 
-                  :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                  :disabled="!effectiveSpeakerPower || !deviceOnline"
                   :value="equalizer" 
                   @change="updateEqualizer"
                 >
@@ -201,7 +201,7 @@
                     <input 
                       type="range" 
                       class="tone-slider" 
-                      :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                      :disabled="!effectiveSpeakerPower || !deviceOnline"
                       :value="displayBass" 
                       @input="updateBassDisplay"
                       @change="updateBass"
@@ -220,7 +220,7 @@
                     <input 
                       type="range" 
                       class="tone-slider" 
-                      :disabled="!effectiveSpeakerPower || !wsConnected || !deviceOnline"
+                      :disabled="!effectiveSpeakerPower || !deviceOnline"
                       :value="displayTreble" 
                       @input="updateTrebleDisplay"
                       @change="updateTreble"
@@ -241,7 +241,6 @@
 
 <script setup>
 import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
-import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -250,9 +249,6 @@ const props = defineProps({
     default: () => ({})
   }
 })
-
-// 使用设备管理器
-const { deviceManager } = useWebSocketManager()
 
 // 设备序列号 - 从props中获取
 const deviceSn = computed(() => props.device?.sn || 'speaker_001')
@@ -263,9 +259,6 @@ const deviceSn = computed(() => props.device?.sn || 'speaker_001')
 const deviceOnline = computed(() => {
   return props.device?.status === 'online'
 })
-
-// WebSocket连接状态
-const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
 // =========================
 // 设备属性统一管理
@@ -391,66 +384,19 @@ const isDragging = ref(false)
 
 // 确保离线时开关始终为Off
 const effectiveSpeakerPower = computed(() => {
-  // 如果设备离线或WebSocket未连接，强制为Off
-  if (!deviceOnline.value || !wsConnected.value) {
+  // 如果设备离线，强制为Off
+  if (!deviceOnline.value) {
     return false
   }
   return speakerPower.value
 })
 
 
-// 监听设备事件通知
-// eventData 格式: { power, volume, mute, source, playing, track, artist, album, ... }
-// eventData 可能包含设备属性的更新数据
-const handleDeviceEventNotification = (eventData) => {
-  if (!eventData || typeof eventData !== 'object') {
-    return
-  }
-  
-  // 统一更新设备属性
-  Object.keys(eventData).forEach(key => {
-    if (eventData[key] !== undefined) {
-      deviceProperties.value[key] = eventData[key]
-    }
-  })
-  
-  // 同步临时值，确保显示一致性
-  if (tempVolume.value === null && eventData.volume !== undefined) {
-    tempVolume.value = eventData.volume
-  }
-  if (tempBass.value === null && eventData.bass !== undefined) {
-    tempBass.value = eventData.bass
-  }
-  if (tempTreble.value === null && eventData.treble !== undefined) {
-    tempTreble.value = eventData.treble
-  }
-}
 
 // 监听设备在线状态
 watch(deviceOnline, async (isOnline) => {
-  if (isOnline) {
-    // 只有在WebSocket连接时才能获取属性和订阅
-    if (wsConnected.value) {
-      await fetchDeviceProperties()
-      await subscribeToDeviceProperties()
-    }
-  } else {
-    // 设备离线时，取消订阅并重置状态
-    await unsubscribeFromDeviceProperties()
-    deviceProperties.value.power = false
-    deviceProperties.value.playing = false
-  }
-})
-
-watch(wsConnected, async (isConnected) => {
-  if (isConnected) {
-    // 只有在设备在线时才获取属性和订阅
-    if (deviceOnline.value) {
-      await fetchDeviceProperties()
-      await subscribeToDeviceProperties()
-    }
-  } else {
-    // WebSocket断开时，重置状态（不需要取消订阅，因为连接已断开）
+  if (!isOnline) {
+    // 设备离线时，重置状态
     deviceProperties.value.power = false
     deviceProperties.value.playing = false
   }
@@ -466,79 +412,50 @@ const progressPercentage = computed(() => {
 // Speaker control functions
 // =========================
 // 切换音响开关
-const toggleSpeaker = async () => {
-  // 设备不在线或WebSocket未连接时不允许操作
-  if (!deviceOnline.value || !wsConnected.value) {
-    console.warn('设备离线或WebSocket未连接，无法控制设备')
+const toggleSpeaker = () => {
+  // 设备不在线时不允许操作
+  if (!deviceOnline.value) {
+    console.warn('设备离线，无法控制设备')
     return
   }
   
-  try {
-    const newPowerState = !deviceProperties.value.power
-    await deviceManager.invokeDeviceService(deviceSn.value, 'setPower', { power: newPowerState })
-    
-    // 本地更新状态
-    deviceProperties.value.power = newPowerState
-    if (!deviceProperties.value.power) {
-      deviceProperties.value.playing = false
-      deviceProperties.value.position = 0
-      currentLyricIndex.value = 0
-    } else {
-      deviceProperties.value.playing = false
-    }
-  } catch (error) {
-    console.error('控制音响开关失败:', error)
+  const newPowerState = !deviceProperties.value.power
+  deviceProperties.value.power = newPowerState
+  if (!deviceProperties.value.power) {
+    deviceProperties.value.playing = false
+    deviceProperties.value.position = 0
+    currentLyricIndex.value = 0
+  } else {
+    deviceProperties.value.playing = false
   }
 }
 
 // 切换播放/暂停
-const togglePlayPause = async () => {
-  if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
+const togglePlayPause = () => {
+  if (!deviceProperties.value.power || !deviceOnline.value) return
   
-  try {
-    const newStatus = deviceProperties.value.playing ? 'paused' : 'playing'
-    await deviceManager.invokeDeviceService(deviceSn.value, 'setPlayStatus', { status: newStatus })
-    
-    // 本地更新状态
-    deviceProperties.value.playing = newStatus === 'playing'
-    if (deviceProperties.value.playing) {
-      startPlaybackSimulation()
-    } else {
-      stopPlaybackSimulation()
-    }
-  } catch (error) {
-    console.error('控制播放状态失败:', error)
+  deviceProperties.value.playing = !deviceProperties.value.playing
+  if (deviceProperties.value.playing) {
+    startPlaybackSimulation()
+  } else {
+    stopPlaybackSimulation()
   }
 }
 
 // 上一曲
-const previousSong = async () => {
-  if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
+const previousSong = () => {
+  if (!deviceProperties.value.power || !deviceOnline.value) return
   
-  try {
-    await deviceManager.invokeDeviceService(deviceSn.value, 'previousSong', {})
-    
-    // 本地更新状态
-    currentSongIndex.value = currentSongIndex.value > 0 ? currentSongIndex.value - 1 : playlist.value.length - 1
-    loadSong(currentSongIndex.value)
-  } catch (error) {
-    console.error('切换上一曲失败:', error)
-  }
+  currentSongIndex.value = currentSongIndex.value > 0 ? currentSongIndex.value - 1 : playlist.value.length - 1
+  loadSong(currentSongIndex.value)
 }
 
 // 下一曲
-const nextSong = async () => {
-  if (!deviceProperties.value.power || !deviceOnline.value || !wsConnected.value) return
+const nextSong = () => {
+  if (!deviceProperties.value.power || !deviceOnline.value) return
   
-  try {
-    await deviceManager.invokeDeviceService(deviceSn.value, 'nextSong', {})
-    
-    // 本地更新状态
-    currentSongIndex.value = currentSongIndex.value < playlist.value.length - 1 ? currentSongIndex.value + 1 : 0
-    loadSong(currentSongIndex.value)
-  } catch (error) {
-    console.error('切换下一曲失败:', error)
-  }
+  currentSongIndex.value = currentSongIndex.value < playlist.value.length - 1 ? currentSongIndex.value + 1 : 0
+  loadSong(currentSongIndex.value)
 }
 
 // 加载歌曲
@@ -641,78 +558,6 @@ const stopPlaybackSimulation = () => {
   }
 }
 
-// 获取设备属性的函数
-const fetchDeviceProperties = async () => {
-  // 检查设备是否在线，只有在线时才获取属性
-  if (!deviceOnline.value) {
-    return
-  }
-  
-  // 检查 deviceManager 和 getDeviceProperties 方法是否存在
-  if (!deviceManager || typeof deviceManager.getDeviceProperties !== 'function') {
-    console.warn('deviceManager.getDeviceProperties 方法不存在，跳过获取设备属性')
-    return
-  }
-  
-  try {
-    // 使用 deviceProperties 中的属性名作为参数传入
-    const requestedProperties = Object.keys(deviceProperties.value)
-    
-    const properties = await deviceManager.getDeviceProperties(deviceSn.value, requestedProperties)
-    
-    // 统一更新设备属性
-    if (properties) {
-      Object.keys(properties).forEach(key => {
-        if (properties[key] !== undefined) {
-          deviceProperties.value[key] = properties[key]
-        }
-      })
-    }
-  } catch (error) {
-    console.error('获取设备属性失败:', error)
-    console.error('错误详情:', error.message)
-  }
-}
-
-// 订阅设备属性更新
-const subscribeToDeviceProperties = async () => {
-  if (!deviceOnline.value || !wsConnected.value) {
-    return
-  }
-  
-  try {
-    // 订阅设备事件
-    await deviceManager.subscribeDeviceEvents(deviceSn.value)
-    
-    // 设置事件通知处理器
-    deviceManager.setEventNotificationHandler(deviceSn.value, handleDeviceEventNotification)
-  } catch (error) {
-    console.error('订阅设备属性更新失败:', error)
-  }
-}
-
-// 取消订阅设备属性更新
-const unsubscribeFromDeviceProperties = async () => {
-  // 如果WebSocket未连接，直接返回，避免发送消息到已关闭的连接
-  if (!wsConnected.value) {
-    return
-  }
-  
-  try {
-    // 取消订阅设备事件
-    await deviceManager.unsubscribeDeviceEvents(deviceSn.value)
-    
-    // 清理事件通知处理器
-    deviceManager.clearEventNotificationHandler(deviceSn.value)
-  } catch (error) {
-    // 如果是连接关闭错误，只记录警告而不是错误
-    if (error.message === 'Connection closed') {
-      console.warn(`WebSocket连接已关闭，跳过取消订阅设备 ${deviceSn.value}`)
-    } else {
-      console.error('取消订阅设备属性更新失败:', error)
-    }
-  }
-}
 
 // =========================
 // 音量和音效控制方法
@@ -785,8 +630,6 @@ const updateVolume = (event) => {
   tempVolume.value = null
   // 更新设备属性
   deviceProperties.value.volume = newVolume
-  // 调用设备服务更新音量
-  deviceManager.invokeDeviceService(deviceSn.value, 'setVolume', { volume: newVolume })
 }
 
 // 更新均衡器模式
@@ -794,8 +637,6 @@ const updateEqualizer = (event) => {
   const newEqualizer = event.target.value
   // 更新设备属性
   deviceProperties.value.equalizer = newEqualizer
-  // 调用设备服务更新均衡器
-  deviceManager.invokeDeviceService(deviceSn.value, 'setEqualizer', { mode: newEqualizer })
 }
 
 // 更新低音显示（拖动过程中）
@@ -812,8 +653,6 @@ const updateBass = (event) => {
   tempBass.value = null
   // 更新设备属性
   deviceProperties.value.bass = newBass
-  // 调用设备服务更新低音
-  deviceManager.invokeDeviceService(deviceSn.value, 'setBass', { level: newBass })
 }
 
 // 更新高音显示（拖动过程中）
@@ -830,14 +669,10 @@ const updateTreble = (event) => {
   tempTreble.value = null
   // 更新设备属性
   deviceProperties.value.treble = newTreble
-  // 调用设备服务更新高音
-  deviceManager.invokeDeviceService(deviceSn.value, 'setTreble', { level: newTreble })
 }
 
 // 添加全局点击事件监听器
 onMounted(() => {
-  fetchDeviceProperties()
-  subscribeToDeviceProperties()
   // 使用 capture 模式确保能捕获到所有点击事件
   document.addEventListener('click', handleGlobalClick, true)
 })
@@ -847,7 +682,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleGlobalClick, true)
   stopPlaybackSimulation()
   
-  // 注意：设备订阅的取消现在由 useWebSocketManager 在断开连接时自动处理
 })
 </script>
 

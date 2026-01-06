@@ -6,12 +6,12 @@
         <div class="connection-status">
           <div 
             :class="['status-indicator', { 
-              'connected': wsConnected && deviceOnline,
-              'disconnected': !wsConnected || !deviceOnline 
+              'connected': deviceOnline,
+              'disconnected': !deviceOnline 
             }]"
           ></div>
           <span class="status-text">
-            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+            {{ deviceOnline ? '在线' : '离线' }}
           </span>
           <span v-if="device.sn" class="device-sn">{{ device.sn }}</span>
         </div>
@@ -125,8 +125,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useWebSocketManager } from '../composables/useWebSocketManager'
+import { ref, computed } from 'vue'
 import { useGlobalStore } from '../stores/global'
 
 // 定义 props
@@ -137,8 +136,7 @@ const props = defineProps({
   }
 })
 
-// 使用设备管理器和全局 store
-const { deviceManager } = useWebSocketManager()
+// 使用全局 store
 const globalStore = useGlobalStore()
 
 // 设备序列号 - 从props中获取
@@ -147,14 +145,6 @@ const deviceSn = computed(() => props.device?.sn || 'M701001-250922-000123')
 // 设备在线状态
 const deviceOnline = computed(() => {
   return props.device?.status === 'online'
-})
-
-// WebSocket连接状态
-const wsConnected = computed(() => {
-  if (!deviceManager || !deviceManager.connectionState) {
-    return false
-  }
-  return deviceManager.connectionState.value === 'connected'
 })
 
 // 传感器数据
@@ -199,114 +189,6 @@ const airQualityText = computed(() => {
   return '重度污染 · 建议强力净化'
 })
 
-// 订阅设备事件
-const subscribeToDeviceProperties = async () => {
-  if (!deviceManager || !deviceManager.subscribeDeviceEvents || !deviceManager.setEventNotificationHandler) {
-    console.warn('EnvironmentMonitorCard: deviceManager 方法不可用')
-    return
-  }
-  
-  if (!wsConnected.value) return
-  
-  try {
-    // 订阅设备事件
-    await deviceManager.subscribeDeviceEvents(deviceSn.value)
-    
-    // 设置事件通知处理器
-    // eventData 是一个对象，格式可能是：
-    // 1. 传感器数据: { co2: 517, hcho: 12, tvoc: 19, pm25: 20, pm10: 24, temp: 26.1, humi: 40.1 }
-    // 2. 设备状态: { status: 'online' } 或 { status: 'offline' }
-    deviceManager.setEventNotificationHandler(deviceSn.value, (eventData) => {
-      try {
-        if (eventData && typeof eventData === 'object' && !Array.isArray(eventData)) {
-            console.log('收到环境监测数据', eventData)
-          // 更新传感器数据（只有当字段存在且为数字时才更新）
-          if (eventData.co2 !== undefined && typeof eventData.co2 === 'number') sensors.value.co2 = eventData.co2
-          if (eventData.hcho !== undefined && typeof eventData.hcho === 'number') sensors.value.hcho = eventData.hcho
-          if (eventData.tvoc !== undefined && typeof eventData.tvoc === 'number') sensors.value.tvoc = eventData.tvoc
-          if (eventData.pm25 !== undefined && typeof eventData.pm25 === 'number') sensors.value.pm25 = eventData.pm25
-          if (eventData.pm10 !== undefined && typeof eventData.pm10 === 'number') sensors.value.pm10 = eventData.pm10
-          if (eventData.temp !== undefined && typeof eventData.temp === 'number') sensors.value.temp = eventData.temp
-          if (eventData.humi !== undefined && typeof eventData.humi === 'number') sensors.value.humi = eventData.humi
-          
-          // 处理设备状态更新
-          // eventData.status 是字符串，例如：'online' 或 'offline'
-          if (eventData.status !== undefined && typeof eventData.status === 'string') {
-            // 更新 global store 中对应设备的状态
-            globalStore.updateDeviceStatus(deviceSn.value, eventData.status)
-          }
-        } else if (eventData !== null && eventData !== undefined) {
-          // 如果 eventData 不是对象，记录警告
-          console.warn('EnvironmentMonitorCard: 收到非对象类型的 eventData:', typeof eventData, eventData)
-        }
-      } catch (error) {
-        console.error('处理事件通知时出错:', error)
-      }
-    })
-  } catch (error) {
-    console.error('订阅环境监测设备事件失败:', error)
-  }
-}
-
-// 监听WebSocket连接状态和设备在线状态
-const watchConnection = () => {
-  if (!deviceManager) return
-  
-  if (wsConnected.value) {
-    subscribeToDeviceProperties()
-  }
-}
-
-// 组件挂载时
-let stopWatchers = null
-
-onMounted(() => {
-  if (!deviceManager) {
-    console.warn('EnvironmentMonitorCard: deviceManager 未初始化')
-    return
-  }
-  
-  watchConnection()
-  
-  // 监听连接状态变化
-  const stopWatchConnection = watch(() => {
-    if (!deviceManager || !deviceManager.connectionState) return 'disconnected'
-    return deviceManager.connectionState.value
-  }, () => {
-    watchConnection()
-  }, { immediate: false })
-  
-  // 监听设备在线状态变化
-  const stopWatchDeviceOnline = watch(() => deviceOnline.value, () => {
-    watchConnection()
-  }, { immediate: false })
-  
-  // 保存清理函数
-  stopWatchers = () => {
-    stopWatchConnection()
-    stopWatchDeviceOnline()
-  }
-})
-
-// 组件卸载时
-onBeforeUnmount(() => {
-  // 清理 watch 监听器
-  if (stopWatchers) {
-    stopWatchers()
-    stopWatchers = null
-  }
-  
-  // 清除事件处理器
-  if (deviceManager && deviceManager.clearEventNotificationHandler) {
-    try {
-      deviceManager.clearEventNotificationHandler(deviceSn.value)
-    } catch (error) {
-      console.error('清除事件处理器失败:', error)
-    }
-  }
-  
-  // 取消订阅（由 useWebSocketManager 在断开连接时自动处理）
-})
 </script>
 
 <style scoped>

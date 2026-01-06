@@ -732,14 +732,10 @@ import { updateDeviceName, getMyDevices, unbindDeviceBySN } from '../api/devices
 import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { getThumbnailByCardName, getDeviceCardBySN } from '../utils/deviceMapping'
-import { useWebSocketManager } from '../composables/useWebSocketManager'
 import QRCode from 'qrcode'
 
 const router = useRouter()
 const globalStore = useGlobalStore()
-
-// WebSocket 管理器
-const { deviceManager } = useWebSocketManager()
 
 // 获取当前家庭ID
 const currentFamilyId = computed(() => {
@@ -1555,15 +1551,6 @@ const selectFamily = async (family) => {
   }
 
   try {
-    // 取消之前所有设备的订阅
-    if (deviceManager && deviceManager.unsubscribeAllDevices) {
-      try {
-        await deviceManager.unsubscribeAllDevices()
-      } catch (error) {
-        console.warn('取消设备订阅失败:', error)
-      }
-    }
-
     // 调用切换家庭 API
     const accountData = await updateCurrentFamily(family.id)
     
@@ -1597,15 +1584,6 @@ const switchToPersonalDevices = async () => {
   closeSwitchFamilyModal()
   
   try {
-    // 取消之前所有设备的订阅
-    if (deviceManager && deviceManager.unsubscribeAllDevices) {
-      try {
-        await deviceManager.unsubscribeAllDevices()
-      } catch (error) {
-        console.warn('取消设备订阅失败:', error)
-      }
-    }
-
     // 调用切换家庭 API，传入 null 表示切回个人设备管理
     const accountData = await updateCurrentFamily(null)
     

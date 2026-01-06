@@ -11,12 +11,12 @@
         <div class="connection-status">
           <div 
             :class="['status-indicator', { 
-              'connected': wsConnected && deviceOnline,
-              'disconnected': !wsConnected || !deviceOnline 
+              'connected': deviceOnline,
+              'disconnected': !deviceOnline 
             }]"
           ></div>
           <span class="status-text">
-            {{ wsConnected && deviceOnline ? '在线' : '离线' }}
+            {{ deviceOnline ? '在线' : '离线' }}
           </span>
           <span v-if="props.device?.sn" class="device-sn">{{ props.device.sn }}</span>
         </div>
@@ -26,7 +26,7 @@
         <div 
           :class="['switch-button', { 
             active: effectivePower,
-            disabled: !wsConnected || !deviceOnline 
+            disabled: !deviceOnline 
           }]"
           @click="toggleDevice"
         ></div>
@@ -37,7 +37,6 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useWebSocketManager } from '../composables/useWebSocketManager'
 
 // 定义 props
 const props = defineProps({
@@ -47,43 +46,31 @@ const props = defineProps({
   }
 })
 
-// 使用设备管理器
-const { deviceManager } = useWebSocketManager()
-
 // 设备在线状态
 const deviceOnline = computed(() => {
   return props.device?.status === 'online'
 })
-
-// WebSocket连接状态
-const wsConnected = computed(() => deviceManager.connectionState.value === 'connected')
 
 // 设备电源状态（本地状态）
 const devicePower = ref(false)
 
 // 确保离线时开关始终为Off
 const effectivePower = computed(() => {
-  // 如果设备离线或WebSocket未连接，强制为Off
-  if (!deviceOnline.value || !wsConnected.value) {
+  // 如果设备离线，强制为Off
+  if (!deviceOnline.value) {
     return false
   }
   return devicePower.value
 })
 
 // Methods
-const toggleDevice = async () => {
-  // 设备不在线或WebSocket未连接时不允许操作
-  if (!deviceOnline.value || !wsConnected.value) {
-    console.warn('设备离线或WebSocket未连接，无法控制设备')
+const toggleDevice = () => {
+  // 设备不在线时不允许操作
+  if (!deviceOnline.value) {
+    console.warn('设备离线，无法控制设备')
     return
   }
-  try {
-    const newPowerState = !devicePower.value
-    await deviceManager.invokeDeviceService(props.device?.sn, 'setPower', { power: newPowerState })
-    devicePower.value = newPowerState
-  } catch (error) {
-    console.error('控制设备开关失败:', error)
-  }
+  devicePower.value = !devicePower.value
 }
 </script>
 
