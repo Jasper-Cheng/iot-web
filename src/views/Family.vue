@@ -733,9 +733,13 @@ import { ElMessage } from 'element-plus'
 import AvatarSelector from '../components/AvatarSelector.vue'
 import { getThumbnailByCardName, getDeviceCardBySN } from '../utils/deviceMapping'
 import QRCode from 'qrcode'
+import { getMQTTManager } from '../utils/mqtt'
 
 const router = useRouter()
 const globalStore = useGlobalStore()
+
+// 获取 MQTT 管理器实例
+const mqttManager = getMQTTManager()
 
 // 获取当前家庭ID
 const currentFamilyId = computed(() => {
@@ -1025,6 +1029,11 @@ const confirmJoinFamily = async () => {
         }
         // 重新加载所有数据
         await globalStore.loadAll()
+        
+        // 更新 MQTT 家庭订阅
+        if (mqttManager && mqttManager.isConnected()) {
+          mqttManager.updateHomeSubscription()
+        }
       } catch (error) {
         console.error('切换家庭失败:', error)
       }
@@ -1201,6 +1210,11 @@ watch(() => currentFamilyId.value, (newFamilyId) => {
   } else {
     // 如果没有当前家庭，清空成员数据
     globalStore.familyMembers = []
+  }
+  
+  // 更新 MQTT 家庭订阅
+  if (mqttManager && mqttManager.isConnected()) {
+    mqttManager.updateHomeSubscription()
   }
 }, { immediate: true })
 
@@ -1569,6 +1583,11 @@ const selectFamily = async (family) => {
     // 调用 loadAll 重新加载所有数据（会自动加载当前家庭的成员和设备）
     await globalStore.loadAll()
     
+    // 更新 MQTT 家庭订阅
+    if (mqttManager && mqttManager.isConnected()) {
+      mqttManager.updateHomeSubscription()
+    }
+    
     closeSwitchFamilyModal()
     ElMessage.success(`已切换到家庭"${family.name}"`)
   } catch (error) {
@@ -1601,6 +1620,11 @@ const switchToPersonalDevices = async () => {
     
     // 调用 loadAll 重新加载所有数据（loadDevices 会加载个人设备）
     await globalStore.loadAll()
+    
+    // 更新 MQTT 家庭订阅（清除家庭订阅）
+    if (mqttManager && mqttManager.isConnected()) {
+      mqttManager.updateHomeSubscription()
+    }
     
     // 跳转到 Home 页面
     router.push('/home')

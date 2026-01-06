@@ -105,6 +105,7 @@ class MQTTManager {
           this.state = this.connectionState.CONNECTED
           this.emit('stateChange', this.state)
           this.emit('connected')
+          console.log('[MQTT] 连接成功')
           this.log('MQTT connected successfully')
 
           // 自动订阅主题
@@ -123,6 +124,7 @@ class MQTTManager {
           this.state = this.connectionState.DISCONNECTED
           this.emit('stateChange', this.state)
           this.emit('disconnected')
+          console.log('[MQTT] 连接已关闭')
           this.log('MQTT disconnected')
 
           // 清除订阅记录
@@ -134,6 +136,7 @@ class MQTTManager {
           this.state = this.connectionState.ERROR
           this.emit('stateChange', this.state)
           this.emit('error', error)
+          console.error('[MQTT] 连接错误:', error.message || error)
           this.log('MQTT error:', error)
           reject(error)
         })
@@ -151,6 +154,7 @@ class MQTTManager {
           this.state = this.connectionState.RECONNECTING
           this.emit('stateChange', this.state)
           this.emit('reconnecting')
+          console.log('[MQTT] 正在重连...')
           this.log('MQTT reconnecting...')
         })
 
@@ -207,6 +211,7 @@ class MQTTManager {
    */
   autoSubscribe() {
     if (!this.client || !this.client.connected) {
+      console.warn('[MQTT] 未连接，无法订阅')
       this.log('MQTT not connected, cannot subscribe')
       return
     }
@@ -219,9 +224,11 @@ class MQTTManager {
     if (!this.subscribedTopics.has(systemTopic)) {
       this.client.subscribe(systemTopic, { qos: 1 }, (error) => {
         if (error) {
+          console.error(`[MQTT] 订阅系统主题失败:`, error)
           this.log(`Failed to subscribe to ${systemTopic}:`, error)
         } else {
           this.subscribedTopics.add(systemTopic)
+          console.log(`[MQTT] 已订阅: ${systemTopic}`)
           this.log(`Subscribed to ${systemTopic}`)
         }
       })
@@ -233,12 +240,15 @@ class MQTTManager {
       // 如果之前订阅了其他家庭，先取消订阅
       if (this.currentHomeId && this.currentHomeId !== homeId) {
         const oldTopic = `home/${this.currentHomeId}/notice`
+        console.log(`[MQTT] 切换家庭: ${this.currentHomeId} -> ${homeId}`)
         if (this.subscribedTopics.has(oldTopic)) {
           this.client.unsubscribe(oldTopic, (error) => {
             if (error) {
+              console.error(`[MQTT] 取消订阅失败:`, error)
               this.log(`Failed to unsubscribe from ${oldTopic}:`, error)
             } else {
               this.subscribedTopics.delete(oldTopic)
+              console.log(`[MQTT] 已取消订阅: ${oldTopic}`)
               this.log(`Unsubscribed from ${oldTopic}`)
             }
           })
@@ -249,10 +259,12 @@ class MQTTManager {
       if (!this.subscribedTopics.has(homeTopic)) {
         this.client.subscribe(homeTopic, { qos: 1 }, (error) => {
           if (error) {
+            console.error(`[MQTT] 订阅失败:`, error)
             this.log(`Failed to subscribe to ${homeTopic}:`, error)
           } else {
             this.subscribedTopics.add(homeTopic)
             this.currentHomeId = homeId
+            console.log(`[MQTT] 已订阅: ${homeTopic}`)
             this.log(`Subscribed to ${homeTopic}`)
           }
         })
@@ -261,17 +273,22 @@ class MQTTManager {
       // 如果没有 homeId，取消之前的家庭订阅
       if (this.currentHomeId) {
         const oldTopic = `home/${this.currentHomeId}/notice`
+        console.log(`[MQTT] 清除家庭订阅 (家庭ID: ${this.currentHomeId})`)
         if (this.subscribedTopics.has(oldTopic)) {
           this.client.unsubscribe(oldTopic, (error) => {
             if (error) {
+              console.error(`[MQTT] 取消订阅失败:`, error)
               this.log(`Failed to unsubscribe from ${oldTopic}:`, error)
             } else {
               this.subscribedTopics.delete(oldTopic)
+              this.currentHomeId = null
+              console.log(`[MQTT] 已取消订阅: ${oldTopic}`)
               this.log(`Unsubscribed from ${oldTopic}`)
             }
           })
+        } else {
+          this.currentHomeId = null
         }
-        this.currentHomeId = null
       }
     }
   }
@@ -280,8 +297,16 @@ class MQTTManager {
    * 更新家庭订阅（当 home_id 变化时调用）
    */
   updateHomeSubscription() {
+    const globalStore = useGlobalStore()
+    const homeId = globalStore.user?.account?.current_family_id
+    
     if (this.client && this.client.connected) {
+      if (this.currentHomeId !== homeId) {
+        console.log(`[MQTT] 更新家庭订阅: ${this.currentHomeId || '无'} -> ${homeId || '无'}`)
+      }
       this.autoSubscribe()
+    } else {
+      console.warn('[MQTT] 未连接，无法更新订阅')
     }
   }
 
@@ -295,32 +320,41 @@ class MQTTManager {
       // 解析消息内容
       const messageStr = message.toString()
       const data = JSON.parse(messageStr)
-      this.log('Message received:', { topic, data })
-
+      
       // 根据主题类型处理消息
       if (topic === 'system/notice') {
         // 系统通知消息
+        console.log('[MQTT] 收到系统消息:', topic)
         this.handleSystemNotice(data)
       } else if (topic.startsWith('home/') && topic.endsWith('/notice')) {
         // 家庭通知消息
+        const homeId = topic.match(/home\/(\d+)\/notice/)?.[1]
+        console.log(`[MQTT] 收到家庭消息: ${topic} (家庭ID: ${homeId})`)
         this.handleHomeNotice(data)
       } else if (topic.startsWith('web/') && (topic.endsWith('/data') || topic.endsWith('/status'))) {
         // 设备消息处理
+        const deviceSn = topic.match(/web\/([^/]+)\/(data|status)/)?.[1]
         const handler = this.deviceTopicHandlers.get(topic)
         if (handler) {
           try {
             handler(data)
           } catch (error) {
+            console.error(`[MQTT] 设备消息处理错误:`, error)
             this.log(`Error in device topic handler for ${topic}:`, error)
           }
         } else {
+          console.warn(`[MQTT] 设备消息无处理器: ${topic}`)
           this.log('Device message received but no handler set:', { topic, data })
         }
       } else {
+        console.warn(`[MQTT] 未知主题: ${topic}`)
         this.log('Unknown topic:', topic)
       }
+      
+      this.log('Message received:', { topic, data })
 
     } catch (error) {
+      console.error('[MQTT] 解析消息失败:', error)
       this.log('Failed to parse message:', error)
       this.emit('error', error)
     }
