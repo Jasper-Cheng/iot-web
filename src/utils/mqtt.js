@@ -360,9 +360,9 @@ class MQTTManager {
         const homeId = topic.match(/home\/(\d+)\/notice/)?.[1]
         console.log(`[MQTT] 收到家庭消息: ${topic} (家庭ID: ${homeId})`)
         this.handleHomeNotice(data)
-      } else if (topic.startsWith('web/') && (topic.endsWith('/data') || topic.endsWith('/status'))) {
+      } else if (topic.startsWith('client/') && (topic.endsWith('/data') || topic.endsWith('/status'))) {
         // 设备消息处理
-        const deviceSn = topic.match(/web\/([^/]+)\/(data|status)/)?.[1]
+        const deviceSn = topic.match(/client\/([^/]+)\/(data|status)/)?.[1]
         const handler = this.deviceTopicHandlers.get(topic)
         if (handler) {
           try {
@@ -540,8 +540,8 @@ class MQTTManager {
   /**
    * 订阅设备主题
    * @param {string} deviceSn - 设备序列号
-   * @param {Function} dataHandler - 数据消息处理器 (web/{sn}/data)
-   * @param {Function} statusHandler - 状态消息处理器 (web/{sn}/status)
+   * @param {Function} dataHandler - 数据消息处理器 (client/{sn}/data)
+   * @param {Function} statusHandler - 状态消息处理器 (client/{sn}/status)
    * @returns {Promise} 返回订阅结果
    */
   subscribeDeviceTopics(deviceSn, dataHandler = null, statusHandler = null) {
@@ -550,8 +550,8 @@ class MQTTManager {
     }
 
     return new Promise((resolve, reject) => {
-      const dataTopic = `web/${deviceSn}/data`
-      const statusTopic = `web/${deviceSn}/status`
+      const dataTopic = `client/${deviceSn}/data`
+      const statusTopic = `client/${deviceSn}/status`
       const topics = []
 
       if (dataHandler) {
@@ -595,16 +595,16 @@ class MQTTManager {
   unsubscribeDeviceTopics(deviceSn) {
     if (!this.client || !this.client.connected) {
       // 即使未连接，也清除处理器
-      const dataTopic = `web/${deviceSn}/data`
-      const statusTopic = `web/${deviceSn}/status`
+      const dataTopic = `client/${deviceSn}/data`
+      const statusTopic = `client/${deviceSn}/status`
       this.deviceTopicHandlers.delete(dataTopic)
       this.deviceTopicHandlers.delete(statusTopic)
       return Promise.resolve()
     }
 
     return new Promise((resolve, reject) => {
-      const dataTopic = `web/${deviceSn}/data`
-      const statusTopic = `web/${deviceSn}/status`
+      const dataTopic = `client/${deviceSn}/data`
+      const statusTopic = `client/${deviceSn}/status`
       const topics = [dataTopic, statusTopic]
 
       this.client.unsubscribe(topics, (error) => {
@@ -635,7 +635,7 @@ class MQTTManager {
     }
 
     return new Promise((resolve, reject) => {
-      const topic = `web/${deviceSn}/control`
+      const topic = `client/${deviceSn}/control`
       const message = JSON.stringify(payload)
 
       this.client.publish(topic, message, { qos: 1 }, (error) => {
