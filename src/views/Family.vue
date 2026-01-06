@@ -2531,12 +2531,12 @@ const switchToPersonalDevices = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-danger);
   background: transparent;
-  color: var(--color-text-secondary);
+  color: var(--color-danger);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -2558,8 +2558,8 @@ const switchToPersonalDevices = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid var(--color-border);
   background: transparent;
