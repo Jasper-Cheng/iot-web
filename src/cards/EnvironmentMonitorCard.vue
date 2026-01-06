@@ -125,8 +125,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useGlobalStore } from '../stores/global'
+import { getMQTTManager } from '../utils/mqtt'
 
 // 定义 props
 const props = defineProps({
@@ -138,6 +139,9 @@ const props = defineProps({
 
 // 使用全局 store
 const globalStore = useGlobalStore()
+
+// 获取 MQTT 管理器
+const mqttManager = getMQTTManager()
 
 // 设备序列号 - 从props中获取
 const deviceSn = computed(() => props.device?.sn || 'M701001-250922-000123')
@@ -187,6 +191,93 @@ const airQualityText = computed(() => {
   if (v <= 75) return '良 · 建议通风'
   if (v <= 115) return '轻度污染 · 建议净化'
   return '重度污染 · 建议强力净化'
+})
+
+// =========================
+// MQTT 设备消息处理
+// =========================
+
+/**
+ * 处理设备数据消息
+ * @param {Object} data - 设备数据
+ */
+const handleDeviceData = (data) => {
+  console.log(`[环境监测] 收到设备数据:`, data)
+  
+  // 更新传感器数据
+  if (data.co2 !== undefined) sensors.value.co2 = data.co2
+  if (data.hcho !== undefined) sensors.value.hcho = data.hcho
+  if (data.tvoc !== undefined) sensors.value.tvoc = data.tvoc
+  if (data.pm25 !== undefined) sensors.value.pm25 = data.pm25
+  if (data.pm10 !== undefined) sensors.value.pm10 = data.pm10
+  if (data.temp !== undefined) sensors.value.temp = data.temp
+  if (data.humi !== undefined) sensors.value.humi = data.humi
+}
+
+/**
+ * 处理设备状态消息
+ * @param {Object} data - 设备状态
+ */
+const handleDeviceStatus = (data) => {
+  console.log(`[环境监测] 收到设备状态:`, data)
+  // 设备状态变化处理（如果需要）
+}
+
+/**
+ * 订阅设备 MQTT 消息
+ */
+const subscribeDevice = async () => {
+  if (!deviceSn.value) {
+    console.warn('[环境监测] 设备序列号为空，无法订阅')
+    return
+  }
+
+  if (!mqttManager.isConnected()) {
+    console.warn('[环境监测] MQTT 未连接，无法订阅设备')
+    return
+  }
+
+  try {
+    // 订阅设备主题并注册处理器
+    await mqttManager.subscribeDeviceTopics(
+      deviceSn.value,
+      handleDeviceData,    // data 消息处理器
+      handleDeviceStatus   // status 消息处理器
+    )
+    console.log(`[环境监测] 已订阅设备: ${deviceSn.value}`)
+  } catch (error) {
+    console.error('[环境监测] 订阅设备失败:', error)
+  }
+}
+
+/**
+ * 取消订阅设备 MQTT 消息
+ */
+const unsubscribeDevice = async () => {
+  if (!deviceSn.value) {
+    return
+  }
+
+  try {
+    await mqttManager.unsubscribeDeviceTopics(deviceSn.value)
+    console.log(`[环境监测] 已取消订阅设备: ${deviceSn.value}`)
+  } catch (error) {
+    console.error('[环境监测] 取消订阅设备失败:', error)
+  }
+}
+
+// =========================
+// 生命周期钩子
+// =========================
+
+onMounted(() => {
+  // 订阅设备消息
+  subscribeDevice()
+})
+
+onBeforeUnmount(() => {
+  // 取消订阅设备消息
+  unsubscribeDevice()
 })
 
 </script>
