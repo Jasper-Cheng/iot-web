@@ -220,7 +220,17 @@ const handleDeviceData = (data) => {
  */
 const handleDeviceStatus = (data) => {
   console.log(`[环境监测] 收到设备状态:`, data)
-  // 设备状态变化处理（如果需要）
+  
+  // 更新设备在线状态
+  if (data.status && data.sn === deviceSn.value) {
+    // 在全局 store 中查找并更新设备状态
+    const devices = globalStore.devices || []
+    const device = devices.find(d => d.sn === data.sn)
+    if (device) {
+      device.status = data.status
+      console.log(`[环境监测] 设备状态已更新: ${data.status}`)
+    }
+  }
 }
 
 /**
