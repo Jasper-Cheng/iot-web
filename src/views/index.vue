@@ -857,6 +857,33 @@ const initMQTTConnection = async () => {
             mqttManager.setFamilyMessageHandler(handleFamilyMessage)
             // 更新家庭订阅（MQTT会自动订阅）
             mqttManager.updateHomeSubscription()
+            
+            // 订阅个人通知
+            const accountId = globalStore.user?.account?.id
+            if (accountId) {
+              mqttManager.subscribePersonalNotice(accountId, handlePersonalNotice)
+                .then(() => {
+                  console.log(`已订阅个人通知: client/${accountId}/notice`)
+                })
+                .catch((error) => {
+                  console.error('订阅个人通知失败:', error)
+                })
+            }
+            
+            // 订阅所有设备的通知
+            if (globalStore.devices && Array.isArray(globalStore.devices)) {
+              globalStore.devices.forEach(device => {
+                if (device.sn) {
+                  mqttManager.subscribeDeviceNotice(device.sn, handleDeviceNotice)
+                    .then(() => {
+                      console.log(`已订阅设备通知: device/${device.sn}/notice`)
+                    })
+                    .catch((error) => {
+                      console.error(`订阅设备通知失败 (${device.sn}):`, error)
+                    })
+                }
+              })
+            }
             break
           case 'connecting':
             console.log('MQTT正在连接...')
@@ -1065,6 +1092,32 @@ const handleSystemMessageType = (data) => {
   console.log(`系统消息 [${typeText}]: ${title} - ${content}`)
 }
 
+// 设备通知处理
+const handleDeviceNotice = (data) => {
+  console.log('收到设备通知:', data)
+  // data 结构可能需要根据实际情况调整
+  // 可以根据通知类型进行不同处理
+  ElMessage({
+    message: `设备通知: ${data.title || data.message || JSON.stringify(data)}`,
+    type: 'info',
+    duration: 3000,
+    showClose: true
+  })
+}
+
+// 个人通知处理
+const handlePersonalNotice = (data) => {
+  console.log('收到个人通知:', data)
+  // data 结构可能需要根据实际情况调整
+  // 可以根据通知类型进行不同处理
+  ElMessage({
+    message: `个人通知: ${data.title || data.message || JSON.stringify(data)}`,
+    type: 'info',
+    duration: 3000,
+    showClose: true
+  })
+}
+
 // 家庭消息处理
 const handleFamilyMessage = (data) => {
   // console.log('收到家庭消息:', data)
@@ -1176,11 +1229,22 @@ const handleDeviceNameUpdate = (data) => {
 
 // 处理设备绑定事件
 const handleDeviceBind = async (data) => {
-  const { title, message, level } = data
+  const { title, message, level, deviceSn } = data
   console.log(`设备绑定 [${level}]: ${title} - ${message}`)
   
   // 重新加载设备列表以获取新绑定的设备
   await globalStore.loadDevices()
+  
+  // 订阅新绑定设备的通知
+  if (deviceSn && mqttManager && mqttManager.isConnected()) {
+    mqttManager.subscribeDeviceNotice(deviceSn, handleDeviceNotice)
+      .then(() => {
+        console.log(`已订阅设备通知: device/${deviceSn}/notice`)
+      })
+      .catch((error) => {
+        console.error(`订阅设备通知失败 (${deviceSn}):`, error)
+      })
+  }
   
   ElMessage.success(message || '设备绑定成功')
 }
@@ -1201,8 +1265,16 @@ const handleDeviceUnbind = async (data) => {
     }
   }
   
-  // 如果找到了设备序列号，取消订阅设备主题（由设备卡片自己管理，这里不需要处理）
-  // MQTT 设备订阅由各个设备卡片自己管理
+  // 取消订阅设备通知
+  if (deviceSerialNumber && mqttManager && mqttManager.isConnected()) {
+    mqttManager.unsubscribeDeviceNotice(deviceSerialNumber)
+      .then(() => {
+        console.log(`已取消订阅设备通知: device/${deviceSerialNumber}/notice`)
+      })
+      .catch((error) => {
+        console.error(`取消订阅设备通知失败 (${deviceSerialNumber}):`, error)
+      })
+  }
   
   // 重新加载设备列表以移除已解绑的设备
   await globalStore.loadDevices()
@@ -1368,11 +1440,22 @@ const handleForceLogout = async (data) => {
 
 // 处理设备添加事件
 const handleDeviceAdd = async (data) => {
-  const { title, message, level } = data
+  const { title, message, level, deviceSn } = data
   console.log(`设备添加 [${level}]: ${title} - ${message}`)
   
   // 重新加载设备列表以获取新添加的设备
   await globalStore.loadDevices()
+  
+  // 订阅新添加设备的通知
+  if (deviceSn && mqttManager && mqttManager.isConnected()) {
+    mqttManager.subscribeDeviceNotice(deviceSn, handleDeviceNotice)
+      .then(() => {
+        console.log(`已订阅设备通知: device/${deviceSn}/notice`)
+      })
+      .catch((error) => {
+        console.error(`订阅设备通知失败 (${deviceSn}):`, error)
+      })
+  }
   
   ElMessage.success(message || '设备添加成功')
 }
@@ -1393,8 +1476,16 @@ const handleDeviceRemove = async (data) => {
     }
   }
   
-  // 如果找到了设备序列号，取消订阅设备主题（由设备卡片自己管理，这里不需要处理）
-  // MQTT 设备订阅由各个设备卡片自己管理
+  // 取消订阅设备通知
+  if (deviceSerialNumber && mqttManager && mqttManager.isConnected()) {
+    mqttManager.unsubscribeDeviceNotice(deviceSerialNumber)
+      .then(() => {
+        console.log(`已取消订阅设备通知: device/${deviceSerialNumber}/notice`)
+      })
+      .catch((error) => {
+        console.error(`取消订阅设备通知失败 (${deviceSerialNumber}):`, error)
+      })
+  }
   
   // 重新加载设备列表以移除已移除的设备
   await globalStore.loadDevices()

@@ -52,6 +52,12 @@ class MQTTManager {
     
     // 设备主题消息处理器映射
     this.deviceTopicHandlers = new Map()
+    
+    // 设备通知处理器映射 (device/{sn}/notice)
+    this.deviceNoticeHandlers = new Map()
+    
+    // 个人通知处理器映射 (client/{account_id}/notice)
+    this.personalNoticeHandlers = new Map()
 
     // 绑定方法
     this.connect = this.connect.bind(this)
@@ -375,6 +381,38 @@ class MQTTManager {
           console.warn(`[MQTT] 设备消息无处理器: ${topic}`)
           this.log('Device message received but no handler set:', { topic, data })
         }
+      } else if (topic.startsWith('device/') && topic.endsWith('/notice')) {
+        // 设备通知消息处理 (device/{sn}/notice)
+        const deviceSn = topic.match(/device\/([^/]+)\/notice/)?.[1]
+        console.log(`[MQTT] 收到设备通知: ${topic} (设备SN: ${deviceSn})`)
+        const handler = this.deviceNoticeHandlers.get(topic)
+        if (handler) {
+          try {
+            handler(data)
+          } catch (error) {
+            console.error(`[MQTT] 设备通知处理错误:`, error)
+            this.log(`Error in device notice handler for ${topic}:`, error)
+          }
+        } else {
+          console.warn(`[MQTT] 设备通知无处理器: ${topic}`)
+          this.log('Device notice received but no handler set:', { topic, data })
+        }
+      } else if (topic.startsWith('client/') && topic.endsWith('/notice')) {
+        // 个人通知消息处理 (client/{account_id}/notice)
+        const accountId = topic.match(/client\/([^/]+)\/notice/)?.[1]
+        console.log(`[MQTT] 收到个人通知: ${topic} (账户ID: ${accountId})`)
+        const handler = this.personalNoticeHandlers.get(topic)
+        if (handler) {
+          try {
+            handler(data)
+          } catch (error) {
+            console.error(`[MQTT] 个人通知处理错误:`, error)
+            this.log(`Error in personal notice handler for ${topic}:`, error)
+          }
+        } else {
+          console.warn(`[MQTT] 个人通知无处理器: ${topic}`)
+          this.log('Personal notice received but no handler set:', { topic, data })
+        }
       } else {
         console.warn(`[MQTT] 未知主题: ${topic}`)
         this.log('Unknown topic:', topic)
@@ -651,6 +689,138 @@ class MQTTManager {
   }
 
   /**
+   * 订阅设备通知主题
+   * @param {string} deviceSn - 设备序列号
+   * @param {Function} handler - 通知消息处理器
+   * @returns {Promise} 返回订阅结果
+   */
+  subscribeDeviceNotice(deviceSn, handler) {
+    if (!this.client || !this.client.connected) {
+      return Promise.reject(new Error('MQTT not connected'))
+    }
+
+    if (!handler || typeof handler !== 'function') {
+      return Promise.reject(new Error('Handler must be a function'))
+    }
+
+    return new Promise((resolve, reject) => {
+      const topic = `device/${deviceSn}/notice`
+      
+      // 保存处理器
+      this.deviceNoticeHandlers.set(topic, handler)
+
+      // 订阅主题
+      this.client.subscribe(topic, { qos: 1 }, (error) => {
+        if (error) {
+          this.deviceNoticeHandlers.delete(topic)
+          this.log(`Failed to subscribe to device notice for ${deviceSn}:`, error)
+          reject(error)
+        } else {
+          this.subscribedTopics.add(topic)
+          this.log(`Subscribed to device notice for ${deviceSn}: ${topic}`)
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
+   * 取消订阅设备通知主题
+   * @param {string} deviceSn - 设备序列号
+   * @returns {Promise} 返回取消订阅结果
+   */
+  unsubscribeDeviceNotice(deviceSn) {
+    if (!this.client || !this.client.connected) {
+      // 即使未连接，也清除处理器
+      const topic = `device/${deviceSn}/notice`
+      this.deviceNoticeHandlers.delete(topic)
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      const topic = `device/${deviceSn}/notice`
+
+      this.client.unsubscribe(topic, (error) => {
+        if (error) {
+          this.log(`Failed to unsubscribe from device notice for ${deviceSn}:`, error)
+          reject(error)
+        } else {
+          this.subscribedTopics.delete(topic)
+          this.deviceNoticeHandlers.delete(topic)
+          this.log(`Unsubscribed from device notice for ${deviceSn}`)
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
+   * 订阅个人通知主题
+   * @param {string} accountId - 账户ID
+   * @param {Function} handler - 通知消息处理器
+   * @returns {Promise} 返回订阅结果
+   */
+  subscribePersonalNotice(accountId, handler) {
+    if (!this.client || !this.client.connected) {
+      return Promise.reject(new Error('MQTT not connected'))
+    }
+
+    if (!handler || typeof handler !== 'function') {
+      return Promise.reject(new Error('Handler must be a function'))
+    }
+
+    return new Promise((resolve, reject) => {
+      const topic = `client/${accountId}/notice`
+      
+      // 保存处理器
+      this.personalNoticeHandlers.set(topic, handler)
+
+      // 订阅主题
+      this.client.subscribe(topic, { qos: 1 }, (error) => {
+        if (error) {
+          this.personalNoticeHandlers.delete(topic)
+          this.log(`Failed to subscribe to personal notice for ${accountId}:`, error)
+          reject(error)
+        } else {
+          this.subscribedTopics.add(topic)
+          this.log(`Subscribed to personal notice for ${accountId}: ${topic}`)
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
+   * 取消订阅个人通知主题
+   * @param {string} accountId - 账户ID
+   * @returns {Promise} 返回取消订阅结果
+   */
+  unsubscribePersonalNotice(accountId) {
+    if (!this.client || !this.client.connected) {
+      // 即使未连接，也清除处理器
+      const topic = `client/${accountId}/notice`
+      this.personalNoticeHandlers.delete(topic)
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      const topic = `client/${accountId}/notice`
+
+      this.client.unsubscribe(topic, (error) => {
+        if (error) {
+          this.log(`Failed to unsubscribe from personal notice for ${accountId}:`, error)
+          reject(error)
+        } else {
+          this.subscribedTopics.delete(topic)
+          this.personalNoticeHandlers.delete(topic)
+          this.log(`Unsubscribed from personal notice for ${accountId}`)
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
    * 日志输出
    * @param {...any} args - 日志参数
    */
@@ -668,6 +838,9 @@ class MQTTManager {
     this.listeners.clear()
     this.systemMessageHandler = null
     this.familyMessageHandler = null
+    this.deviceTopicHandlers.clear()
+    this.deviceNoticeHandlers.clear()
+    this.personalNoticeHandlers.clear()
   }
 }
 
