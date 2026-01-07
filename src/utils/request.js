@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 let isHandlingUnauthorized = false
 
 const request = axios.create({
-  baseURL: '/api/v1/web',
+  baseURL: '/api/v1/client',
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' }
 })
