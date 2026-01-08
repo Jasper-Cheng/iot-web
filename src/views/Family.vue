@@ -1031,10 +1031,6 @@ const confirmJoinFamily = async () => {
         // 重新加载所有数据
         await globalStore.loadAll()
         
-        // 更新 MQTT 家庭订阅
-        if (mqttManager && mqttManager.isConnected()) {
-          mqttManager.updateHomeSubscription()
-        }
       } catch (error) {
         console.error('切换家庭失败:', error)
       }
@@ -1138,10 +1134,25 @@ const confirmDeleteFamily = async () => {
   if (!deletingFamily.value) return
 
   const familyId = deletingFamily.value.id
+  const isCurrentFamily = currentFamilyId.value === familyId
+  
   isDeletingFamily.value = true
   try {
     await deleteFamily(familyId)
+    
+    // 如果删除的是当前家庭，将当前家庭ID置为null
+    if (isCurrentFamily) {
+      // 直接本地更新，将当前家庭ID置为null
+      globalStore.updateUserInfo({
+        current_family_id: null
+      })
+      
+      // 清空家庭成员数据
+      globalStore.familyMembers = []
+    }
+    
     closeDeleteFamilyModal()
+    
   } catch (error) {
     console.error('删除家庭失败:', error)
     ElMessage.error(error.response?.data?.detail || '删除家庭失败，请重试')
@@ -1584,11 +1595,6 @@ const selectFamily = async (family) => {
     // 调用 loadAll 重新加载所有数据（会自动加载当前家庭的成员和设备）
     await globalStore.loadAll()
     
-    // 更新 MQTT 家庭订阅
-    if (mqttManager && mqttManager.isConnected()) {
-      mqttManager.updateHomeSubscription()
-    }
-    
     closeSwitchFamilyModal()
     ElMessage.success(`已切换到家庭"${family.name}"`)
   } catch (error) {
@@ -1621,11 +1627,6 @@ const switchToPersonalDevices = async () => {
     
     // 调用 loadAll 重新加载所有数据（loadDevices 会加载个人设备）
     await globalStore.loadAll()
-    
-    // 更新 MQTT 家庭订阅（清除家庭订阅）
-    if (mqttManager && mqttManager.isConnected()) {
-      mqttManager.updateHomeSubscription()
-    }
     
     // 跳转到 Home 页面
     router.push('/home')
