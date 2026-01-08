@@ -402,6 +402,7 @@
             <label>家庭头像</label>
             <AvatarSelector 
               v-model="newFamily.avatar"
+              type="family"
               :current-user-avatar="''"
             />
           </div>

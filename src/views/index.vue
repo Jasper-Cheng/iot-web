@@ -420,6 +420,7 @@
         <div class="avatar-section">
           <AvatarSelector 
             v-model="editUserForm.avatar"
+            type="person"
             :current-user-avatar="globalStore.user?.account?.avatar || ''"
             @change="handleAvatarChange"
           />

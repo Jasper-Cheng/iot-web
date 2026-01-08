@@ -86,6 +86,7 @@
         <div class="avatar-section">
           <AvatarSelector 
             v-model="registerData.avatar"
+            type="person"
             @change="handleAvatarChange"
           />
         </div>

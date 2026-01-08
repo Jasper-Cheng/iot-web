@@ -10,10 +10,13 @@
           v-for="(avatar, index) in avatarOptions" 
           :key="index"
           class="avatar-option"
-          :class="{ active: selectedAvatar === avatar }"
+          :class="{ 
+            active: selectedAvatar === avatar,
+            'avatar-option-family': props.type === 'family'
+          }"
           @click="selectAvatar(avatar)"
         >
-          <img :src="avatar" :alt="`头像${index + 1}`" class="avatar-thumb">
+          <img :src="avatar" :alt="`头像${index + 1}`" class="avatar-thumb" :class="{ 'avatar-thumb-family': props.type === 'family' }">
         </div>
       </div>
     </div>
@@ -29,30 +32,14 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  type: {
+    type: String,
+    default: 'person', // 'person' 或 'family'
+    validator: (value) => ['person', 'family'].includes(value)
+  },
   options: {
     type: Array,
-    default: () => [
-      '/avatars/avatar1.png',
-      '/avatars/avatar2.png',
-      '/avatars/avatar3.png',
-      '/avatars/avatar4.png',
-      '/avatars/avatar5.png',
-      '/avatars/avatar6.png',
-      '/avatars/avatar7.png',
-      '/avatars/avatar8.png',
-      '/avatars/avatar9.png',
-      '/avatars/avatar10.png',
-      '/avatars/avatar11.png',
-      '/avatars/avatar12.png',
-      '/avatars/avatar13.png',
-      '/avatars/avatar14.png',
-      '/avatars/avatar15.png',
-      '/avatars/avatar16.png',
-      '/avatars/avatar17.png',
-      '/avatars/avatar18.png',
-      '/avatars/avatar19.png',
-      '/avatars/avatar20.png'
-    ]
+    default: null // 如果为 null，则根据 type 自动生成
   },
   currentUserAvatar: {
     type: String,
@@ -63,6 +50,12 @@ const props = defineProps({
     default: 1.5
   }
 })
+
+// 根据类型生成头像选项
+const generateAvatarOptions = (type) => {
+  const basePath = type === 'family' ? '/avatars/family' : '/avatars/person'
+  return Array.from({ length: 20 }, (_, i) => `${basePath}/avatar${i + 1}.png`)
+}
 
 // Emits
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -77,7 +70,9 @@ const startX = ref(0)
 const scrollLeft = ref(0)
 
 // 头像选项
-const avatarOptions = ref([...props.options])
+const avatarOptions = ref(
+  props.options || generateAvatarOptions(props.type)
+)
 
 // 初始化头像选项，如果当前用户头像不在选项中，添加到中间位置
 const initializeAvatarOptions = () => {
@@ -168,15 +163,20 @@ const scrollToSelectedAvatar = () => {
 
 // 设置默认选中头像
 const setDefaultAvatar = () => {
-  if (props.currentUserAvatar && avatarOptions.value.includes(props.currentUserAvatar)) {
+  // 检查头像是否有效（非空且在选项中）
+  const isValidAvatar = (avatar) => {
+    return avatar && avatar.trim() !== '' && avatarOptions.value.includes(avatar)
+  }
+  
+  if (isValidAvatar(props.currentUserAvatar)) {
     // 如果当前用户头像存在且在选项中，则选中
     selectedAvatar.value = props.currentUserAvatar
     emit('update:modelValue', props.currentUserAvatar)
-  } else if (props.modelValue && avatarOptions.value.includes(props.modelValue)) {
+  } else if (isValidAvatar(props.modelValue)) {
     // 如果 modelValue 存在且在选项中，则选中
     selectedAvatar.value = props.modelValue
   } else {
-    // 如果都不存在，则不选中任何头像
+    // 如果都不存在或无效，则不选中任何头像
     selectedAvatar.value = ''
     emit('update:modelValue', '')
   }
@@ -194,8 +194,15 @@ watch(() => props.modelValue, (newValue) => {
 
 // 监听 props.options 变化
 watch(() => props.options, (newOptions) => {
-  avatarOptions.value = newOptions
+  avatarOptions.value = newOptions || generateAvatarOptions(props.type)
 }, { deep: true })
+
+// 监听 props.type 变化
+watch(() => props.type, (newType) => {
+  if (!props.options) {
+    avatarOptions.value = generateAvatarOptions(newType)
+  }
+})
 
 // 生命周期
 onMounted(() => {
@@ -304,5 +311,16 @@ onUnmounted(() => {
 
 .avatar-option:hover .avatar-thumb {
   border-color: var(--color-primary);
+}
+
+/* Family 类型头像的内边距 */
+.avatar-option-family .avatar-thumb-family {
+  width: 42px;
+  height: 42px;
+}
+
+.avatar-option-family.active .avatar-thumb-family {
+  width: 38px;
+  height: 38px;
 }
 </style>
