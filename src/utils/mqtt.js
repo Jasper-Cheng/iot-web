@@ -42,6 +42,15 @@ class MQTTManager {
     // 订阅的主题
     this.subscribedTopics = new Set()
     this.currentHomeId = null
+    
+    // 保存的订阅信息（用于重连后恢复）
+    this.savedSubscriptions = {
+      systemTopic: null,
+      homeTopic: null,
+      deviceTopics: new Map(), // deviceSn -> { dataHandler, statusHandler }
+      deviceNotices: new Map(), // deviceSn -> handler
+      personalNotices: new Map() // accountId -> handler
+    }
 
     // 事件监听器
     this.listeners = new Map()
@@ -58,6 +67,9 @@ class MQTTManager {
     
     // 个人通知处理器映射 (client/{account_id}/notice)
     this.personalNoticeHandlers = new Map()
+    
+    // 是否手动断开（手动断开时不自动重连）
+    this.isManualDisconnect = false
 
     // 绑定方法
     this.connect = this.connect.bind(this)
@@ -98,6 +110,9 @@ class MQTTManager {
 
     return new Promise((resolve, reject) => {
       try {
+        // 重置手动断开标志（允许自动重连）
+        this.isManualDisconnect = false
+        
         this.state = this.connectionState.CONNECTING
         this.emit('stateChange', this.state)
         this.log('Connecting to MQTT server...')
@@ -122,7 +137,7 @@ class MQTTManager {
           username: this.options.username,
           password: this.options.password,
           keepalive: this.options.keepalive,
-          reconnectPeriod: this.options.reconnectPeriod,
+          reconnectPeriod: this.options.reconnectPeriod, // 自动重连间隔（毫秒），每3秒重连一次
           connectTimeout: this.options.connectTimeout,
           clean: true,
           will: {
@@ -138,13 +153,14 @@ class MQTTManager {
         // 连接成功
         this.client.on('connect', () => {
           this.state = this.connectionState.CONNECTED
+          this.isManualDisconnect = false // 重置手动断开标志
           this.emit('stateChange', this.state)
           this.emit('connected')
           console.log('[MQTT] 连接成功')
           this.log('MQTT connected successfully')
 
-          // 自动订阅主题
-          this.autoSubscribe()
+          // 重新订阅所有主题（包括自动订阅和之前保存的订阅）
+          this.resubscribeAllTopics()
 
           resolve()
         })
@@ -156,14 +172,23 @@ class MQTTManager {
 
         // 连接关闭
         this.client.on('close', () => {
-          this.state = this.connectionState.DISCONNECTED
-          this.emit('stateChange', this.state)
-          this.emit('disconnected')
-          console.log('[MQTT] 连接已关闭')
-          this.log('MQTT disconnected')
-
-          // 清除订阅记录
-          this.subscribedTopics.clear()
+          if (this.isManualDisconnect) {
+            // 手动断开，清除所有订阅记录
+            this.subscribedTopics.clear()
+            this.state = this.connectionState.DISCONNECTED
+            this.emit('stateChange', this.state)
+            this.emit('disconnected')
+            console.log('[MQTT] 连接已关闭（手动断开）')
+            this.log('MQTT disconnected (manual)')
+          } else {
+            // 非手动断开，保持订阅记录，等待自动重连
+            this.state = this.connectionState.DISCONNECTED
+            this.emit('stateChange', this.state)
+            this.emit('disconnected')
+            console.log('[MQTT] 连接已关闭，等待自动重连...')
+            this.log('MQTT disconnected, waiting for auto-reconnect...')
+            // MQTT 库会自动重连（由 reconnectPeriod 控制）
+          }
         })
 
         // 连接错误
@@ -173,15 +198,26 @@ class MQTTManager {
           this.emit('error', error)
           console.error('[MQTT] 连接错误:', error.message || error)
           this.log('MQTT error:', error)
-          reject(error)
+          
+          // 如果是第一次连接失败，reject Promise
+          // 但不会阻止 MQTT 库的自动重连机制（通过 reconnectPeriod）
+          if (this.state === this.connectionState.CONNECTING) {
+            reject(error)
+          }
+          // 如果是在重连过程中出错，MQTT 库会自动继续重连
         })
 
         // 离线
         this.client.on('offline', () => {
-          this.state = this.connectionState.DISCONNECTED
-          this.emit('stateChange', this.state)
-          this.emit('offline')
-          this.log('MQTT offline')
+          if (!this.isManualDisconnect) {
+            // 非手动断开，保持订阅记录，等待自动重连
+            this.state = this.connectionState.DISCONNECTED
+            this.emit('stateChange', this.state)
+            this.emit('offline')
+            console.log('[MQTT] 离线，等待自动重连...')
+            this.log('MQTT offline, waiting for auto-reconnect...')
+            // MQTT 库会自动重连（由 reconnectPeriod 控制）
+          }
         })
 
         // 重连
@@ -208,6 +244,9 @@ class MQTTManager {
    */
   disconnect() {
     this.log('Disconnecting MQTT...')
+    
+    // 标记为手动断开，阻止自动重连
+    this.isManualDisconnect = true
 
     // 清除重连定时器
     if (this.reconnectTimer) {
@@ -228,7 +267,7 @@ class MQTTManager {
       })
     }
 
-    // 关闭连接
+    // 关闭连接（传入 true 表示强制断开，不自动重连）
     if (this.client) {
       this.client.end(true)
       this.client = null
@@ -238,6 +277,13 @@ class MQTTManager {
     this.emit('stateChange', this.state)
     this.emit('disconnected')
     this.subscribedTopics.clear()
+    
+    // 清除保存的订阅信息
+    this.savedSubscriptions.systemTopic = null
+    this.savedSubscriptions.homeTopic = null
+    this.savedSubscriptions.deviceTopics.clear()
+    this.savedSubscriptions.deviceNotices.clear()
+    this.savedSubscriptions.personalNotices.clear()
   }
 
   /**
@@ -263,6 +309,7 @@ class MQTTManager {
           this.log(`Failed to subscribe to ${systemTopic}:`, error)
         } else {
           this.subscribedTopics.add(systemTopic)
+          this.savedSubscriptions.systemTopic = systemTopic // 保存订阅信息
           console.log(`[MQTT] 已订阅: ${systemTopic}`)
           this.log(`Subscribed to ${systemTopic}`)
         }
@@ -299,6 +346,7 @@ class MQTTManager {
           } else {
             this.subscribedTopics.add(homeTopic)
             this.currentHomeId = homeId
+            this.savedSubscriptions.homeTopic = homeTopic // 保存订阅信息
             console.log(`[MQTT] 已订阅: ${homeTopic}`)
             this.log(`Subscribed to ${homeTopic}`)
           }
@@ -317,15 +365,91 @@ class MQTTManager {
             } else {
               this.subscribedTopics.delete(oldTopic)
               this.currentHomeId = null
+              this.savedSubscriptions.homeTopic = null // 清除保存的订阅信息
               console.log(`[MQTT] 已取消订阅: ${oldTopic}`)
               this.log(`Unsubscribed from ${oldTopic}`)
             }
           })
         } else {
           this.currentHomeId = null
+          this.savedSubscriptions.homeTopic = null
         }
       }
     }
+  }
+
+  /**
+   * 重新订阅所有主题（重连后调用）
+   */
+  resubscribeAllTopics() {
+    if (!this.client || !this.client.connected) {
+      console.warn('[MQTT] 未连接，无法重新订阅')
+      this.log('MQTT not connected, cannot resubscribe')
+      return
+    }
+
+    console.log('[MQTT] 开始重新订阅所有主题...')
+    this.log('Resubscribing to all topics...')
+
+    // 清空当前的订阅记录（重连后需要重新订阅）
+    // 但保留处理器映射，以便重新订阅时使用
+    this.subscribedTopics.clear()
+
+    // 1. 重新订阅自动订阅的主题（system/notice 和 home/{home_id}/notice）
+    this.autoSubscribe()
+
+    // 2. 重新订阅设备主题
+    this.savedSubscriptions.deviceTopics.forEach((handlers, deviceSn) => {
+      if (handlers.dataHandler || handlers.statusHandler) {
+        // 重新设置处理器（因为在重连时可能会丢失）
+        const dataTopic = `client/${deviceSn}/data`
+        const statusTopic = `client/${deviceSn}/status`
+        if (handlers.dataHandler) {
+          this.deviceTopicHandlers.set(dataTopic, handlers.dataHandler)
+        }
+        if (handlers.statusHandler) {
+          this.deviceTopicHandlers.set(statusTopic, handlers.statusHandler)
+        }
+        
+        // 重新订阅
+        this.subscribeDeviceTopics(deviceSn, handlers.dataHandler, handlers.statusHandler)
+          .catch(error => {
+            console.error(`[MQTT] 重新订阅设备主题失败 (${deviceSn}):`, error)
+            this.log(`Failed to resubscribe device topics for ${deviceSn}:`, error)
+          })
+      }
+    })
+
+    // 3. 重新订阅设备通知
+    this.savedSubscriptions.deviceNotices.forEach((handler, deviceSn) => {
+      const topic = `device/${deviceSn}/notice`
+      // 重新设置处理器
+      this.deviceNoticeHandlers.set(topic, handler)
+      
+      // 重新订阅
+      this.subscribeDeviceNotice(deviceSn, handler)
+        .catch(error => {
+          console.error(`[MQTT] 重新订阅设备通知失败 (${deviceSn}):`, error)
+          this.log(`Failed to resubscribe device notice for ${deviceSn}:`, error)
+        })
+    })
+
+    // 4. 重新订阅个人通知
+    this.savedSubscriptions.personalNotices.forEach((handler, accountId) => {
+      const topic = `client/${accountId}/notice`
+      // 重新设置处理器
+      this.personalNoticeHandlers.set(topic, handler)
+      
+      // 重新订阅
+      this.subscribePersonalNotice(accountId, handler)
+        .catch(error => {
+          console.error(`[MQTT] 重新订阅个人通知失败 (${accountId}):`, error)
+          this.log(`Failed to resubscribe personal notice for ${accountId}:`, error)
+        })
+    })
+
+    console.log('[MQTT] 重新订阅完成')
+    this.log('Resubscription completed')
   }
 
   /**
@@ -606,6 +730,12 @@ class MQTTManager {
         return
       }
 
+      // 保存订阅信息（用于重连后恢复）
+      this.savedSubscriptions.deviceTopics.set(deviceSn, {
+        dataHandler,
+        statusHandler
+      })
+
       // 订阅所有主题
       const topicList = topics.map(t => t.topic)
       this.client.subscribe(topicList, { qos: 1 }, (error) => {
@@ -632,11 +762,12 @@ class MQTTManager {
    */
   unsubscribeDeviceTopics(deviceSn) {
     if (!this.client || !this.client.connected) {
-      // 即使未连接，也清除处理器
+      // 即使未连接，也清除处理器和保存的订阅信息
       const dataTopic = `client/${deviceSn}/data`
       const statusTopic = `client/${deviceSn}/status`
       this.deviceTopicHandlers.delete(dataTopic)
       this.deviceTopicHandlers.delete(statusTopic)
+      this.savedSubscriptions.deviceTopics.delete(deviceSn) // 清除保存的订阅信息
       return Promise.resolve()
     }
 
@@ -654,6 +785,7 @@ class MQTTManager {
             this.subscribedTopics.delete(topic)
             this.deviceTopicHandlers.delete(topic)
           })
+          this.savedSubscriptions.deviceTopics.delete(deviceSn) // 清除保存的订阅信息
           this.log(`Unsubscribed from device topics for ${deviceSn}`)
           resolve()
         }
@@ -708,11 +840,14 @@ class MQTTManager {
       
       // 保存处理器
       this.deviceNoticeHandlers.set(topic, handler)
+      // 保存订阅信息（用于重连后恢复）
+      this.savedSubscriptions.deviceNotices.set(deviceSn, handler)
 
       // 订阅主题
       this.client.subscribe(topic, { qos: 1 }, (error) => {
         if (error) {
           this.deviceNoticeHandlers.delete(topic)
+          this.savedSubscriptions.deviceNotices.delete(deviceSn)
           this.log(`Failed to subscribe to device notice for ${deviceSn}:`, error)
           reject(error)
         } else {
@@ -731,9 +866,10 @@ class MQTTManager {
    */
   unsubscribeDeviceNotice(deviceSn) {
     if (!this.client || !this.client.connected) {
-      // 即使未连接，也清除处理器
+      // 即使未连接，也清除处理器和保存的订阅信息
       const topic = `device/${deviceSn}/notice`
       this.deviceNoticeHandlers.delete(topic)
+      this.savedSubscriptions.deviceNotices.delete(deviceSn) // 清除保存的订阅信息
       return Promise.resolve()
     }
 
@@ -747,6 +883,7 @@ class MQTTManager {
         } else {
           this.subscribedTopics.delete(topic)
           this.deviceNoticeHandlers.delete(topic)
+          this.savedSubscriptions.deviceNotices.delete(deviceSn) // 清除保存的订阅信息
           this.log(`Unsubscribed from device notice for ${deviceSn}`)
           resolve()
         }
@@ -774,11 +911,14 @@ class MQTTManager {
       
       // 保存处理器
       this.personalNoticeHandlers.set(topic, handler)
+      // 保存订阅信息（用于重连后恢复）
+      this.savedSubscriptions.personalNotices.set(accountId, handler)
 
       // 订阅主题
       this.client.subscribe(topic, { qos: 1 }, (error) => {
         if (error) {
           this.personalNoticeHandlers.delete(topic)
+          this.savedSubscriptions.personalNotices.delete(accountId)
           this.log(`Failed to subscribe to personal notice for ${accountId}:`, error)
           reject(error)
         } else {
@@ -797,9 +937,10 @@ class MQTTManager {
    */
   unsubscribePersonalNotice(accountId) {
     if (!this.client || !this.client.connected) {
-      // 即使未连接，也清除处理器
+      // 即使未连接，也清除处理器和保存的订阅信息
       const topic = `client/${accountId}/notice`
       this.personalNoticeHandlers.delete(topic)
+      this.savedSubscriptions.personalNotices.delete(accountId) // 清除保存的订阅信息
       return Promise.resolve()
     }
 
@@ -813,6 +954,7 @@ class MQTTManager {
         } else {
           this.subscribedTopics.delete(topic)
           this.personalNoticeHandlers.delete(topic)
+          this.savedSubscriptions.personalNotices.delete(accountId) // 清除保存的订阅信息
           this.log(`Unsubscribed from personal notice for ${accountId}`)
           resolve()
         }
