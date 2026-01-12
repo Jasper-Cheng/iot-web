@@ -1,7 +1,7 @@
 /**
  * MQTT工具类
  * 提供MQTT连接管理和消息订阅功能
- * 自动订阅 "system/notice" 和 "home/{home_id}/notice" 主题
+ * 自动订阅 "system/web/notice" 和 "home/{home_id}/notice" 主题
  */
 
 import mqtt from 'mqtt'
@@ -288,7 +288,7 @@ class MQTTManager {
 
   /**
    * 自动订阅主题
-   * 订阅 "system/notice" 和 "home/{home_id}/notice"
+   * 订阅 "system/web/notice" 和 "home/{home_id}/notice"
    */
   autoSubscribe() {
     if (!this.client || !this.client.connected) {
@@ -301,7 +301,7 @@ class MQTTManager {
     const homeId = globalStore.user?.account?.current_family_id
 
     // 订阅系统通知主题
-    const systemTopic = 'system/notice'
+    const systemTopic = 'system/web/notice'
     if (!this.subscribedTopics.has(systemTopic)) {
       this.client.subscribe(systemTopic, { qos: 1 }, (error) => {
         if (error) {
@@ -395,7 +395,7 @@ class MQTTManager {
     // 但保留处理器映射，以便重新订阅时使用
     this.subscribedTopics.clear()
 
-    // 1. 重新订阅自动订阅的主题（system/notice 和 home/{home_id}/notice）
+    // 1. 重新订阅自动订阅的主题（system/web/notice 和 home/{home_id}/notice）
     this.autoSubscribe()
 
     // 2. 重新订阅设备主题
@@ -481,7 +481,7 @@ class MQTTManager {
       const data = JSON.parse(messageStr)
       
       // 根据主题类型处理消息
-      if (topic === 'system/notice') {
+      if (topic === 'system/web/notice') {
         // 系统通知消息
         console.log('[MQTT] 收到系统消息:', topic)
         this.handleSystemNotice(data)
