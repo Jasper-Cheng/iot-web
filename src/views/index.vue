@@ -1119,7 +1119,7 @@ const handleDeviceNotice = (data) => {
       handleDeviceUnbindNotice(data)
       break
     case 'device_bind':
-      handleDeviceBindNotice(data)
+      // handleDeviceBindNotice(data)
       break
     default:
       console.warn('未知的设备消息类型:', messageType)
