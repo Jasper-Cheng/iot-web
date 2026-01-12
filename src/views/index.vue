@@ -1289,6 +1289,12 @@ const handleFamilyMessage = (data) => {
     case 'device_removed_from_family':
       handleDeviceRemovedFromFamily(data)
       break
+    case 'member_info_updated':
+      handleMemberInfoUpdated(data)
+      break
+    case 'account_deleted':
+      handleAccountDeleted(data)
+      break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
@@ -1446,6 +1452,75 @@ const handleDeviceRemovedFromFamily = async (data) => {
   ElMessage.success(message || '设备已从家庭中移除')
 }
 
+// 处理成员信息更新事件
+const handleMemberInfoUpdated = async (data) => {
+  const { message, account_id, updated_fields, platform, operator_account_id } = data
+  console.log(`[家庭消息] 成员信息更新: ${message}`, { account_id, updated_fields, platform })
+  
+  const currentAccountId = globalStore.user?.account?.id
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  
+  // 如果是当前用户更新了信息，更新 globalStore.user
+  if (account_id === currentAccountId) {
+    // 重新加载用户信息以获取最新数据
+    await globalStore.loadUser()
+  }
+  
+  // 如果是当前家庭，更新家庭成员列表中对应账户的信息
+  if (currentFamilyId && globalStore.familyMembers?.length) {
+    const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === account_id)
+    if (memberIndex > -1) {
+      // 重新加载成员数据以获取最新信息
+      await globalStore.loadFamilyMembers()
+    }
+  }
+  
+  ElMessage.success(message || '成员信息已更新')
+}
+
+// 处理账号注销事件
+const handleAccountDeleted = async (data) => {
+  const { message, account_id, reason, platform, operator_account_id } = data
+  console.log(`[家庭消息] 账号注销: ${message}`, { account_id, reason, platform })
+  
+  const currentAccountId = globalStore.user?.account?.id
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  
+  // 如果是当前用户注销了账号，需要退出登录
+  if (account_id === currentAccountId) {
+    // 显示警告消息
+    ElMessage.warning({
+      message: '您的账号已注销',
+      duration: 5000,
+      showClose: true
+    })
+    
+    // 断开 MQTT 连接
+    if (mqttManager && mqttManager.isConnected()) {
+      disconnectMQTT().then(() => {
+        console.log('MQTT 连接已断开（账号注销）')
+      }).catch(disconnectError => {
+        console.warn('断开 MQTT 连接失败:', disconnectError)
+      })
+    }
+    
+    // 延迟后执行退出登录流程
+    setTimeout(() => {
+      // 清除认证状态并跳转
+      globalStore.clearAuth()
+      showUserMenu.value = false
+      router.push('/login')
+    }, 500)
+    return
+  }
+  
+  // 如果是当前家庭，重新加载成员数据以移除已注销的成员
+  if (currentFamilyId) {
+    await globalStore.loadFamilyMembers()
+  }
+  
+  ElMessage.info(message || '成员账号已注销')
+}
 
 // 导航配置
 const navigationItems = ref([
