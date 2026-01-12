@@ -987,22 +987,21 @@ const currentTheme = ref('dark')
 
 // 系统消息处理
 const handleSystemMessage = (data) => {
-  console.log('收到系统消息:', data)
-  // data 结构: { type: "notification", data: { id, title, content, type, priority, extra, timestamp } }
+  // 如果 data 为 undefined 或 null，直接返回
+  if (!data) {
+    console.warn('[系统消息] 收到空数据，跳过处理')
+    return
+  }
+  
+  // data 结构: { type, message, id, title, priority, platforms, extra, operator_account_id }
+  // 直接使用 data，因为消息格式已经是扁平结构
   const messageType = data.type
-  const messageData = data.data || data
   
   // 根据消息类型调用相应的处理函数
-  switch (messageType) {
-    case 'notification':
-    case 'announcement':
-    case 'alert':
-    case 'maintenance':
-    case 'update':
-      handleSystemMessageType(messageData)
-      break
-    default:
-      console.warn('未知的系统消息类型:', messageType)
+  if (messageType && ['notification', 'announcement', 'alert', 'maintenance', 'update'].includes(messageType)) {
+    handleSystemMessageType(data)
+  } else {
+    console.warn('未知的系统消息类型:', messageType, data)
   }
 }
 
@@ -1018,22 +1017,128 @@ const getSystemMessageTypeText = (type) => {
   return typeMap[type] || '通知'
 }
 
+// 颜色映射表（根据类型和优先级）
+const Colors = {
+  blue: {
+    400: '#60a5fa',
+    600: '#2563eb',
+    700: '#1d4ed8',
+    900: '#1e3a8a'
+  },
+  green: {
+    400: '#4ade80',
+    600: '#16a34a',
+    700: '#15803d',
+    900: '#14532d'
+  },
+  orange: {
+    400: '#fb923c',
+    600: '#ea580c',
+    700: '#c2410c',
+    900: '#7c2d12'
+  },
+  slate: { // 蓝灰色（用于 maintenance）
+    400: '#94a3b8',
+    600: '#475569',
+    700: '#334155',
+    900: '#0f172a'
+  },
+  purple: {
+    400: '#a78bfa',
+    600: '#9333ea',
+    700: '#7e22ce',
+    900: '#581c87'
+  },
+  red: {
+    900: '#7f1d1d'
+  }
+}
+
+/**
+ * 计算 Toast 背景颜色
+ * @param {string} type - 消息类型
+ * @param {string} priority - 优先级
+ * @returns {string} 颜色值
+ */
+const getToastColor = (type, priority) => {
+  // 特殊规则：alert + urgent → 红色
+  if (type === 'alert' && priority === 'urgent') {
+    return Colors.red[900]
+  }
+  
+  // 优先级颜色深度映射
+  const priorityDepthMap = {
+    'low': 400,
+    'normal': 600,
+    'high': 700,
+    'urgent': 900
+  }
+  const depth = priorityDepthMap[priority] || 600
+  
+  // 类型基础颜色映射
+  const typeColorMap = {
+    'notification': Colors.blue,
+    'announcement': Colors.green,
+    'alert': Colors.orange,
+    'maintenance': Colors.slate,
+    'update': Colors.purple
+  }
+  
+  const colorBase = typeColorMap[type] || Colors.blue
+  return colorBase[depth] || colorBase[600]
+}
+
 // 处理系统消息类型（notification, announcement, alert, maintenance, update）
 const handleSystemMessageType = (data) => {
-  // data 结构: { id, title, content, type, priority, extra, timestamp }
-  const { id, title, content, type, priority, extra, timestamp } = data
+  // 提取 message, type, priority
+  const { id, message, type, priority, title, platforms, extra, operator_account_id } = data
   
-  // 将 timestamp 转换为 ISO 字符串格式
-  const timestampISO = timestamp ? new Date(timestamp).toISOString() : new Date().toISOString()
+  // 检查 message 是否为空
+  if (!message || message.trim() === '') {
+    console.log('[系统消息] message 为空，跳过 ElMessage 显示')
+    // 即使 message 为空，也要保存到系统消息列表
+    const timestampISO = new Date().toISOString()
+    const systemMessage = {
+      id: id || Date.now(),
+      title: title || '系统消息',
+      content: message || '',
+      type: type || 'notification',
+      priority: priority || 'normal',
+      platforms: platforms || ['web'],
+      extra: extra || {},
+      created_at: timestampISO,
+      updated_at: timestampISO
+    }
+    if (!globalStore.systemMessages) {
+      globalStore.systemMessages = []
+    }
+    globalStore.systemMessages.unshift(systemMessage)
+    // 刷新系统消息列表
+    loadSystemMessages(1, false)
+    return
+  }
+  
+  // 非空，继续处理
+  // 计算背景颜色
+  const backgroundColor = getToastColor(type || 'notification', priority || 'normal')
+  
+  // 获取类型名称
+  const typeName = getSystemMessageTypeText(type || 'notification')
+  
+  // 构建显示文本 "[类型] 消息内容"
+  const displayText = `[${typeName}] ${message}`
+  
+  // 将时间戳转换为 ISO 字符串格式
+  const timestampISO = new Date().toISOString()
   
   // 构建系统消息对象（符合 globalStore.systemMessages 的数据结构）
   const systemMessage = {
     id: id || Date.now(),
     title: title || '系统消息',
-    content: content || '',
-    type: type,
+    content: message || '',
+    type: type || 'notification',
     priority: priority || 'normal',
-    platforms: ['web'], // 默认平台
+    platforms: platforms || ['web'],
     extra: extra || {},
     created_at: timestampISO,
     updated_at: timestampISO
@@ -1045,42 +1150,41 @@ const handleSystemMessageType = (data) => {
   }
   globalStore.systemMessages.unshift(systemMessage)
   
-  // 使用 ElMessage 显示弹窗提示
-  const typeText = getSystemMessageTypeText(type)
-  const messageText = title ? `${title}${content ? ': ' + content : ''}` : content || '系统消息'
-  
-  // 根据优先级选择 ElMessage 类型（颜色）
-  // 普通及以下（normal, low）→ 绿色（success）
-  // 高（high）→ 橙色（warning）
-  // 紧急（urgent）→ 红色（error）
-  let messageType = 'success' // 默认绿色
-  if (priority === 'urgent') {
-    messageType = 'error' // 红色
-  } else if (priority === 'high') {
-    messageType = 'warning' // 橙色
-  } else {
-    // normal 或 low 都是绿色
-    messageType = 'success'
-  }
-  
-  // 根据优先级设置持续时间（单位：毫秒）
-  let duration = 3000
-  if (priority === 'urgent') {
-    duration = 5000
-  } else if (priority === 'high') {
-    duration = 4000
-  } else if (priority === 'low') {
-    duration = 2000
-  }
-  
+  // 显示 ElMessage（顶部，5秒，白色文字，自定义背景颜色）
   ElMessage({
-    message: `系统消息: [${typeText}] ${messageText}`,
-    type: messageType,
-    duration: duration,
-    showClose: true
+    message: displayText,
+    duration: 5000,
+    showClose: true,
+    customClass: 'system-message-toast-custom',
+    dangerouslyUseHTMLString: false
   })
   
-  console.log(`系统消息 [${typeText}]: ${title} - ${content}`)
+  // 使用 setTimeout 确保 DOM 已更新，然后设置自定义样式
+  setTimeout(() => {
+    const messageEl = document.querySelector('.system-message-toast-custom')
+    if (messageEl) {
+      messageEl.style.backgroundColor = backgroundColor
+      messageEl.style.color = '#ffffff'
+      messageEl.style.border = 'none'
+      // 确保文字是白色
+      const textEl = messageEl.querySelector('.el-message__content')
+      if (textEl) {
+        textEl.style.color = '#ffffff'
+      }
+      const closeBtn = messageEl.querySelector('.el-message__closeBtn')
+      if (closeBtn) {
+        closeBtn.style.color = '#ffffff'
+      }
+      // 设置图标颜色为白色
+      const iconEl = messageEl.querySelector('.el-message__icon')
+      if (iconEl) {
+        iconEl.style.color = '#ffffff'
+      }
+    }
+  }, 0)
+  
+  // 刷新系统消息列表
+  loadSystemMessages(1, false)
 }
 
 // 设备消息处理
@@ -4175,6 +4279,25 @@ body, html {
   background: var(--color-danger-light);
   border-radius: 6px;
   border: 1px solid var(--color-danger);
+}
+
+/* 系统消息 Toast 自定义样式 */
+.system-message-toast-custom {
+  background-color: var(--toast-bg-color, #2563eb) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.system-message-toast-custom .el-message__content {
+  color: #ffffff !important;
+}
+
+.system-message-toast-custom .el-message__closeBtn {
+  color: #ffffff !important;
+}
+
+.system-message-toast-custom .el-message__closeBtn:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 </style>

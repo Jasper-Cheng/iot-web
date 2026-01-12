@@ -483,7 +483,6 @@ class MQTTManager {
       // 根据主题类型处理消息
       if (topic === 'system/web/notice') {
         // 系统通知消息
-        console.log('[MQTT] 收到系统消息:', topic)
         this.handleSystemNotice(data)
       } else if (topic.startsWith('home/') && topic.endsWith('/notice')) {
         // 家庭通知消息
@@ -562,7 +561,9 @@ class MQTTManager {
     // 调用系统消息处理器
     if (this.systemMessageHandler) {
       try {
-        this.systemMessageHandler(data.params)
+        // 如果消息有 params 字段，使用 params；否则直接使用 data
+        const messageData = data.params || data
+        this.systemMessageHandler(messageData)
       } catch (error) {
         this.log('Error in system message handler:', error)
       }
