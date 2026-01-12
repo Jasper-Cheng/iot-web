@@ -1169,16 +1169,11 @@ const handlePersonalNotice = (data) => {
   const currentAccountId = globalStore.user?.account?.id
   const operatorAccountId = data.operator_account_id
   
-  // 判断是否是积分调整消息（points_adjusted）
-  const isPointsAdjusted = messageType === 'points_adjusted'
-  
   // 判断是否是当前用户自己操作产生的通知
-  // feedback_replied 和 points_adjusted 除外，即使是自己操作也要处理
+  // points_adjusted 和 feedback_replied 的 operator_account_id 是管理员 ID，不会与当前用户相同
   const shouldSkipSelfOperation = currentAccountId && 
                                    operatorAccountId && 
-                                   currentAccountId === operatorAccountId &&
-                                   messageType !== 'feedback_replied' &&
-                                   !isPointsAdjusted
+                                   currentAccountId === operatorAccountId
   
   if (shouldSkipSelfOperation) {
     console.log('[个人通知] 忽略当前用户自己操作产生的通知:', messageType)
