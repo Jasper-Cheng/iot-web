@@ -1490,11 +1490,12 @@ const handleMemberInfoUpdated = async (data) => {
 
 // 处理账号注销事件
 const handleAccountDeleted = async (data) => {
-  const { message, account_id, reason, platform, operator_account_id } = data
-  console.log(`[家庭消息] 账号注销: ${message}`, { account_id, reason, platform })
+  const { message, account_id, reason, platform, operator_account_id, home_id, family_id } = data
+  console.log(`[家庭消息] 账号注销: ${message}`, { account_id, reason, platform, home_id, family_id })
   
   const currentAccountId = globalStore.user?.account?.id
   const currentFamilyId = globalStore.user?.account?.current_family_id
+  const deletedAccountFamilyId = family_id || (home_id ? parseInt(home_id) : null)
   
   // 如果是当前用户注销了账号，需要退出登录
   if (account_id === currentAccountId) {
@@ -1524,8 +1525,45 @@ const handleAccountDeleted = async (data) => {
     return
   }
   
-  // 如果是当前家庭，重新加载成员数据以移除已注销的成员
-  if (currentFamilyId) {
+  // 如果被注销账号所在的家庭是当前家庭，切换到个人设备管理
+  if (deletedAccountFamilyId && currentFamilyId === deletedAccountFamilyId) {
+    try {
+      // 调用切换家庭 API，传入 null 表示切回个人设备管理
+      const accountData = await updateCurrentFamily(null)
+      
+      // 根据返回的数据更新本地 user 数据
+      if (accountData) {
+        globalStore.updateUserInfo({
+          nickname: accountData.nickname,
+          gender: accountData.gender,
+          phone: accountData.phone,
+          email: accountData.email,
+          avatar: accountData.avatar,
+          current_family_id: accountData.current_family_id
+        })
+      }
+      
+      // 清空家庭成员数据
+      globalStore.familyMembers = []
+      
+      // 重新加载设备列表（个人设备）
+      await globalStore.loadDevices()
+      
+      // 如果当前在 Family 页面，跳转到 Home 页面
+      if (route.path === '/family') {
+        router.push('/home')
+      }
+      
+      ElMessage.warning('该家庭有成员注销账号，已切回个人设备管理')
+      return
+    } catch (error) {
+      console.error('切回个人设备管理失败:', error)
+      ElMessage.error('切回个人设备管理失败，请刷新页面')
+    }
+  }
+  
+  // 如果是当前家庭的其他成员注销，重新加载成员数据以移除已注销的成员
+  if (currentFamilyId && currentFamilyId === deletedAccountFamilyId) {
     await globalStore.loadFamilyMembers(currentFamilyId)
   }
   
