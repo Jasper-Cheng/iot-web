@@ -1266,406 +1266,79 @@ const handlePersonalNotice = (data) => {
 
 // 家庭消息处理
 const handleFamilyMessage = (data) => {
-  // console.log('收到家庭消息:', data)
-  // 根据消息类型调用相应的处理函数
   console.log('收到家庭消息:', data)
+  
+  // 扁平化结构，直接在顶层包含所有字段
+  // 根据消息类型调用相应的处理函数
   switch (data.type) {
-    case 'account.update':
-      handleAccountUpdate(data.data)
+    case 'family_member_added':
+      handleFamilyMemberAdded(data)
       break
-    case 'device.add':
-      handleDeviceAdd(data.data)
+    case 'family_member_updated':
+      handleFamilyMemberUpdated(data)
       break
-    case 'device.alert':
-      handleDeviceAlert(data.data)
+    case 'family_member_removed':
+      handleFamilyMemberRemoved(data)
       break
-    case 'device.bind':
-      handleDeviceBind(data.data)
+    case 'family_deleted':
+      handleFamilyDeleted(data)
       break
-    case 'device.message.mark_all_read':
-      handleDeviceMessageMarkAllRead(data.data)
+    case 'device_added_to_family':
+      handleDeviceAddedToFamily(data)
       break
-    case 'device.message.read':
-      handleDeviceMessageRead(data.data)
-      break
-    case 'device.name.update':
-      handleDeviceNameUpdate(data.data)
-      break
-    case 'device.remove':
-      handleDeviceRemove(data.data)
-      break
-    case 'device.unbind':
-      handleDeviceUnbind(data.data)
-      break
-    case 'family.delete':
-      handleFamilyDelete(data.data)
-      break
-    case 'force.logout':
-      handleForceLogout(data.data)
-      break
-    case 'member.join':
-      handleMemberJoin(data.data)
-      break
-    case 'member.remove':
-      handleMemberRemove(data.data)
-      break
-    case 'member.update':
-      handleMemberUpdate(data.data)
+    case 'device_removed_from_family':
+      handleDeviceRemovedFromFamily(data)
       break
     default:
       console.warn('未知的家庭消息类型:', data.type)
   }
 }
 
-// 具体的家庭消息处理方法
-// 处理设备消息已读事件
-const handleDeviceMessageRead = (data) => {
-  const { title, message, level, messageId } = data
-  console.log(`设备消息已读 [${level}]: ${title} - ${message}`)
-  
-  // 如果消息在当前未读列表中，移除它
-  if (messageId) {
-    const index = unreadMessages.value.findIndex(m => m.id === messageId)
-    if (index > -1) {
-      unreadMessages.value.splice(index, 1)
-    }
-    
-    // 更新全局消息状态
-    if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
-      const globalMessage = globalStore.deviceMessages.find(m => m.id === messageId)
-      if (globalMessage) {
-        globalMessage.status = 'read'
-      }
-    }
-  }
-  ElMessage.success(message || `消息已标记为已读`)
-}
+// 新的家庭消息处理函数（扁平化格式）
 
-// 处理所有设备消息已读事件
-const handleDeviceMessageMarkAllRead = (data) => {
-  const { title, message, level } = data
-  console.log(`所有设备消息已读 [${level}]: ${title} - ${message}`)
-  
-     // 清空未读消息列表
-     unreadMessages.value = []
-    
-    // 更新全局消息状态
-    if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
-      globalStore.deviceMessages.forEach(msg => {
-        msg.status = 'read'
-      })
-    }
-    ElMessage.success(message || `所有消息已标记为已读`)
-}
-
-// 处理设备名称更新事件
-const handleDeviceNameUpdate = (data) => {
-  const { title, message, level, deviceId, deviceName } = data
-  console.log(`设备名称更新 [${level}]: ${title} - ${message}`)
-  
-  // 更新全局设备列表中对应设备的名称
-  if (deviceId && deviceName && globalStore.devices) {
-    const device = globalStore.devices.find(d => d.id === deviceId)
-    if (device) {
-      device.name = deviceName
-    }
-  }
-  ElMessage.success(message || `设备名称更新成功`)
-}
-
-// 处理设备绑定事件
-const handleDeviceBind = async (data) => {
-  const { title, message, level, deviceSn } = data
-  console.log(`设备绑定 [${level}]: ${title} - ${message}`)
-  
-  // 重新加载设备列表以获取新绑定的设备
-  // watch 会自动监听设备列表变化并重新订阅
-  await globalStore.loadDevices()
-  
-  ElMessage.success(message || '设备绑定成功')
-}
-
-// 处理设备解绑事件
-const handleDeviceUnbind = async (data) => {
-  const { title, message, level, deviceId, deviceSn } = data
-  console.log(`设备解绑 [${level}]: ${title} - ${message}`)
-  
-  // 获取设备序列号
-  let deviceSerialNumber = deviceSn
-  
-  // 如果没有直接提供 deviceSn，通过 deviceId 查找设备
-  if (!deviceSerialNumber && deviceId) {
-    const device = globalStore.devices.find(d => d.id === deviceId)
-    if (device && device.sn) {
-      deviceSerialNumber = device.sn
-    }
-  }
-  
-  // 取消订阅设备通知
-  if (deviceSerialNumber && mqttManager && mqttManager.isConnected()) {
-    mqttManager.unsubscribeDeviceNotice(deviceSerialNumber)
-      .then(() => {
-        console.log(`已取消订阅设备通知: device/${deviceSerialNumber}/notice`)
-      })
-      .catch((error) => {
-        console.error(`取消订阅设备通知失败 (${deviceSerialNumber}):`, error)
-      })
-  }
-  
-  // 重新加载设备列表以移除已解绑的设备
-  await globalStore.loadDevices()
-  
-  ElMessage.success(message || '设备解绑成功')
-}
-
-// 处理设备告警事件
-const handleDeviceAlert = async (data) => {
-  const { title, message, level, deviceId, deviceName } = data
-  console.log(`设备告警 [${level}]: ${title} - ${message}`, { deviceId, deviceName })
-  
-  // 重新加载消息列表以获取新的告警消息
-  await globalStore.loadDeviceMessages()
-  
-  // 更新未读消息列表
-  updateUnreadMessages()
-  
-  // 根据告警级别显示不同样式的通知消息
-  const alertMessage = deviceName 
-    ? `${deviceName}: ${message || title}` 
-    : (message || title)
-  
-  switch (level) {
-    case 'low':
-      ElMessage.info({
-        message: alertMessage,
-        duration: 3000,
-        showClose: true
-      })
-      break
-    case 'normal':
-      ElMessage.warning({
-        message: alertMessage,
-        duration: 4000,
-        showClose: true
-      })
-      break
-    case 'error':
-    case 'fatal':
-      ElMessage.error({
-        message: alertMessage,
-        duration: 5000,
-        showClose: true
-      })
-      break
-    default:
-      ElMessage.warning({
-        message: alertMessage,
-        duration: 4000,
-        showClose: true
-      })
-  }
-}
-
-// 处理成员信息更新事件
-// 处理成员信息更新事件
-const handleMemberUpdate = (data) => {
-  const { title, message, level, familyId, memberId, oldNickname, newNickname, memberName } = data
-  // console.log(`成员信息更新 [${level}]: ${title} - ${message}`, { familyId, memberId, oldNickname, newNickname })
-  
-  const currentFamilyId = globalStore.user?.account?.current_family_id
-  
-  // 检查是否是当前家庭的成员更新
-  if (familyId !== currentFamilyId || !globalStore.familyMembers?.length) {
-    return
-  }
-  
-  // memberId 指的是 member.account_id，使用 account_id 查找成员
-  const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === memberId)
-  if (memberIndex === -1) {
-    return
-  }
-  
-  const member = globalStore.familyMembers[memberIndex]
-  
-  // 更新成员的昵称（使用新数组确保响应式更新）
-  globalStore.familyMembers = [
-    ...globalStore.familyMembers.slice(0, memberIndex),
-    {
-      ...member,
-      nickname: newNickname
-    },
-    ...globalStore.familyMembers.slice(memberIndex + 1)
-  ]
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: message || title || '成员信息已更新',
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理账户信息更新事件
-const handleAccountUpdate = (data) => {
-  const { title, message, level, accountId, updatedFields } = data
-  // console.log(`账户信息更新 [${level}]: ${title} - ${message}`, { accountId, updatedFields })
-  
-  const currentAccountId = globalStore.user?.account?.id
-  const isCurrentUser = accountId === currentAccountId
-  
-  // 如果是当前用户，更新 globalStore.user
-  if (isCurrentUser) {
-    globalStore.updateUserInfo(updatedFields)
-  }
-  
-  // 更新 globalStore.familyMembers 中对应账户的信息
-  if (globalStore.familyMembers?.length) {
-    const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === accountId)
-    if (memberIndex > -1) {
-      const member = globalStore.familyMembers[memberIndex]
-      // 更新账户信息（使用新数组确保响应式更新）
-      globalStore.familyMembers = [
-        ...globalStore.familyMembers.slice(0, memberIndex),
-        {
-          ...member,
-          account: {
-            ...member.account,
-            ...updatedFields
-          }
-        },
-        ...globalStore.familyMembers.slice(memberIndex + 1)
-      ]
-    }
-  }
-  
-  // 显示通知消息
-  ElMessage.success({
-    message: title||'账户信息已更新',
-    duration: 3000,
-    showClose: true
-  })
-}
-
-// 处理强制退出事件
-const handleForceLogout = async (data) => {
-  const { title, message, level, reason } = data
-  console.log(`强制退出 [${level}]: ${title} - ${message}`, reason)
-  
-  // 显示警告消息
-  ElMessage.warning({
-    message: message,
-    duration: 5000,
-    showClose: true
-  })
-  
-  // 断开 MQTT 连接（不等待结果）
-  disconnectMQTT().then(() => {
-    console.log('MQTT 连接已断开（强制退出）')
-  }).catch(disconnectError => {
-    console.warn('断开 MQTT 连接失败:', disconnectError)
-  })
-  
-  // 延迟 500 毫秒后执行退出登录流程
-  setTimeout(() => {
-    // 清除认证状态并跳转
-    globalStore.clearAuth()
-    showUserMenu.value = false
-    router.push('/login')
-  }, 500)
-}
-
-// 处理设备添加事件
-const handleDeviceAdd = async (data) => {
-  const { title, message, level, deviceSn } = data
-  console.log(`设备添加 [${level}]: ${title} - ${message}`)
-  
-  // 重新加载设备列表以获取新添加的设备
-  // watch 会自动监听设备列表变化并重新订阅
-  await globalStore.loadDevices()
-  
-  ElMessage.success(message || '设备添加成功')
-}
-
-// 处理设备移除事件
-const handleDeviceRemove = async (data) => {
-  const { title, message, level, deviceId, deviceSn } = data
-  console.log(`设备移除 [${level}]: ${title} - ${message}`)
-  
-  // 获取设备序列号
-  let deviceSerialNumber = deviceSn
-  
-  // 如果没有直接提供 deviceSn，通过 deviceId 查找设备
-  if (!deviceSerialNumber && deviceId) {
-    const device = globalStore.devices.find(d => d.id === deviceId)
-    if (device && device.sn) {
-      deviceSerialNumber = device.sn
-    }
-  }
-  
-  // 取消订阅设备通知
-  if (deviceSerialNumber && mqttManager && mqttManager.isConnected()) {
-    mqttManager.unsubscribeDeviceNotice(deviceSerialNumber)
-      .then(() => {
-        console.log(`已取消订阅设备通知: device/${deviceSerialNumber}/notice`)
-      })
-      .catch((error) => {
-        console.error(`取消订阅设备通知失败 (${deviceSerialNumber}):`, error)
-      })
-  }
-  
-  // 重新加载设备列表以移除已移除的设备
-  await globalStore.loadDevices()
-  
-  ElMessage.success(message || '设备移除成功')
-}
-
-// 处理家庭删除事件
-const handleFamilyDelete = async (data) => {
-  const { title, message, level, familyId } = data
-  console.log(`家庭删除 [${level}]: ${title} - ${message}`)
-  
-  // 如果删除的是当前家庭，清空成员数据并重新加载设备
-  const currentFamilyId = globalStore.user?.account?.current_family_id
-  if (currentFamilyId === familyId) {
-    globalStore.familyMembers = []
-    // 清空当前家庭ID
-    globalStore.updateUserInfo({ current_family_id: null })
-    // 重新加载设备列表（会加载个人设备）
-    await globalStore.loadDevices()
-  }
-  
-  // 重新加载家庭列表
-  await globalStore.loadFamilys()
-  
-  ElMessage.success(message || '家庭已删除')
-}
-
-// 处理成员加入事件
-const handleMemberJoin = async (data) => {
-  const { title, message, level, familyId } = data
-  console.log(`成员加入 [${level}]: ${title} - ${message}`)
+// 处理成员加入家庭事件
+const handleFamilyMemberAdded = async (data) => {
+  const { message, family_id, family_name, operator_account_id } = data
+  console.log(`[家庭消息] 成员加入: ${message}`)
   
   // 如果当前正在查看该家庭，重新加载成员数据和设备列表
   const currentFamilyId = globalStore.user?.account?.current_family_id
-  if (currentFamilyId === familyId) {
+  if (currentFamilyId === family_id) {
     await globalStore.loadAll()
   }
   
   ElMessage.success(message || '成员已加入家庭')
 }
 
-// 处理成员移除事件
-// 处理成员移除事件
-const handleMemberRemove = async (data) => {
-  const { title, message, level, familyId, memberId } = data
-  console.log(`成员移除 [${level}]: ${title} - ${message}`)
+// 处理成员昵称更新事件
+const handleFamilyMemberUpdated = async (data) => {
+  const { message, family_id, family_name, operator_account_id } = data
+  console.log(`[家庭消息] 成员昵称更新: ${message}`)
+  
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  
+  // 检查是否是当前家庭的成员更新
+  if (family_id !== currentFamilyId || !globalStore.familyMembers?.length) {
+    return
+  }
+  
+  // 重新加载成员数据以获取最新的昵称
+  await globalStore.loadFamilyMembers()
+  
+  ElMessage.success(message || '成员昵称已更新')
+}
+
+// 处理成员被移除事件
+const handleFamilyMemberRemoved = async (data) => {
+  const { message, family_id, family_name, operator_account_id, removed_account_id } = data
+  console.log(`[家庭消息] 成员被移除: ${message}`)
   
   const currentAccountId = globalStore.user?.account?.id
   const currentFamilyId = globalStore.user?.account?.current_family_id
-  const isCurrentUser = memberId === currentAccountId
+  const isCurrentUser = removed_account_id === currentAccountId
   
   // 如果移除的是当前用户，切回个人设备管理
-  if (isCurrentUser && currentFamilyId === familyId) {
+  if (isCurrentUser && currentFamilyId === family_id) {
     try {
       // 调用切换家庭 API，传入 null 表示切回个人设备管理
       const accountData = await updateCurrentFamily(null)
@@ -1685,8 +1358,8 @@ const handleMemberRemove = async (data) => {
       // 清空家庭成员数据
       globalStore.familyMembers = []
       
-      // 调用 loadAll 重新加载所有数据（loadDevices 会加载所有设备）
-      await globalStore.loadAll()
+      // 重新加载设备列表（个人设备）
+      await globalStore.loadDevices()
       
       // 如果当前在 Family 页面，跳转到 Home 页面
       if (route.path === '/family') {
@@ -1694,19 +1367,85 @@ const handleMemberRemove = async (data) => {
       }
       
       ElMessage.success('您已被移除，已切回个人设备管理')
+      return
     } catch (error) {
       console.error('切回个人设备管理失败:', error)
       ElMessage.error('切回个人设备管理失败，请刷新页面')
+      return
     }
-  } else {
-    // 如果移除的是其他成员，重新加载成员数据和设备列表
-    if (currentFamilyId === familyId) {
-      await globalStore.loadAll()
-    }
-    
-    ElMessage.success(message || '成员已移除')
   }
+  
+  // 如果移除的是其他成员，重新加载成员数据和设备列表
+  if (currentFamilyId === family_id) {
+    await globalStore.loadAll()
+  }
+  
+  ElMessage.success(message || '成员已移除')
 }
+
+// 处理家庭被删除事件
+const handleFamilyDeleted = async (data) => {
+  const { message, family_id, family_name, deleted_by_account_id, platform, operator_account_id, removed_account_id } = data
+  console.log(`[家庭消息] 家庭被删除: ${message}`)
+  
+  const currentAccountId = globalStore.user?.account?.id
+  const currentFamilyId = globalStore.user?.account?.current_family_id
+  const isCurrentUser = removed_account_id === currentAccountId
+  
+  // 如果删除的是当前家庭
+  if (currentFamilyId === family_id) {
+    globalStore.familyMembers = []
+    // 清空当前家庭ID
+    globalStore.updateUserInfo({ current_family_id: null })
+    // 重新加载设备列表（会加载个人设备）
+    await globalStore.loadDevices()
+    
+    // 如果当前用户被移除导致家庭被删除，且当前在 Family 页面，跳转到 Home 页面
+    if (isCurrentUser && route.path === '/family') {
+      router.push('/home')
+    }
+  }
+  
+  // 重新加载家庭列表
+  await globalStore.loadFamilys()
+  
+  ElMessage.success(message || '家庭已删除')
+}
+
+// 处理设备添加到家庭事件
+const handleDeviceAddedToFamily = async (data) => {
+  const { message, device_id, device_name, device_sn, operator_account_id } = data
+  console.log(`[家庭消息] 设备添加到家庭: ${message}`)
+  
+  // 重新加载设备列表以获取新添加的设备
+  // watch 会自动监听设备列表变化并重新订阅
+  await globalStore.loadDevices()
+  
+  ElMessage.success(message || '设备已添加到家庭')
+}
+
+// 处理设备从家庭移除事件
+const handleDeviceRemovedFromFamily = async (data) => {
+  const { message, device_id, device_name, device_sn, operator_account_id } = data
+  console.log(`[家庭消息] 设备从家庭移除: ${message}`)
+  
+  // 取消订阅设备通知
+  if (device_sn && mqttManager && mqttManager.isConnected()) {
+    mqttManager.unsubscribeDeviceNotice(device_sn)
+      .then(() => {
+        console.log(`已取消订阅设备通知: device/${device_sn}/notice`)
+      })
+      .catch((error) => {
+        console.error(`取消订阅设备通知失败 (${device_sn}):`, error)
+      })
+  }
+  
+  // 重新加载设备列表以移除已移除的设备
+  await globalStore.loadDevices()
+  
+  ElMessage.success(message || '设备已从家庭中移除')
+}
+
 
 // 导航配置
 const navigationItems = ref([
