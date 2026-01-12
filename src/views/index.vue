@@ -861,17 +861,17 @@ const initMQTTConnection = async () => {
             // 更新家庭订阅（MQTT会自动订阅）
             mqttManager.updateHomeSubscription()
             
-            // 订阅个人通知
-            const accountId = globalStore.user?.account?.id
-            if (accountId) {
-              mqttManager.subscribePersonalNotice(accountId, handlePersonalNotice)
-                .then(() => {
-                  console.log(`已订阅个人通知: client/${accountId}/notice`)
-                })
-                .catch((error) => {
-                  console.error('订阅个人通知失败:', error)
-                })
-            }
+            // 订阅个人通知（暂时屏蔽）
+            // const accountId = globalStore.user?.account?.id
+            // if (accountId) {
+            //   mqttManager.subscribePersonalNotice(accountId, handlePersonalNotice)
+            //     .then(() => {
+            //       console.log(`已订阅个人通知: client/${accountId}/notice`)
+            //     })
+            //     .catch((error) => {
+            //       console.error('订阅个人通知失败:', error)
+            //     })
+            // }
             
             // 订阅所有设备的通知
             subscribeAllDeviceNotices()
@@ -1158,8 +1158,11 @@ const subscribeAllDeviceNotices = async () => {
   }
 }
 
-// 个人消息处理
+// 个人消息处理（暂时屏蔽）
 const handlePersonalNotice = (data) => {
+  // 暂时屏蔽个人消息处理
+  return
+  
   console.log('收到个人通知:', data)
   
   // 根据消息类型进行不同处理
