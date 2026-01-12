@@ -1017,77 +1017,6 @@ const getSystemMessageTypeText = (type) => {
   return typeMap[type] || '通知'
 }
 
-// 颜色映射表（根据类型和优先级）
-const Colors = {
-  blue: {
-    400: '#60a5fa',
-    600: '#2563eb',
-    700: '#1d4ed8',
-    900: '#1e3a8a'
-  },
-  green: {
-    400: '#4ade80',
-    600: '#16a34a',
-    700: '#15803d',
-    900: '#14532d'
-  },
-  orange: {
-    400: '#fb923c',
-    600: '#ea580c',
-    700: '#c2410c',
-    900: '#7c2d12'
-  },
-  slate: { // 蓝灰色（用于 maintenance）
-    400: '#94a3b8',
-    600: '#475569',
-    700: '#334155',
-    900: '#0f172a'
-  },
-  purple: {
-    400: '#a78bfa',
-    600: '#9333ea',
-    700: '#7e22ce',
-    900: '#581c87'
-  },
-  red: {
-    900: '#7f1d1d'
-  }
-}
-
-/**
- * 计算 Toast 背景颜色
- * @param {string} type - 消息类型
- * @param {string} priority - 优先级
- * @returns {string} 颜色值
- */
-const getToastColor = (type, priority) => {
-  // 特殊规则：alert + urgent → 红色
-  if (type === 'alert' && priority === 'urgent') {
-    return Colors.red[900]
-  }
-  
-  // 优先级颜色深度映射
-  const priorityDepthMap = {
-    'low': 400,
-    'normal': 600,
-    'high': 700,
-    'urgent': 900
-  }
-  const depth = priorityDepthMap[priority] || 600
-  
-  // 类型基础颜色映射
-  const typeColorMap = {
-    'notification': Colors.blue,
-    'announcement': Colors.green,
-    'alert': Colors.orange,
-    'maintenance': Colors.slate,
-    'update': Colors.purple
-  }
-  
-  const colorBase = typeColorMap[type] || Colors.blue
-  return colorBase[depth] || colorBase[600]
-}
-
 // 处理系统消息类型（notification, announcement, alert, maintenance, update）
 const handleSystemMessageType = (data) => {
   // 提取 message, type, priority
@@ -1119,9 +1048,6 @@ const handleSystemMessageType = (data) => {
   }
   
   // 非空，继续处理
-  // 计算背景颜色
-  const backgroundColor = getToastColor(type || 'notification', priority || 'normal')
-  
   // 获取类型名称
   const typeName = getSystemMessageTypeText(type || 'notification')
   
@@ -1150,38 +1076,24 @@ const handleSystemMessageType = (data) => {
   }
   globalStore.systemMessages.unshift(systemMessage)
   
-  // 显示 ElMessage（顶部，5秒，白色文字，自定义背景颜色）
+  // 根据优先级选择 ElMessage 类型（颜色）
+  // low, normal → 绿色（success）
+  // high → 黄色（warning）
+  // urgent → 红色（error）
+  let messageType = 'success' // 默认绿色
+  if (priority === 'urgent') {
+    messageType = 'error' // 红色
+  } else if (priority === 'high') {
+    messageType = 'warning' // 黄色
+  }
+  
+  // 显示 ElMessage（5秒）
   ElMessage({
     message: displayText,
+    type: messageType,
     duration: 5000,
-    showClose: true,
-    customClass: 'system-message-toast-custom',
-    dangerouslyUseHTMLString: false
+    showClose: true
   })
-  
-  // 使用 setTimeout 确保 DOM 已更新，然后设置自定义样式
-  setTimeout(() => {
-    const messageEl = document.querySelector('.system-message-toast-custom')
-    if (messageEl) {
-      messageEl.style.backgroundColor = backgroundColor
-      messageEl.style.color = '#ffffff'
-      messageEl.style.border = 'none'
-      // 确保文字是白色
-      const textEl = messageEl.querySelector('.el-message__content')
-      if (textEl) {
-        textEl.style.color = '#ffffff'
-      }
-      const closeBtn = messageEl.querySelector('.el-message__closeBtn')
-      if (closeBtn) {
-        closeBtn.style.color = '#ffffff'
-      }
-      // 设置图标颜色为白色
-      const iconEl = messageEl.querySelector('.el-message__icon')
-      if (iconEl) {
-        iconEl.style.color = '#ffffff'
-      }
-    }
-  }, 0)
   
   // 刷新系统消息列表
   loadSystemMessages(1, false)
@@ -4279,25 +4191,6 @@ body, html {
   background: var(--color-danger-light);
   border-radius: 6px;
   border: 1px solid var(--color-danger);
-}
-
-/* 系统消息 Toast 自定义样式 */
-.system-message-toast-custom {
-  background-color: var(--toast-bg-color, #2563eb) !important;
-  color: #ffffff !important;
-  border: none !important;
-}
-
-.system-message-toast-custom .el-message__content {
-  color: #ffffff !important;
-}
-
-.system-message-toast-custom .el-message__closeBtn {
-  color: #ffffff !important;
-}
-
-.system-message-toast-custom .el-message__closeBtn:hover {
-  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 </style>
