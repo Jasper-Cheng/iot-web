@@ -212,6 +212,14 @@ const handleDeviceData = (data) => {
   if (data.pm10 !== undefined) sensors.value.pm10 = data.pm10
   if (data.temp !== undefined) sensors.value.temp = data.temp
   if (data.humi !== undefined) sensors.value.humi = data.humi
+  
+  // 收到数据说明设备在线，更新设备在线状态
+  const devices = globalStore.devices || []
+  const device = devices.find(d => d.sn === deviceSn.value)
+  if (device && device.status !== 'online') {
+    device.status = 'online'
+    console.log(`[环境监测] 设备状态已更新为在线 (收到数据)`)
+  }
 }
 
 /**
