@@ -1329,7 +1329,7 @@ const handleFamilyMemberUpdated = async (data) => {
   }
   
   // 重新加载成员数据以获取最新的昵称
-  await globalStore.loadFamilyMembers()
+  await globalStore.loadFamilyMembers(family_id)
   
   ElMessage.success(message || '成员昵称已更新')
 }
@@ -1471,7 +1471,7 @@ const handleMemberInfoUpdated = async (data) => {
     const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === account_id)
     if (memberIndex > -1) {
       // 重新加载成员数据以获取最新信息
-      await globalStore.loadFamilyMembers()
+      await globalStore.loadFamilyMembers(currentFamilyId)
     }
   }
   
@@ -1516,7 +1516,7 @@ const handleAccountDeleted = async (data) => {
   
   // 如果是当前家庭，重新加载成员数据以移除已注销的成员
   if (currentFamilyId) {
-    await globalStore.loadFamilyMembers()
+    await globalStore.loadFamilyMembers(currentFamilyId)
   }
   
   ElMessage.info(message || '成员账号已注销')

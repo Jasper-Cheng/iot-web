@@ -583,7 +583,9 @@ class MQTTManager {
     // 调用家庭消息处理器
     if (this.familyMessageHandler) {
       try {
-        this.familyMessageHandler(data.params)
+        // 如果消息有 params 字段，使用 params；否则直接使用 data（扁平化格式）
+        const messageData = data.params || data
+        this.familyMessageHandler(messageData)
       } catch (error) {
         this.log('Error in family message handler:', error)
       }
