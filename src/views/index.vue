@@ -1145,8 +1145,38 @@ const subscribeAllDeviceNotices = async () => {
 // 个人消息处理
 const handlePersonalNotice = (data) => {
   console.log('收到个人通知:', data)
-  // data 结构可能需要根据实际情况调整
-  // 可以根据通知类型进行不同处理
+  
+  // 根据消息类型进行不同处理
+  const messageType = data.type
+  
+  // feedback_created: 如果是 web 主动创建的，则不处理
+  if (messageType === 'feedback_created') {
+    if (data.source === 'web') {
+      console.log('[个人通知] 忽略 web 主动创建的反馈通知')
+      return
+    }
+    // 非 web 创建的反馈，正常处理
+    ElMessage({
+      message: `个人通知: ${data.message || data.title || '反馈已创建'}`,
+      type: 'info',
+      duration: 3000,
+      showClose: true
+    })
+    return
+  }
+  
+  // feedback_replied: 正常处理
+  if (messageType === 'feedback_replied') {
+    ElMessage({
+      message: `个人通知: ${data.message || data.title || '反馈已回复'}`,
+      type: 'success',
+      duration: 3000,
+      showClose: true
+    })
+    return
+  }
+  
+  // 其他类型的消息，正常处理
   ElMessage({
     message: `个人通知: ${data.title || data.message || JSON.stringify(data)}`,
     type: 'info',
