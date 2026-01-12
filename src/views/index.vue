@@ -806,6 +806,8 @@ const globalStore = useGlobalStore()
 // MQTT 管理器实例
 let mqttManager = null
 const mqttConnectionState = ref('disconnected')
+// 跟踪当前已订阅的设备 SN 列表
+const subscribedDeviceSNs = ref(new Set())
 
 /**
  * 初始化MQTT连接
@@ -872,19 +874,7 @@ const initMQTTConnection = async () => {
             }
             
             // 订阅所有设备的通知
-            if (globalStore.devices && Array.isArray(globalStore.devices)) {
-              globalStore.devices.forEach(device => {
-                if (device.sn) {
-                  mqttManager.subscribeDeviceNotice(device.sn, handleDeviceNotice)
-                    .then(() => {
-                      console.log(`已订阅设备通知: device/${device.sn}/notice`)
-                    })
-                    .catch((error) => {
-                      console.error(`订阅设备通知失败 (${device.sn}):`, error)
-                    })
-                }
-              })
-            }
+            subscribeAllDeviceNotices()
             break
           case 'connecting':
             console.log('MQTT正在连接...')
@@ -1093,7 +1083,7 @@ const handleSystemMessageType = (data) => {
   console.log(`系统消息 [${typeText}]: ${title} - ${content}`)
 }
 
-// 设备通知处理
+// 设备消息处理
 const handleDeviceNotice = (data) => {
   console.log('收到设备通知:', data)
   // data 结构可能需要根据实际情况调整
@@ -1106,7 +1096,53 @@ const handleDeviceNotice = (data) => {
   })
 }
 
-// 个人通知处理
+/**
+ * 订阅所有设备的通知
+ */
+const subscribeAllDeviceNotices = async () => {
+  if (!mqttManager || !mqttManager.isConnected()) {
+    return
+  }
+  
+  if (!globalStore.devices || !Array.isArray(globalStore.devices)) {
+    return
+  }
+  
+  const currentDeviceSNs = new Set()
+  
+  // 订阅所有设备的通知
+  for (const device of globalStore.devices) {
+    if (device.sn) {
+      currentDeviceSNs.add(device.sn)
+      
+      // 如果还未订阅，则订阅
+      if (!subscribedDeviceSNs.value.has(device.sn)) {
+        try {
+          await mqttManager.subscribeDeviceNotice(device.sn, handleDeviceNotice)
+          subscribedDeviceSNs.value.add(device.sn)
+          console.log(`已订阅设备通知: device/${device.sn}/notice`)
+        } catch (error) {
+          console.error(`订阅设备通知失败 (${device.sn}):`, error)
+        }
+      }
+    }
+  }
+  
+  // 取消订阅不在当前设备列表中的设备
+  for (const sn of subscribedDeviceSNs.value) {
+    if (!currentDeviceSNs.has(sn)) {
+      try {
+        await mqttManager.unsubscribeDeviceNotice(sn)
+        subscribedDeviceSNs.value.delete(sn)
+        console.log(`已取消订阅设备通知: device/${sn}/notice`)
+      } catch (error) {
+        console.error(`取消订阅设备通知失败 (${sn}):`, error)
+      }
+    }
+  }
+}
+
+// 个人消息处理
 const handlePersonalNotice = (data) => {
   console.log('收到个人通知:', data)
   // data 结构可能需要根据实际情况调整
@@ -1234,18 +1270,8 @@ const handleDeviceBind = async (data) => {
   console.log(`设备绑定 [${level}]: ${title} - ${message}`)
   
   // 重新加载设备列表以获取新绑定的设备
+  // watch 会自动监听设备列表变化并重新订阅
   await globalStore.loadDevices()
-  
-  // 订阅新绑定设备的通知
-  if (deviceSn && mqttManager && mqttManager.isConnected()) {
-    mqttManager.subscribeDeviceNotice(deviceSn, handleDeviceNotice)
-      .then(() => {
-        console.log(`已订阅设备通知: device/${deviceSn}/notice`)
-      })
-      .catch((error) => {
-        console.error(`订阅设备通知失败 (${deviceSn}):`, error)
-      })
-  }
   
   ElMessage.success(message || '设备绑定成功')
 }
@@ -1445,18 +1471,8 @@ const handleDeviceAdd = async (data) => {
   console.log(`设备添加 [${level}]: ${title} - ${message}`)
   
   // 重新加载设备列表以获取新添加的设备
+  // watch 会自动监听设备列表变化并重新订阅
   await globalStore.loadDevices()
-  
-  // 订阅新添加设备的通知
-  if (deviceSn && mqttManager && mqttManager.isConnected()) {
-    mqttManager.subscribeDeviceNotice(deviceSn, handleDeviceNotice)
-      .then(() => {
-        console.log(`已订阅设备通知: device/${deviceSn}/notice`)
-      })
-      .catch((error) => {
-        console.error(`订阅设备通知失败 (${deviceSn}):`, error)
-      })
-  }
   
   ElMessage.success(message || '设备添加成功')
 }
@@ -2239,8 +2255,30 @@ watch(() => globalStore.user?.account?.current_family_id, async (newFamilyId, ol
   if (newFamilyId !== oldFamilyId) {
     // MQTT会自动处理家庭订阅的更新
     mqttManager.updateHomeSubscription()
+    // watch 会自动监听设备列表变化并重新订阅
   }
 })
+
+// 监听设备列表变化，重新订阅设备通知
+watch(() => globalStore.devices, async (newDevices, oldDevices) => {
+  if (mqttConnectionState.value !== 'connected' || !mqttManager) {
+    return
+  }
+  
+  // 只有当设备列表真正变化时才重新订阅
+  // 比较设备 SN 列表是否变化
+  const newDeviceSNs = new Set((newDevices || []).map(d => d.sn).filter(Boolean))
+  const oldDeviceSNs = new Set((oldDevices || []).map(d => d.sn).filter(Boolean))
+  
+  // 如果设备 SN 列表相同，不需要重新订阅
+  if (newDeviceSNs.size === oldDeviceSNs.size && 
+      [...newDeviceSNs].every(sn => oldDeviceSNs.has(sn))) {
+    return
+  }
+  
+  // 设备列表已变化，重新订阅
+  subscribeAllDeviceNotices()
+}, { deep: true })
 
 // 组件销毁时移除事件监听
 onUnmounted(() => {
