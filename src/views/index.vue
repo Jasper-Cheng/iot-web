@@ -1841,9 +1841,12 @@ const loadMoreReadMessagesDirect = async (skip, limit) => {
 const loadUserPoints = async () => {
   try {
     const response = await getPointsBalance()
-    globalStore.userPoints = response.available_balance || 0
+    // API 返回格式: { balance: number }
+    globalStore.userPoints = response.balance || 0
+    console.log('[积分] 已加载积分余额:', globalStore.userPoints)
   } catch (error) {
     console.error('获取积分余额失败:', error)
+    globalStore.userPoints = 0
   }
 }
 
