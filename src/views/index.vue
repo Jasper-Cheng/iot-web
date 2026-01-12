@@ -1165,26 +1165,30 @@ const handlePersonalNotice = (data) => {
   // 根据消息类型进行不同处理
   const messageType = data.type
   
-  // feedback_created: 如果是 web 主动创建的，则不处理
-  if (messageType === 'feedback_created') {
-    if (data.source === 'web') {
-      console.log('[个人通知] 忽略 web 主动创建的反馈通知')
-      return
-    }
-    // 非 web 创建的反馈，正常处理
-    ElMessage({
-      message: `个人通知: ${data.message || data.title || '反馈已创建'}`,
-      type: 'info',
-      duration: 3000,
-      showClose: true
-    })
+  // 获取当前用户的 account_id
+  const currentAccountId = globalStore.user?.account?.id
+  const operatorAccountId = data.operator_account_id
+  
+  // 判断是否是积分调整消息（points_adjusted）
+  const isPointsAdjusted = messageType === 'points_adjusted'
+  
+  // 判断是否是当前用户自己操作产生的通知
+  // feedback_replied 和 points_adjusted 除外，即使是自己操作也要处理
+  const shouldSkipSelfOperation = currentAccountId && 
+                                   operatorAccountId && 
+                                   currentAccountId === operatorAccountId &&
+                                   messageType !== 'feedback_replied' &&
+                                   !isPointsAdjusted
+  
+  if (shouldSkipSelfOperation) {
+    console.log('[个人通知] 忽略当前用户自己操作产生的通知:', messageType)
     return
   }
   
-  // feedback_replied: 正常处理
-  if (messageType === 'feedback_replied') {
+  // 1. feedback_created: 反馈创建通知
+  if (messageType === 'feedback_created') {
     ElMessage({
-      message: `个人通知: ${data.message || data.title || '反馈已回复'}`,
+      message: data.message || '反馈已创建',
       type: 'success',
       duration: 3000,
       showClose: true
@@ -1192,9 +1196,70 @@ const handlePersonalNotice = (data) => {
     return
   }
   
-  // 其他类型的消息，正常处理
+  // 2. check_in_success: 签到成功通知
+  if (messageType === 'check_in_success') {
+    const { message, points_earned, continuous_days, check_in_type } = data
+    const displayMessage = message || `签到成功！获得 ${points_earned || 0} 积分，连续签到 ${continuous_days || 0} 天`
+    
+    ElMessage({
+      message: displayMessage,
+      type: check_in_type === 'bonus' ? 'success' : 'success', // 连续7天及以上显示成功
+      duration: 4000,
+      showClose: true
+    })
+    
+    // 更新积分显示（如果 store 中有积分相关状态）
+    if (globalStore.user?.account && points_earned) {
+      // 可以在这里更新积分显示，具体实现取决于 store 结构
+      console.log(`[签到] 获得积分: ${points_earned}, 连续签到: ${continuous_days} 天`)
+    }
+    
+    return
+  }
+  
+  // 3. points_adjusted: 积分调整通知
+  if (messageType === 'points_adjusted') {
+    const { message, points, old_balance, new_balance, points_type, description } = data
+    const isReward = points > 0
+    const displayMessage = message || `${isReward ? '奖励' : '扣除'} ${Math.abs(points)} 积分`
+    
+    ElMessage({
+      message: displayMessage,
+      type: isReward ? 'success' : 'warning',
+      duration: 4000,
+      showClose: true
+    })
+    
+    // 更新积分显示
+    if (globalStore.user?.account) {
+      // 可以在这里更新积分显示，具体实现取决于 store 结构
+      console.log(`[积分调整] ${isReward ? '奖励' : '扣除'} ${Math.abs(points)} 积分, 余额: ${old_balance} -> ${new_balance}, 类型: ${points_type}`)
+    }
+    
+    return
+  }
+  
+  // 4. feedback_replied: 反馈回复通知
+  if (messageType === 'feedback_replied') {
+    const { message, feedback_id } = data
+    ElMessage({
+      message: message || '反馈已回复',
+      type: 'success',
+      duration: 4000,
+      showClose: true
+    })
+    
+    // 可以在这里添加跳转到反馈详情的逻辑
+    if (feedback_id) {
+      console.log(`[反馈回复] 反馈ID: ${feedback_id}`)
+    }
+    
+    return
+  }
+  
+  // 其他未知类型的消息，显示通用通知
   ElMessage({
-    message: `个人通知: ${data.title || data.message || JSON.stringify(data)}`,
+    message: data.message || data.title || '收到个人通知',
     type: 'info',
     duration: 3000,
     showClose: true
