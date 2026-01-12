@@ -1102,14 +1102,162 @@ const handleSystemMessageType = (data) => {
 // 设备消息处理
 const handleDeviceNotice = (data) => {
   console.log('收到设备通知:', data)
-  // data 结构可能需要根据实际情况调整
-  // 可以根据通知类型进行不同处理
-  ElMessage({
-    message: `设备通知: ${data.title || data.message || JSON.stringify(data)}`,
-    type: 'info',
-    duration: 3000,
-    showClose: true
-  })
+  
+  const messageType = data.type
+  
+  switch (messageType) {
+    case 'message_read':
+      handleDeviceMessageRead(data)
+      break
+    case 'all_messages_read':
+      handleDeviceAllMessagesRead(data)
+      break
+    case 'device_name_updated':
+      handleDeviceNameUpdated(data)
+      break
+    case 'device_unbind':
+      handleDeviceUnbindNotice(data)
+      break
+    case 'device_bind':
+      handleDeviceBindNotice(data)
+      break
+    default:
+      console.warn('未知的设备消息类型:', messageType)
+      ElMessage({
+        message: data.message || '收到设备通知',
+        type: 'info',
+        duration: 3000,
+        showClose: true
+      })
+  }
+}
+
+// 处理单条消息标记为已读
+const handleDeviceMessageRead = (data) => {
+  const { message, message_id, device_id, device_name, level } = data
+  console.log(`[设备消息] 消息已读: ${message}`, { message_id, device_id, device_name })
+  
+  // 如果消息在当前未读列表中，移除它
+  if (message_id) {
+    const index = unreadMessages.value.findIndex(m => m.id === message_id)
+    if (index > -1) {
+      unreadMessages.value.splice(index, 1)
+    }
+    
+    // 更新全局消息状态
+    if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+      const globalMessage = globalStore.deviceMessages.find(m => m.id === message_id)
+      if (globalMessage) {
+        globalMessage.status = 'read'
+      }
+    }
+  }
+  
+  // 不显示通知，因为这是用户自己的操作
+}
+
+// 处理所有消息标记为已读
+const handleDeviceAllMessagesRead = (data) => {
+  const { message, device_id, account_id, operator_account_id } = data
+  console.log(`[设备消息] 所有消息已读: ${message}`, { device_id, account_id })
+  
+  const currentAccountId = globalStore.user?.account?.id
+  
+  // 如果指定了设备ID，只清空该设备的未读消息
+  if (device_id) {
+      unreadMessages.value = unreadMessages.value.filter(msg => msg.device_id !== device_id)
+      
+      // 更新全局消息状态
+      if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+        globalStore.deviceMessages.forEach(msg => {
+          if (msg.device_id === device_id) {
+            msg.status = 'read'
+          }
+        })
+      }
+    } else {
+      // 如果没有指定设备ID，清空所有未读消息
+      unreadMessages.value = []
+      
+      // 更新全局消息状态
+      if (globalStore.deviceMessages && Array.isArray(globalStore.deviceMessages)) {
+        globalStore.deviceMessages.forEach(msg => {
+          msg.status = 'read'
+        })
+      }
+    }
+  
+  // 不显示通知，因为这是用户自己的操作
+}
+
+// 处理设备名称更新
+const handleDeviceNameUpdated = (data) => {
+  const { message, device_id, device_name, old_name, device_sn } = data
+  console.log(`[设备消息] 设备名称更新: ${message}`, { device_id, device_name, old_name })
+  
+  // 更新全局设备列表中对应设备的名称
+  if (device_id && device_name && globalStore.devices) {
+    const device = globalStore.devices.find(d => d.id === device_id)
+    if (device) {
+      device.name = device_name
+    }
+  }
+  
+  ElMessage.success(message || '设备名称已更新')
+}
+
+// 处理设备绑定通知
+const handleDeviceBindNotice = async (data) => {
+  const { message, device_id, device_name, device_sn, account_id, family_id, operator_account_id } = data
+  console.log(`[设备消息] 设备绑定: ${message}`, { device_id, device_name, device_sn, account_id, family_id })
+  
+  // 重新加载设备列表以获取新绑定的设备
+  // watch 会自动监听设备列表变化并重新订阅
+  await globalStore.loadDevices()
+  
+  // 重新加载设备消息以刷新消息列表
+  await globalStore.loadDeviceMessages()
+  
+  // 更新未读消息列表
+  updateUnreadMessages()
+  
+  ElMessage.success(message || '设备已绑定')
+}
+
+// 处理设备解绑通知
+const handleDeviceUnbindNotice = async (data) => {
+  const { message, device_id, device_name, device_sn, sn } = data
+  console.log(`[设备消息] 设备解绑: ${message}`, { device_id, device_sn, sn })
+  
+  // 获取设备序列号
+  const deviceSerialNumber = device_sn || sn
+  
+  // 取消订阅设备通知
+  if (deviceSerialNumber && mqttManager && mqttManager.isConnected()) {
+    try {
+      await mqttManager.unsubscribeDeviceNotice(deviceSerialNumber)
+      subscribedDeviceSNs.value.delete(deviceSerialNumber)
+      console.log(`已取消订阅设备通知: device/${deviceSerialNumber}/notice`)
+    } catch (error) {
+      console.error(`取消订阅设备通知失败 (${deviceSerialNumber}):`, error)
+    }
+  }
+  
+  // 从未读消息列表中移除该设备的消息
+  if (device_id) {
+    unreadMessages.value = unreadMessages.value.filter(msg => msg.device_id !== device_id)
+  }
+  
+  // 重新加载设备列表以移除已解绑的设备
+  await globalStore.loadDevices()
+  
+  // 重新加载设备消息以刷新消息列表
+  await globalStore.loadDeviceMessages()
+  
+  // 更新未读消息列表
+  updateUnreadMessages()
+  
+  ElMessage.success(message || '设备已解绑')
 }
 
 /**
@@ -1132,7 +1280,7 @@ const subscribeAllDeviceNotices = async () => {
       currentDeviceSNs.add(device.sn)
       
       // 如果还未订阅，则订阅
-      if (!subscribedDeviceSNs.value.has(device.sn)) {
+      if (!subscribedDeviceSNs.value.has(device.sn)) {  
         try {
           await mqttManager.subscribeDeviceNotice(device.sn, handleDeviceNotice)
           subscribedDeviceSNs.value.add(device.sn)
@@ -2140,12 +2288,17 @@ const submitAddDevice = async () => {
     const currentFamilyId = globalStore.user?.account?.current_family_id
     await bindDeviceBySN(deviceForm.value.sn.trim(), currentFamilyId)
     
-    // 当用户没有选择家庭时，接口调用成功后重新加载设备列表
-    if (currentFamilyId === null || currentFamilyId === undefined) {
-      await globalStore.loadDevices()
-    }
+    // 重新加载设备列表（watch 会自动监听设备列表变化并重新订阅）
+    await globalStore.loadDevices()
+    
+    // 重新加载设备消息以刷新消息列表
+    await globalStore.loadDeviceMessages()
+    
+    // 更新未读消息列表
+    updateUnreadMessages()
     
     closeAddDeviceModal()
+    ElMessage.success('设备绑定成功')
   } catch (error) {
     console.error('绑定设备失败:', error)
   } finally {
