@@ -1460,19 +1460,29 @@ const handleMemberInfoUpdated = async (data) => {
   const currentAccountId = globalStore.user?.account?.id
   const currentFamilyId = globalStore.user?.account?.current_family_id
   
-  // 如果是当前用户更新了信息，更新 globalStore.user
+  // 如果是当前用户更新了信息
   if (account_id === currentAccountId) {
-    // 重新加载用户信息以获取最新数据
-    await globalStore.loadUser()
-  }
-  
-  // 如果是当前家庭，更新家庭成员列表中对应账户的信息
-  if (currentFamilyId && globalStore.familyMembers?.length) {
-    const memberIndex = globalStore.familyMembers.findIndex(m => m.account?.id === account_id)
-    if (memberIndex > -1) {
-      // 重新加载成员数据以获取最新信息
+    // 如果当前在家庭中，重新加载家庭成员数据（包含账户信息）
+    if (currentFamilyId) {
       await globalStore.loadFamilyMembers(currentFamilyId)
+      // 从家庭成员数据中更新当前用户信息
+      const currentMember = globalStore.familyMembers?.find(m => m.account?.id === currentAccountId)
+      if (currentMember?.account) {
+        globalStore.updateUserInfo({
+          nickname: currentMember.account.nickname,
+          gender: currentMember.account.gender,
+          phone: currentMember.account.phone,
+          email: currentMember.account.email,
+          avatar: currentMember.account.avatar
+        })
+      }
+    } else {
+      // 如果不在家庭中，重新加载所有数据以获取最新用户信息
+      await globalStore.loadAll()
     }
+  } else if (currentFamilyId) {
+    // 如果是其他成员更新了信息，且当前在家庭中，重新加载家庭成员数据
+    await globalStore.loadFamilyMembers(currentFamilyId)
   }
   
   ElMessage.success(message || '成员信息已更新')
