@@ -833,7 +833,7 @@ const initMQTTConnection = async () => {
       // 创建新的 MQTT 管理器
       // clientId 将在 connect 时自动生成，格式为: web_iot_${userId}_${时间戳}
       mqttManager = getMQTTManager({
-        host: 'localhost', // 根据实际情况修改
+        host: '192.168.3.196', // 根据实际情况修改
         port: 8083, // 根据实际情况修改
         protocol: 'ws', // ws 或 wss
         path: '',

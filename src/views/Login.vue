@@ -407,7 +407,12 @@ const handleLogin = async () => {
     router.push('/home')
   } catch (error) {
     console.error('登录失败:', error)
-    errorMessage.value = error.response?.data?.detail || '登录失败，请重试'
+    if (import.meta.env.DEV && error.response?.data) {
+      console.log('[登录] 服务器响应:', error.response.data)
+    }
+    const detail = error.response?.data?.detail
+    const msg = typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail.map(d => d.msg || d.message).filter(Boolean).join('；') : null)
+    errorMessage.value = msg || (error.response?.status === 401 ? '手机号或密码错误，请重试' : '登录失败，请重试')
   } finally {
     isLoading.value = false
     globalStore.loading.auth = false
