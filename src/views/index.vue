@@ -834,11 +834,11 @@ const initMQTTConnection = async () => {
       // clientId 将在 connect 时自动生成，格式为: web_iot_${userId}_${时间戳}
       mqttManager = getMQTTManager({
         host: '192.168.3.196',
-        port: 8083, // WebSocket 端口，1883 为原生 TCP 端口
+        port: 8083,
         protocol: 'ws',
         path: '/mqtt', // 常见 path，服务端用根路径则改为 ''
         username: '',
-        password: '',
+        password: token,
         reconnectPeriod: 3000,
         connectTimeout: 60000,
         keepalive: 60,
