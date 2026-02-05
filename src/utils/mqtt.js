@@ -125,7 +125,7 @@ class MQTTManager {
         }
         
         // 打印 clientId
-        console.log('[MQTT] ClientId:', clientId)
+        // console.log('[MQTT] ClientId:', clientId)
 
         // 构建连接URL
         const protocol = this.options.protocol === 'wss' ? 'wss' : 'ws'
