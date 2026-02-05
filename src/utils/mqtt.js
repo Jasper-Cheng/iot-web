@@ -193,18 +193,16 @@ class MQTTManager {
 
         // 连接错误
         this.client.on('error', (error) => {
+          const wasConnecting = this.state === this.connectionState.CONNECTING
           this.state = this.connectionState.ERROR
           this.emit('stateChange', this.state)
           this.emit('error', error)
           console.error('[MQTT] 连接错误:', error.message || error)
           this.log('MQTT error:', error)
-          
-          // 如果是第一次连接失败，reject Promise
-          // 但不会阻止 MQTT 库的自动重连机制（通过 reconnectPeriod）
-          if (this.state === this.connectionState.CONNECTING) {
+          // 首次连接失败时 reject，便于调用方捕获
+          if (wasConnecting) {
             reject(error)
           }
-          // 如果是在重连过程中出错，MQTT 库会自动继续重连
         })
 
         // 离线
