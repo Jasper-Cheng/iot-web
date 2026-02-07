@@ -1,3 +1,6 @@
+# 多阶段构建：Node 构建 + Nginx 托管
+# 更新后运行：docker-compose up -d --build
+
 # 构建阶段
 FROM node:22-alpine AS build
 
