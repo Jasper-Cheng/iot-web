@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'  # 匹配 v1.0, v1.2.3 等标签
+      - 'v*'
 
 jobs:
   build-and-push:
@@ -15,29 +15,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Get version from tag
-        id: get_version
-        run: |
-          if [[ ${{ github.ref_type }} == 'tag' ]]; then
-            # 移除标签前的 'v' 前缀（如 v1.0.0 → 1.0.0）
-            VERSION=${GITHUB_REF#refs/tags/v}
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          else
-            # 分支推送时使用 commit SHA 前7位
-            echo "VERSION=${{ github.sha }}" | cut -c1-7 >> $GITHUB_OUTPUT
-          fi
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.Docker_USERNAME }}
           password: ${{ secrets.Docker_PASSWORD }}
 
+      - name: Extract metadata for Docker tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.Docker_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: |
-            ${{ secrets.Docker_REPOSITORY }}:latest
-            ${{ secrets.Docker_REPOSITORY }}:${{ steps.get_version.outputs.VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
