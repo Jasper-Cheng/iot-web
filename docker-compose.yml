@@ -1,19 +1,14 @@
-# GitHub 更新后重新构建并运行：
-#   git pull
-#   docker-compose up -d --build
-#
-# 首次运行：docker-compose up -d --build
-# 查看日志：docker-compose logs -f web
-
 version: "3.9"
 
 services:
   web:
-    image: vue-web:latest
-    build: .
-    container_name: vue-web
+    image: jasper27/iot-web:latest  # 改为 Docker Hub 名称
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iot-web          # 容器名也可以改一下
     ports:
       - "8080:80"
     restart: always
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # 使容器可访问宿主机（Linux 需此配置）
+      - "host.docker.internal:host-gateway"
