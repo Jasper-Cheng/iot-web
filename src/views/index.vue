@@ -810,6 +810,35 @@ const mqttConnectionState = ref('disconnected')
 const subscribedDeviceSNs = ref(new Set())
 
 /**
+ * 从环境变量或当前页面地址解析 MQTT WebSocket 配置
+ * 支持 VITE_MQTT_WS_URL（完整 URL，如 ws://localhost:8884/mqtt）或
+ * VITE_MQTT_WS_HOST / VITE_MQTT_WS_PORT / VITE_MQTT_WS_PATH 分别配置
+ */
+const getMQTTWsConfig = () => {
+  const env = import.meta.env
+  const fullUrl = env.VITE_MQTT_WS_URL
+  if (fullUrl && typeof fullUrl === 'string' && (fullUrl.startsWith('ws://') || fullUrl.startsWith('wss://'))) {
+    try {
+      const url = new URL(fullUrl)
+      return {
+        protocol: url.protocol === 'wss:' ? 'wss' : 'ws',
+        host: url.hostname,
+        port: url.port ? parseInt(url.port, 10) : (url.protocol === 'wss:' ? 443 : 80),
+        path: url.pathname || '/mqtt'
+      }
+    } catch (e) {
+      console.warn('[MQTT] 解析 VITE_MQTT_WS_URL 失败，使用默认配置', e)
+    }
+  }
+  return {
+    protocol: 'ws',
+    host: env.VITE_MQTT_WS_HOST || (typeof window !== 'undefined' ? window.location.hostname : 'localhost'),
+    port: parseInt(env.VITE_MQTT_WS_PORT || '8884', 10),
+    path: env.VITE_MQTT_WS_PATH || '/mqtt'
+  }
+}
+
+/**
  * 初始化MQTT连接
  */
 const initMQTTConnection = async () => {
@@ -830,13 +859,14 @@ const initMQTTConnection = async () => {
       }
       // 清除全局 MQTT 实例
       clearMQTTManager()
+      const mqttWs = getMQTTWsConfig()
       // 创建新的 MQTT 管理器
       // clientId 将在 connect 时自动生成，格式为: web_iot_${userId}_${时间戳}
       mqttManager = getMQTTManager({
-        host: '192.168.3.196',
-        port: 8083,
-        protocol: 'ws',
-        path: '/mqtt', // 常见 path，服务端用根路径则改为 ''
+        host: mqttWs.host,
+        port: mqttWs.port,
+        protocol: mqttWs.protocol,
+        path: mqttWs.path,
         username: '',
         password: token,
         reconnectPeriod: 3000,

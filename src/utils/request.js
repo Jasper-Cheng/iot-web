@@ -4,8 +4,12 @@ import { ElMessage } from 'element-plus'
 
 let isHandlingUnauthorized = false
 
+// 构建时注入：有 VITE_API_BASE_URL 则用绝对地址（如 Docker 镜像），否则用相对路径走本地/nginx 代理
+const apiBase = import.meta.env.VITE_API_BASE_URL
+const baseURL = apiBase ? `${apiBase.replace(/\/$/, '')}/v1/client` : '/api/v1/client'
+
 const request = axios.create({
-  baseURL: '/api/v1/client',
+  baseURL,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' }
 })
