@@ -1,27 +1,26 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import envConfig from './src/config/env.js'
 
-// 开发时 API 代理目标，可通过 .env 设置 VITE_PROXY_TARGET（如 http://localhost:8001 或 http://192.168.3.196:8000）
-function getApiProxyTarget(mode) {
-  const env = loadEnv(mode, process.cwd(), '')
-  return env.VITE_PROXY_TARGET || 'http://localhost:8001'
-}
-
-export default defineConfig(({ mode }) => {
-  const apiProxyTarget = getApiProxyTarget(mode)
+export default defineConfig(() => {
   return {
-  plugins: [vue()],
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: apiProxyTarget,
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
+    plugins: [vue()],
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      proxy: {
+        '/api': {
+          target: envConfig.proxyTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '/api')
+        }
       }
+    },
+    // 构建时注入环境变量（用于 Docker 镜像构建）
+    define: {
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(envConfig.apiBaseUrl),
+      'import.meta.env.VITE_MQTT_WS_URL': JSON.stringify(envConfig.mqttWsUrl)
     }
-  }
   }
 })
 

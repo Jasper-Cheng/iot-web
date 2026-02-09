@@ -6,12 +6,6 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-# 前端构建时注入的变量（Vite 仅读取 VITE_ 前缀）
-ARG VITE_MQTT_WS_URL=ws://localhost:8884/mqtt
-ARG VITE_API_BASE_URL=
-ENV VITE_MQTT_WS_URL=$VITE_MQTT_WS_URL
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
 COPY package*.json ./
 RUN npm install
 

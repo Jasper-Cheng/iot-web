@@ -796,6 +796,7 @@ import { logout as logoutApi } from '../api/auth'
 import { ElMessage } from 'element-plus'
 import { getMQTTManager, clearMQTTManager } from '../utils/mqtt.js'
 import AvatarSelector from '../components/AvatarSelector.vue'
+import envConfig from '../config/env.js'
 
 // Index.vue 现在只作为布局容器，不需要导入具体的widget组件
 
@@ -810,32 +811,10 @@ const mqttConnectionState = ref('disconnected')
 const subscribedDeviceSNs = ref(new Set())
 
 /**
- * 从环境变量或当前页面地址解析 MQTT WebSocket 配置
- * 支持 VITE_MQTT_WS_URL（完整 URL，如 ws://localhost:8884/mqtt）或
- * VITE_MQTT_WS_HOST / VITE_MQTT_WS_PORT / VITE_MQTT_WS_PATH 分别配置
+ * 从本地配置文件获取 MQTT WebSocket 配置
  */
 const getMQTTWsConfig = () => {
-  const env = import.meta.env
-  const fullUrl = env.VITE_MQTT_WS_URL
-  if (fullUrl && typeof fullUrl === 'string' && (fullUrl.startsWith('ws://') || fullUrl.startsWith('wss://'))) {
-    try {
-      const url = new URL(fullUrl)
-      return {
-        protocol: url.protocol === 'wss:' ? 'wss' : 'ws',
-        host: url.hostname,
-        port: url.port ? parseInt(url.port, 10) : (url.protocol === 'wss:' ? 443 : 80),
-        path: url.pathname || '/mqtt'
-      }
-    } catch (e) {
-      console.warn('[MQTT] 解析 VITE_MQTT_WS_URL 失败，使用默认配置', e)
-    }
-  }
-  return {
-    protocol: 'ws',
-    host: env.VITE_MQTT_WS_HOST || (typeof window !== 'undefined' ? window.location.hostname : 'localhost'),
-    port: parseInt(env.VITE_MQTT_WS_PORT || '8884', 10),
-    path: env.VITE_MQTT_WS_PATH || '/mqtt'
-  }
+  return envConfig.mqtt
 }
 
 /**
