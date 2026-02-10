@@ -5,9 +5,7 @@ import envConfig from '../config/env.js'
 
 let isHandlingUnauthorized = false
 
-// 使用本地配置：有 apiBaseUrl 则用绝对地址（如 Docker 镜像），否则用相对路径走本地/nginx 代理
-const apiBase = envConfig.apiBaseUrl
-const baseURL = apiBase ? `${apiBase.replace(/\/$/, '')}/v1/client` : '/api/v1/client'
+const baseURL = `${envConfig.baseUrl.replace(/\/$/, '')}/v1/client`
 
 const request = axios.create({
   baseURL,
