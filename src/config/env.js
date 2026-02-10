@@ -16,12 +16,12 @@ const TEST_CONFIG = {
 }
 
 const PRODUCTION_CONFIG = {
-  baseUrl: 'https://your-production-api-host/api', // 改为实际生产 API 地址
-  mqttWsUrl: 'wss://your-production-mqtt-host/mqtt',
+  baseUrl: 'https://192.168.3.196:8000/api', // 改为实际生产 API 地址
+  mqttWsUrl: 'wss://192.168.3.196:8083/mqtt',
   mqtt: {
     protocol: 'wss',
-    host: 'your-production-mqtt-host',
-    port: 443,
+    host: '192.168.3.196',
+    port: 8083,
     path: '/mqtt'
   }
 }
