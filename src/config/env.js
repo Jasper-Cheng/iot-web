@@ -2,7 +2,7 @@
  * 环境配置：切换 CURRENT_ENV 即切换整套 baseUrl / MQTT 等
  */
 
-const CURRENT_ENV = 'test' // 'test' | 'production'
+const CURRENT_ENV = 'production' // 'test' | 'production'
 
 const TEST_CONFIG = {
   baseUrl: 'http://192.168.3.196:8001/api',
