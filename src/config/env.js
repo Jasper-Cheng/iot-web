@@ -2,7 +2,7 @@
  * 环境配置：切换 CURRENT_ENV 即切换整套 baseUrl / MQTT 等
  */
 
-const CURRENT_ENV = 'test' // 'test' | 'production'
+const CURRENT_ENV = 'production' // 'test' | 'production'
 
 const TEST_CONFIG = {
   baseUrl: 'http://192.168.3.196:8001/api',
@@ -16,12 +16,12 @@ const TEST_CONFIG = {
 }
 
 const PRODUCTION_CONFIG = {
-  baseUrl: 'https://your-production-api-host/api', // 改为实际生产 API 地址
-  mqttWsUrl: 'wss://your-production-mqtt-host/mqtt',
+  baseUrl: 'http://192.168.3.196:8000/api', // 改为实际生产 API 地址
+  mqttWsUrl: 'ws://192.168.3.196:8083/mqtt',
   mqtt: {
-    protocol: 'wss',
-    host: 'your-production-mqtt-host',
-    port: 443,
+    protocol: 'ws',
+    host: '192.168.3.196',
+    port: 8083,
     path: '/mqtt'
   }
 }
