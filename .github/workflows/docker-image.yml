@@ -6,20 +6,21 @@ on:
       - main
       - test
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
-      - name: Determine environment and image name
+    steps:
+      # 1 checkout
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2 识别环境
+      - name: Determine environment
         id: env
         run: |
-          # 确定环境和分支
           if [[ "${GITHUB_REF}" == refs/heads/main ]]; then
             ENVIRONMENT="production"
             BRANCH="main"
@@ -29,63 +30,69 @@ jobs:
             BRANCH="test"
             REPOSITORY="${{ secrets.Docker_REPOSITORY_TEST }}"
           else
-            ENVIRONMENT="production"  # 标签推送默认使用生产环境
+            ENVIRONMENT="production"
             BRANCH="main"
             REPOSITORY="${{ secrets.Docker_REPOSITORY }}"
           fi
-          
-          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
-          echo "repository=${REPOSITORY}" >> $GITHUB_OUTPUT
 
-      - name: Generate Docker tags
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "repository=$REPOSITORY" >> $GITHUB_OUTPUT
+
+      # 3 生成 tag
+      - name: Generate tags
         id: tags
         run: |
-          IMAGE_NAME="${{ steps.env.outputs.repository }}"
-          ENVIRONMENT="${{ steps.env.outputs.environment }}"
+          IMAGE="${{ steps.env.outputs.repository }}"
           BRANCH="${{ steps.env.outputs.branch }}"
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          
-          # 初始化标签数组
-          TAGS=""
-          
-          # 1. 分支标签：main 或 test
-          TAGS="${IMAGE_NAME}:${BRANCH}"
-          
-          # 2. 提交哈希标签（缩写）
-          TAGS="${TAGS},${IMAGE_NAME}:${SHORT_SHA}"
-          
-          # 3. 如果是标签推送，添加版本标签
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG_NAME=${GITHUB_REF#refs/tags/}
-            VERSION=${TAG_NAME#v}  # 移除 v 前缀
-            TAGS="${TAGS},${IMAGE_NAME}:${VERSION}"
-            # 版本环境标签可选保留
-            # TAGS="${TAGS},${IMAGE_NAME}:${VERSION}-${ENVIRONMENT}"
-          fi
-          
-          # 输出标签
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+          TAGS="$IMAGE:$BRANCH,$IMAGE:$SHORT_SHA"
+
+          if [[ "$BRANCH" == "main" ]]; then
+            TAGS="$TAGS,$IMAGE:latest"
+          fi
+
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+            TAGS="$TAGS,$IMAGE:$VERSION"
+          fi
+
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      # 4 登录 DockerHub
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.Docker_USERNAME }}
           password: ${{ secrets.Docker_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      # 5 支持 ARM 构建
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # 6 buildx
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 7 构建并 push（多架构 + cache）
+      - name: Build and Push
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ steps.tags.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
           build-args: |
             ENVIRONMENT=${{ steps.env.outputs.environment }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Log push information
+      # 8 输出日志
+      - name: Build Info
         run: |
           echo "Environment: ${{ steps.env.outputs.environment }}"
           echo "Branch: ${{ steps.env.outputs.branch }}"
           echo "Repository: ${{ steps.env.outputs.repository }}"
           echo "Tags: ${{ steps.tags.outputs.tags }}"
-          echo "Commit SHA: ${GITHUB_SHA:0:7}"
+          echo "Commit: ${GITHUB_SHA:0:7}"
