@@ -3,6 +3,7 @@
  */
 
 const CURRENT_ENV = 'production' // 'test' | 'production'
+const isDev = true // true: 使用 Vite 代理请求；false: 直连 baseUrl（可能遇到 CORS）
 
 const TEST_CONFIG = {
   baseUrl: 'http://192.168.3.196:8001/api',
@@ -16,11 +17,11 @@ const TEST_CONFIG = {
 }
 
 const PRODUCTION_CONFIG = {
-  baseUrl: 'http://192.168.3.196:8000/api', // 改为实际生产 API 地址
-  mqttWsUrl: 'ws://192.168.3.196:8083/mqtt',
+  baseUrl: 'http://192.168.3.214:8000/api', // 改为实际生产 API 地址
+  mqttWsUrl: 'ws://192.168.3.214:8083/mqtt',
   mqtt: {
     protocol: 'ws',
-    host: '192.168.3.196',
+    host: '192.168.3.214',
     port: 8083,
     path: '/mqtt'
   }
@@ -30,6 +31,7 @@ const config = CURRENT_ENV === 'production' ? PRODUCTION_CONFIG : TEST_CONFIG
 
 export default {
   env: CURRENT_ENV,
+  isDev,
   baseUrl: config.baseUrl,
   mqttWsUrl: config.mqttWsUrl,
   mqtt: config.mqtt

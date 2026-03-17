@@ -5,7 +5,10 @@ import envConfig from '../config/env.js'
 
 let isHandlingUnauthorized = false
 
-const baseURL = `${envConfig.baseUrl.replace(/\/$/, '')}/v1/client`
+// isDev=true 时使用相对路径，通过 Vite 代理转发（避免 CORS）
+const baseURL = envConfig.isDev
+  ? '/api/v1/client'
+  : `${envConfig.baseUrl.replace(/\/$/, '')}/v1/client`
 
 const request = axios.create({
   baseURL,
