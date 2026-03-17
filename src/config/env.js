@@ -6,11 +6,11 @@ const CURRENT_ENV = 'production' // 'test' | 'production'
 const isDev = true // true: 使用 Vite 代理请求；false: 直连 baseUrl（可能遇到 CORS）
 
 const TEST_CONFIG = {
-  baseUrl: 'http://192.168.3.196:8001/api',
-  mqttWsUrl: 'ws://192.168.3.196:8884/mqtt',
+  baseUrl: 'http://192.168.3.214:8001/api',
+  mqttWsUrl: 'ws://192.168.3.214:8884/mqtt',
   mqtt: {
     protocol: 'ws',
-    host: '192.168.3.196',
+    host: '192.168.3.214',
     port: 8884,
     path: '/mqtt'
   }
