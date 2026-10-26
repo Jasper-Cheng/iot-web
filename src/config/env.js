@@ -7,10 +7,10 @@ const isDev = true // true: 使用 Vite 代理请求；false: 直连 baseUrl（�
 
 const TEST_CONFIG = {
   baseUrl: 'http://212.129.243.155/api',
-  mqttWsUrl: 'ws://192.168.3.214:8884/mqtt',
+  mqttWsUrl: 'ws://212.129.243.155:8884/mqtt',
   mqtt: {
     protocol: 'ws',
-    host: '192.168.3.214',
+    host: '212.129.243.155',
     port: 8884,
     path: '/mqtt'
   }
@@ -18,10 +18,10 @@ const TEST_CONFIG = {
 
 const PRODUCTION_CONFIG = {
   baseUrl: 'http://212.129.243.155/api',
-  mqttWsUrl: 'ws://192.168.3.214:8083/mqtt',
+  mqttWsUrl: 'ws://212.129.243.155:8083/mqtt',
   mqtt: {
     protocol: 'ws',
-    host: '192.168.3.214',
+    host: '212.129.243.155',
     port: 8083,
     path: '/mqtt'
   }
