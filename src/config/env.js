@@ -6,7 +6,7 @@ const CURRENT_ENV = 'production' // 'test' | 'production'
 const isDev = true // true: 使用 Vite 代理请求；false: 直连 baseUrl（可能遇到 CORS）
 
 const TEST_CONFIG = {
-  baseUrl: 'http://f6f9f48a.natappfree.cc/api',
+  baseUrl: 'http://212.129.243.155/api',
   mqttWsUrl: 'ws://192.168.3.214:8884/mqtt',
   mqtt: {
     protocol: 'ws',
@@ -17,7 +17,7 @@ const TEST_CONFIG = {
 }
 
 const PRODUCTION_CONFIG = {
-  baseUrl: 'http://f6f9f48a.natappfree.cc/api',
+  baseUrl: 'http://212.129.243.155/api',
   mqttWsUrl: 'ws://192.168.3.214:8083/mqtt',
   mqtt: {
     protocol: 'ws',
