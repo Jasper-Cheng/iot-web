@@ -1,22 +1,10 @@
 /**
- * 环境配置：切换 CURRENT_ENV 即切换整套 baseUrl / MQTT 等
+ * 环境配置：固定使用正式环境
  */
 
-const CURRENT_ENV = 'production' // 'test' | 'production'
 const isDev = true // true: 使用 Vite 代理请求；false: 直连 baseUrl（可能遇到 CORS）
 
-const TEST_CONFIG = {
-  baseUrl: 'http://212.129.243.155/api',
-  mqttWsUrl: 'ws://212.129.243.155:8884/mqtt',
-  mqtt: {
-    protocol: 'ws',
-    host: '212.129.243.155',
-    port: 8884,
-    path: '/mqtt'
-  }
-}
-
-const PRODUCTION_CONFIG = {
+const config = {
   baseUrl: 'http://212.129.243.155/api',
   mqttWsUrl: 'ws://212.129.243.155:8083/mqtt',
   mqtt: {
@@ -27,10 +15,7 @@ const PRODUCTION_CONFIG = {
   }
 }
 
-const config = CURRENT_ENV === 'production' ? PRODUCTION_CONFIG : TEST_CONFIG
-
 export default {
-  env: CURRENT_ENV,
   isDev,
   baseUrl: config.baseUrl,
   mqttWsUrl: config.mqttWsUrl,
